@@ -54,11 +54,9 @@ npm run preview
 
 ## Production URL
 
-После первого деплоя на Vercel подставь сюда актуальный Production URL:
+**Production URL:** https://path-to-self-miniapp-ozharov164-9998s-projects.vercel.app
 
-**Production URL:** `https://your-project.vercel.app` *(замени на реальный URL после деплоя)*
-
-Этот URL нужно указать в настройках бота (Web App / WebAppInfo) как ссылку на Mini App.
+Укажи этот URL в настройках бота (Web App / WebAppInfo) как ссылку на Mini App. После подключения репозитория к GitHub в Vercel и успешного redeploy приложение будет доступно по этому адресу.
 
 ---
 
