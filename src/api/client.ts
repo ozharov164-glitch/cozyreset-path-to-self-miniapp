@@ -84,8 +84,8 @@ function getTokenFromHash(): string | null {
   return params.get('s')?.trim() || params.get('token')?.trim() || null
 }
 
-// initData: приоритет Telegram.WebApp.initData (из initDataUnsafe контекста), затем hash/search tgWebAppData
-function getInitDataString(): string {
+// initData: приоритет Telegram.WebApp.initData, затем hash/search tgWebAppData (для сохранения без токена)
+export function getInitDataString(): string {
   if (typeof window === 'undefined') return ''
   const tg = window.Telegram?.WebApp
   if (tg?.initData?.trim()) return tg.initData.trim()
@@ -164,9 +164,12 @@ export async function apiSaveTestResult(payload: {
   completedAt: string
 }): Promise<SaveResult> {
   try {
+    const body: Record<string, unknown> = { ...payload }
+    const initData = getInitDataString()
+    if (initData) body.initData = initData
     const res = await fetchWithAuth('/mini-app/save-test-result', {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: JSON.stringify(body),
     })
     const data = await res.json().catch(() => ({})) as { id?: string; error?: string }
     if (res.ok && data.id) return { id: data.id }

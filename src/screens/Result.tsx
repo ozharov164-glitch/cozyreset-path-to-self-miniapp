@@ -129,10 +129,44 @@ export function Result({ onBack }: ResultProps) {
       </motion.div>
 
       {saving && (
-        <p className="text-center text-sm text-[var(--color-text-secondary)] mb-4">Сохранение...</p>
+        <p className="text-center text-sm mb-4" style={{ color: '#5a5550' }}>Сохранение...</p>
       )}
       {error && (
-        <p className="text-center text-sm text-red-600 mb-4">{error}</p>
+        <div className="max-w-[420px] mx-auto w-full px-2 mb-4">
+          <p className="text-center text-sm mb-3" style={{ color: '#b91c1c' }}>{error}</p>
+          <button
+            type="button"
+            onClick={() => {
+              if (!test) return
+              setError(null)
+              setSaving(true)
+              ensureAuth()
+                .then(() =>
+                  apiSaveTestResult({
+                    testId: test.id,
+                    testTitle: test.title,
+                    answers,
+                    completedAt: new Date().toISOString(),
+                  })
+                )
+                .then((res) => {
+                  if ('id' in res && res.id) {
+                    setLastSavedResultId(res.id)
+                    setSaved(true)
+                  } else {
+                    const err = 'error' in res ? String(res.error) : ''
+                    setError(err && (err.includes('Token') || err.includes('token')) ? 'Закройте приложение и откройте снова из бота.' : err || 'Не удалось сохранить')
+                  }
+                })
+                .catch(() => setError('Ошибка сети.'))
+                .finally(() => setSaving(false))
+            }}
+            className="w-full py-2.5 px-4 rounded-xl font-medium border-2 border-[var(--color-lavender)]"
+            style={{ color: '#2d2a26' }}
+          >
+            Повторить сохранение
+          </button>
+        </div>
       )}
       {(saved || isViewingHistory) && (
         <motion.div
