@@ -23,6 +23,7 @@ export function TestFlow({ onBack }: TestFlowProps) {
   const total = test.questions.length
   const isLast = currentQuestionIndex === total - 1
   const currentQ = test.questions[currentQuestionIndex]
+  const questionText = currentQ?.text?.trim() || `Вопрос ${currentQuestionIndex + 1} из ${total}. Оцени по шкале от 1 до 10.`
   const progress = ((currentQuestionIndex + 1) / total) * 100
 
   const handleAnswer = (value: number) => {
@@ -64,10 +65,10 @@ export function TestFlow({ onBack }: TestFlowProps) {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -30 }}
             transition={{ duration: 0.25 }}
-            className="flex flex-col flex-1"
+            className="flex flex-col flex-1 min-h-[120px]"
           >
-            <p className="text-lg font-medium text-[var(--color-text-primary)] mb-6">
-              {currentQ.text}
+            <p className="text-lg font-medium text-[var(--color-text-primary)] mb-6 break-words min-h-[3em]" style={{ color: 'var(--color-text-primary)' }}>
+              {questionText}
             </p>
             <div className="flex flex-wrap gap-2">
               {SCALE.map((n) => (

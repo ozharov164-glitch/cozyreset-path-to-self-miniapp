@@ -1,6 +1,26 @@
 import { useAuthStore } from '../store/authStore'
 
-const getBackendUrl = (): string => {
+let backendUrlOverride: string | null = null
+
+/** Загрузить config.json с того же origin (позволяет задать HTTPS без пересборки). */
+export async function loadBackendConfig(): Promise<void> {
+  if (typeof window === 'undefined') return
+  try {
+    const base = (import.meta.env.VITE_BASE_PATH as string) || '/'
+    const path = base.endsWith('/') ? `${base}config.json` : `${base}/config.json`
+    const url = `${window.location.origin}${path}`
+    const r = await fetch(url, { cache: 'no-store' })
+    if (!r.ok) return
+    const j = (await r.json()) as { backendUrl?: string }
+    const u = j?.backendUrl && typeof j.backendUrl === 'string' ? j.backendUrl.replace(/\/$/, '') : null
+    if (u && (u.startsWith('http://') || u.startsWith('https://'))) backendUrlOverride = u
+  } catch {
+    /* ignore */
+  }
+}
+
+function getBackendUrl(): string {
+  if (backendUrlOverride) return backendUrlOverride
   const fromEnv = import.meta.env.VITE_BOT_BACKEND_URL
   if (fromEnv && typeof fromEnv === 'string') return fromEnv.replace(/\/$/, '')
   if (typeof window !== 'undefined' && window.location?.origin) return window.location.origin
@@ -134,20 +154,26 @@ async function fetchWithAuth(
   return res
 }
 
+export type SaveResult = { id: string } | { error: string; status?: number }
+
 export async function apiSaveTestResult(payload: {
   testId: string
   testTitle: string
   answers: number[]
   dimensions?: Record<string, number>
   completedAt: string
-}): Promise<{ id: string } | null> {
-  const res = await fetchWithAuth('/mini-app/save-test-result', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
-  if (!res.ok) return null
-  const data = await res.json()
-  return data as { id: string }
+}): Promise<SaveResult> {
+  try {
+    const res = await fetchWithAuth('/mini-app/save-test-result', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+    const data = await res.json().catch(() => ({})) as { id?: string; error?: string }
+    if (res.ok && data.id) return { id: data.id }
+    return { error: data.error || 'Не удалось сохранить', status: res.status }
+  } catch {
+    return { error: 'network', status: 0 }
+  }
 }
 
 export async function apiTestHistory(): Promise<{ items: Array<{ id: string; testId: string; testTitle: string; completedAt: string }> }> {

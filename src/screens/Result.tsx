@@ -49,12 +49,17 @@ export function Result({ onBack }: ResultProps) {
       completedAt: new Date().toISOString(),
     })
       .then((res) => {
-        if (res?.id) {
+        if ('id' in res && res.id) {
           setLastSavedResultId(res.id)
           setSaved(true)
-        } else setError('Не удалось сохранить')
+        } else {
+          const msg = 'error' in res && res.error === 'network'
+            ? 'Ошибка сети. Откройте приложение из бота; если повторяется — на сервере нужен HTTPS.'
+            : ('error' in res && res.error) || 'Не удалось сохранить'
+          setError(msg)
+        }
       })
-      .catch(() => setError('Ошибка сети'))
+      .catch(() => setError('Ошибка сети. Откройте приложение из бота.'))
       .finally(() => setSaving(false))
   }, [test, answers, saved, saving, isViewingHistory, setLastSavedResultId])
 

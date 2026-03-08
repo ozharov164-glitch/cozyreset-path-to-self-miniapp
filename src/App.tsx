@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
 import { Canvas } from '@react-three/fiber'
-import { ensureAuth } from './api/client'
+import { ensureAuth, loadBackendConfig } from './api/client'
 import { apiTestHistory } from './api/client'
 import { Dashboard } from './screens/Dashboard'
 import { Catalog } from './screens/Catalog'
@@ -35,7 +35,9 @@ function AppContent() {
     const tg = window.Telegram?.WebApp
     tg?.ready()
     tg?.expand()
-    ensureAuth().then(() => useAppStore.getState().setAuthReady(true))
+    loadBackendConfig().then(() => {
+      ensureAuth().then(() => useAppStore.getState().setAuthReady(true))
+    })
   }, [])
 
   const dimOverlay = screen === 'catalog' || screen === 'history'
