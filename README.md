@@ -1,26 +1,18 @@
 # 🌱 Путь к Себе — Telegram Mini App
 
-Mini App «Сад Внутреннего Я» для бота ВключиСебя AI. Прохождение объёмных тестов (тревога, настроение, самооценка, выгорание, границы, смысл жизни, прогресс терапии), сохранение результатов и история.
+Mini App **«Сад Внутреннего Я»** для бота CozyReset (ВключиСебя AI). Объёмные тесты (тревога, настроение, самооценка, выгорание, границы, смысл жизни, прогресс терапии), 3D-сцена, сохранение результатов и история.
+
+---
 
 ## Стек
 
 - React 18 + TypeScript + Vite
-- @react-three/fiber + @react-three/drei + three.js (3D — по дизайн-спеку)
+- @react-three/fiber + @react-three/drei + three.js (3D-сад, bloom, частицы)
 - Tailwind CSS v4 + Framer Motion
-- TanStack Query + Zod + Zustand (localStorage)
-- Recharts, Telegram WebApp SDK
+- TanStack Query + Zustand (localStorage) + Recharts + Zod
+- Telegram WebApp SDK
 
-## Авторизация (приоритет)
-
-1. `Telegram.WebApp.initDataUnsafe` + при необходимости полный `initData`
-2. `app_save_token` из hash-параметра URL (`#s=TOKEN` или `#token=TOKEN`)
-3. `POST /mini-app/init` → в ответе `app_save_token` → сохраняем в Zustand + localStorage
-
-Все последующие запросы к API — с заголовком или телом, содержащим `app_save_token`. При 401 — автоматический повтор init (без показа ошибки пользователю).
-
-## Переменные окружения
-
-- `VITE_BOT_BACKEND_URL` — URL бэкенда бота (например `https://your-server.com` или `http://217.114.11.97:8080`). Без слэша в конце.
+---
 
 ## Команды
 
@@ -31,114 +23,157 @@ npm run build
 npm run preview
 ```
 
-## Эндпоинты бэкенда (для реализации на стороне бота)
+---
 
-Бэкенд должен предоставлять следующие роуты. Авторизация: по `app_save_token` в теле (или в заголовке), получение `user_id` через существующую логику (например `get_user_id_from_app_token`). CORS для origin Mini App.
+## Переменные окружения
 
-### POST /mini-app/init
+| Переменная | Описание |
+|------------|----------|
+| `VITE_BOT_BACKEND_URL` | URL бэкенда бота (например `https://your-server.com` или `http://217.114.11.97:8080`). **Без слэша в конце.** |
 
-Уже существует в боте. Тело: `{ "initData": "<Telegram WebApp initData>" }`. Ответ: JSON с данными пользователя и полем `app_save_token`. Mini App сохраняет токен и использует его во всех запросах ниже.
+---
+
+## Деплой на Vercel (пошаговая инструкция для пользователя)
+
+1. Зайди на **[vercel.com](https://vercel.com)** и войди через GitHub.
+2. Нажми **Add New** → **Project**.
+3. Импортируй репозиторий **cozyreset-path-to-self-miniapp** (если не виден — настрой доступ к GitHub-аккаунту в Vercel).
+4. В настройках проекта:
+   - **Framework Preset:** Vite (определится автоматически при наличии `vercel.json` / `vite.config.ts`).
+   - **Build Command:** `npm run build` (или оставь по умолчанию).
+   - **Output Directory:** `dist`.
+   - **Environment Variables:** добавь переменную:
+     - **Name:** `VITE_BOT_BACKEND_URL`
+     - **Value:** полный URL бэкенда бота (без слэша в конце), например `https://api.example.com`.
+5. Нажми **Deploy**. Дождись окончания сборки.
+6. После успешного деплоя скопируй **Production URL** (например `https://cozyreset-path-to-self-miniapp-xxx.vercel.app`).
+7. Укажи этот URL в боте как **Web App URL** для кнопки/команды, открывающей Mini App.
+8. При следующих push в ветку `main` Vercel будет автоматически пересобирать и деплоить проект.
+
+---
+
+## Production URL
+
+После первого деплоя на Vercel подставь сюда актуальный Production URL:
+
+**Production URL:** `https://your-project.vercel.app` *(замени на реальный URL после деплоя)*
+
+Этот URL нужно указать в настройках бота (Web App / WebAppInfo) как ссылку на Mini App.
+
+---
+
+## Авторизация в Mini App
+
+1. Токен из **store** (Zustand + localStorage).
+2. Токен из **hash** URL: `#s=TOKEN` или `#token=TOKEN`.
+3. **POST /mini-app/init** с `initData` из Telegram → в ответе `app_save_token` → сохраняем и используем во всех запросах.
+
+При **401** приложение выполняет один автоматический re-init без показа ошибки пользователю.
+
+---
+
+## Эндпоинты бэкенда с точными JSON-примерами запросов/ответов
+
+Бэкенд бота должен реализовать эти роуты. Авторизация: по полю `token` (значение `app_save_token`) в теле запроса (POST) или в query-параметре `token` (GET). CORS: разрешить origin Vercel и при необходимости `https://web.telegram.org`.
+
+---
 
 ### POST /mini-app/save-test-result
 
-Сохранение результата прохождения теста.
+Сохранение результата прохождения теста. В теле передаётся также `token` (app_save_token).
 
-**Тело (JSON):**
+**Пример запроса (Request body):**
 
 ```json
 {
+  "token": "app_save_token_значение_из_init",
   "testId": "anxiety",
   "testTitle": "Тревога и беспокойство",
-  "answers": [3, 4, 2, 5, 1, ...],
-  "dimensions": { "anxiety": 3.2, "somatic": 2.8 },
-  "completedAt": "2026-03-08T20:00:00.000Z"
+  "answers": [3, 7, 2, 5, 9, 4, 6, 1, 8, 5, 4, 3, 7, 2, 6, 9, 4, 5, 8, 3, 6, 7],
+  "dimensions": { "anxiety": 5.2, "somatic": 4.1 },
+  "completedAt": "2026-03-10T14:30:00.000Z"
 }
 ```
 
-- `testId` (string) — идентификатор теста (anxiety, mood-energy, self-esteem, burnout, boundaries, meaning, progress).
-- `testTitle` (string) — название теста для отображения.
-- `answers` (number[]) — массив ответов по шкале 1–5 (порядок = порядку вопросов).
-- `dimensions` (object, опционально) — сводные баллы по шкалам/измерениям.
-- `completedAt` (string) — ISO 8601 дата/время завершения.
+- `testId` — один из: `anxiety`, `mood-energy`, `self-esteem`, `burnout`, `boundaries`, `meaning`, `progress`.
+- `answers` — массив чисел от 1 до 10 (порядок = порядку вопросов в тесте).
+- `dimensions` — опционально; сводные баллы по шкалам.
 
-**Ответ (JSON):**
+**Пример ответа (Response 200):**
 
 ```json
-{ "id": "uuid-or-unique-id" }
+{
+  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+}
 ```
 
-- `id` — уникальный идентификатор сохранённого результата (для последующего запроса GET и списка истории).
-
-**Ошибки:** 401 — невалидный/просроченный токен; 400 — невалидное тело.
+**Ошибки:** `401` — невалидный/просроченный токен; `400` — невалидное тело.
 
 ---
 
 ### POST /mini-app/test-history
 
-Получение списка сохранённых результатов текущего пользователя.
+Список сохранённых результатов текущего пользователя. В теле передаётся `token` (app_save_token).
 
-**Тело (JSON):** `{}` или любое пустое тело. Авторизация по токену (в теле или заголовке, по договорённости с бэкендом).
+**Пример запроса (Request body):**
 
-**Ответ (JSON):**
+```json
+{
+  "token": "app_save_token_значение_из_init"
+}
+```
+
+**Пример ответа (Response 200):**
 
 ```json
 {
   "items": [
     {
-      "id": "uuid-1",
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
       "testId": "anxiety",
       "testTitle": "Тревога и беспокойство",
-      "completedAt": "2026-03-08T20:00:00.000Z"
+      "completedAt": "2026-03-10T14:30:00.000Z"
     },
     {
-      "id": "uuid-2",
+      "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
       "testId": "burnout",
       "testTitle": "Эмоциональное выгорание",
-      "completedAt": "2026-03-07T18:30:00.000Z"
+      "completedAt": "2026-03-09T12:00:00.000Z"
     }
   ]
 }
 ```
 
-- `items` — массив объектов, отсортированный по дате (новые сверху).
-- В каждом элементе: `id`, `testId`, `testTitle`, `completedAt` (ISO 8601).
+- `items` — массив, отсортированный по дате (новые сверху).
 
-**Ошибки:** 401 — невалидный токен.
+**Ошибки:** `401` — невалидный токен.
 
 ---
 
 ### GET /mini-app/test-result/{id}
 
-Получение одного сохранённого результата по идентификатору. Пользователь может видеть только свои результаты (проверка по `user_id` по токену или по сохранённому результату).
+Получение одного сохранённого результата по `id`. Пользователь видит только свои результаты.
 
-**Параметры пути:** `id` — идентификатор результата (из ответа save-test-result или из списка history).
+**Пример запроса:**  
+`GET /mini-app/test-result/a1b2c3d4-e5f6-7890-abcd-ef1234567890?token=app_save_token_значение_из_init`
 
-**Ответ (JSON):**
+**Пример ответа (Response 200):**
 
 ```json
 {
-  "id": "uuid-1",
+  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   "testId": "anxiety",
   "testTitle": "Тревога и беспокойство",
-  "answers": [3, 4, 2, 5, 1, ...],
-  "dimensions": { "anxiety": 3.2 },
-  "completedAt": "2026-03-08T20:00:00.000Z"
+  "answers": [3, 7, 2, 5, 9, 4, 6, 1, 8, 5, 4, 3, 7, 2, 6, 9, 4, 5, 8, 3, 6, 7],
+  "dimensions": { "anxiety": 5.2, "somatic": 4.1 },
+  "completedAt": "2026-03-10T14:30:00.000Z"
 }
 ```
 
-- Поля те же, что при сохранении; `answers` — полный массив ответов.
-
-**Ошибки:** 401 — не авторизован; 404 — результат не найден или принадлежит другому пользователю.
+**Ошибки:** `401` — не авторизован; `404` — результат не найден или принадлежит другому пользователю.
 
 ---
 
-## Деплой на Vercel
+## После сохранения результата в Mini App
 
-1. Подключи репозиторий к Vercel.
-2. В настройках проекта задай переменную окружения `VITE_BOT_BACKEND_URL` (URL бэкенда бота).
-3. Build command: `npm run build`, Output directory: `dist`.
-4. После деплоя используй выданный URL как ссылку для Web App в боте (WebAppInfo).
-
-## После сохранения результата
-
-В приложении показывается текст: «Результат сохранён ✅ Перейди в бота» и кнопка «Открыть бота», вызывающая `Telegram.WebApp.openTelegramLink('https://t.me/CozyReset_bot')`. Не используется `sendData` и не используется `?start=param` как основной поток связи с ботом.
+Пользователю показывается текст **«Результат сохранён ✅ Перейди в бота»** и кнопка **«Открыть бота»**, вызывающая `Telegram.WebApp.openTelegramLink('https://t.me/CozyReset_bot')`. Не используется `sendData` и не `?start=...` как основной поток связи с ботом.
