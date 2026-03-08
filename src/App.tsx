@@ -35,9 +35,19 @@ function AppContent() {
     const tg = window.Telegram?.WebApp
     tg?.ready()
     tg?.expand()
-    loadBackendConfig().then(() => {
-      ensureAuth().then(() => useAppStore.getState().setAuthReady(true))
-    })
+    const init = () => {
+      loadBackendConfig().then(() => {
+        // Небольшая задержка, чтобы Telegram успел подставить initData в WebApp или hash
+        setTimeout(() => {
+          ensureAuth().then(() => useAppStore.getState().setAuthReady(true))
+        }, 100)
+      })
+    }
+    init()
+    // Telegram иногда подставляет tgWebAppData в hash после загрузки — подхватываем
+    const onHash = () => ensureAuth()
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
   }, [])
 
   const dimOverlay = screen === 'catalog' || screen === 'history'

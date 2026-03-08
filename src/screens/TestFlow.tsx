@@ -67,9 +67,11 @@ export function TestFlow({ onBack }: TestFlowProps) {
             transition={{ duration: 0.25 }}
             className="flex flex-col flex-1 min-h-[120px]"
           >
-            <p className="text-lg font-medium text-[var(--color-text-primary)] mb-6 break-words min-h-[3em]" style={{ color: 'var(--color-text-primary)' }}>
-              {questionText}
-            </p>
+            <div className="rounded-xl px-4 py-3 mb-6 min-h-[3.5em] flex items-center" style={{ background: 'rgba(255,255,255,0.35)' }}>
+              <p className="text-lg font-medium break-words m-0" style={{ color: '#2d2a26' }}>
+                {questionText}
+              </p>
+            </div>
             <div className="flex flex-wrap gap-2">
               {SCALE.map((n) => (
                 <button

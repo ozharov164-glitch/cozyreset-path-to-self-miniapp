@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts'
 import { TESTS } from '../data/tests'
 import { useAppStore } from '../store/appStore'
-import { apiSaveTestResult, apiTestResult } from '../api/client'
+import { apiSaveTestResult, apiTestResult, ensureAuth } from '../api/client'
 
 interface ResultProps {
   onBack: () => void
@@ -42,20 +42,28 @@ export function Result({ onBack }: ResultProps) {
   useEffect(() => {
     if (isViewingHistory || !test || saved || saving) return
     setSaving(true)
-    apiSaveTestResult({
-      testId: test.id,
-      testTitle: test.title,
-      answers,
-      completedAt: new Date().toISOString(),
-    })
+    setError(null)
+    ensureAuth()
+      .then(() =>
+        apiSaveTestResult({
+          testId: test.id,
+          testTitle: test.title,
+          answers,
+          completedAt: new Date().toISOString(),
+        })
+      )
       .then((res) => {
         if ('id' in res && res.id) {
           setLastSavedResultId(res.id)
           setSaved(true)
         } else {
-          const msg = 'error' in res && res.error === 'network'
-            ? 'Ошибка сети. Откройте приложение из бота; если повторяется — на сервере нужен HTTPS.'
-            : ('error' in res && res.error) || 'Не удалось сохранить'
+          const err = 'error' in res ? String(res.error) : ''
+          const msg =
+            err === 'network'
+              ? 'Ошибка сети. Откройте приложение из бота.'
+              : err && (err.includes('Token') || err.includes('token') || err.includes('401'))
+                ? 'Не удалось сохранить. Закройте приложение и откройте снова из бота.'
+                : err || 'Не удалось сохранить'
           setError(msg)
         }
       })
