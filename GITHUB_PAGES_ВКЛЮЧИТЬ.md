@@ -6,3 +6,4 @@
 2. **Settings** → **Pages** (в левом меню).
 3. В разделе **Build and deployment** → **Source:** выбери **GitHub Actions**.
 4. Сохрани. После следующего push в `main` workflow «Deploy to GitHub Pages» соберёт проект и опубликует его. URL будет указан в Environments → github-pages.
+
