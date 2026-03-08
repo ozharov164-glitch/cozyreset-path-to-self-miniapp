@@ -175,3 +175,23 @@ npm run preview
 ## После сохранения результата в Mini App
 
 Пользователю показывается текст **«Результат сохранён ✅ Перейди в бота»** и кнопка **«Открыть бота»**, вызывающая `Telegram.WebApp.openTelegramLink('https://t.me/CozyReset_bot')`. Не используется `sendData` и не `?start=...` как основной поток связи с ботом.
+
+---
+
+## ✅ Как завершить настройку и подключить Mini App к боту (2 минуты)
+
+1. Открой https://vercel.com/ozharov164-9998s-projects/path-to-self-miniapp
+2. Перейди в **Settings → Environment Variables**
+   - Найди `VITE_BOT_BACKEND_URL`
+   - Замени значение `https://placeholder.backend` на **реальный URL твоего бэкенда** (например `https://t.me-bot-server.com` или `https://217.114.11.97:8080`) — **без слэша в конце**.
+   - Нажми Save (применить для Production).
+3. Подключи GitHub (если ещё не сделано):
+   - Vercel → Account Settings → Login Connections → Connect GitHub
+   - Дай доступ к репозиторию `ozharov164-glitch/cozyreset-path-to-self-miniapp`
+4. Вернись в проект → нажми **Redeploy** на последнем деплое (или сделай новый push в main).
+5. После появления статуса **READY** открой ссылку:
+   **https://path-to-self-miniapp-ozharov164-9998s-projects.vercel.app**
+
+Готово! Теперь вставь эту ссылку в бота как Web App URL для кнопки «🌱 Путь к Себе».
+
+После этого приложение полностью готово к использованию.
