@@ -36,15 +36,15 @@ jobs:
           VITE_BASE_PATH: "/cozyreset-path-to-self-miniapp/"
           VITE_BOT_BACKEND_URL: "http://217.114.11.97:8080"
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
   deploy:
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
