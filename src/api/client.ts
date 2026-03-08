@@ -20,10 +20,17 @@ export async function ensureAuth(): Promise<string | null> {
   }
 
   const initData = getInitDataString()
-  if (!initData) return null
+  if (!initData) {
+    // В браузере без Telegram — показываем интерфейс без сохранения (избегаем белого экрана)
+    useAuthStore.getState().setInitialized(true)
+    return null
+  }
 
   const backend = getBackendUrl()
-  if (!backend) return null
+  if (!backend) {
+    useAuthStore.getState().setInitialized(true)
+    return null
+  }
 
   try {
     const res = await fetch(`${backend}/mini-app/init`, {
@@ -31,7 +38,10 @@ export async function ensureAuth(): Promise<string | null> {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ initData }),
     })
-    if (!res.ok) return null
+    if (!res.ok) {
+      useAuthStore.getState().setInitialized(true)
+      return null
+    }
     const data = await res.json()
     const newToken = (data as { app_save_token?: string }).app_save_token?.trim()
     if (newToken) {
@@ -42,6 +52,7 @@ export async function ensureAuth(): Promise<string | null> {
   } catch {
     // ignore
   }
+  useAuthStore.getState().setInitialized(true)
   return null
 }
 
