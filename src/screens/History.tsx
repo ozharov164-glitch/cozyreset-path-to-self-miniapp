@@ -1,0 +1,77 @@
+import { useQuery } from '@tanstack/react-query'
+import { motion } from 'framer-motion'
+import { apiTestHistory } from '../api/client'
+import { useAppStore } from '../store/appStore'
+
+interface HistoryProps {
+  onBack: () => void
+}
+
+export function History({ onBack }: HistoryProps) {
+  const setScreen = useAppStore((s) => s.setScreen)
+  const setOpenResultId = useAppStore((s) => s.setOpenResultId)
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['test-history'],
+    queryFn: apiTestHistory,
+  })
+
+  const items = data?.items ?? []
+
+  const openResult = (id: string) => {
+    setOpenResultId(id)
+    setScreen('result')
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col safe-area pb-6">
+      <header className="glass-card h-14 flex items-center px-4 mb-4 rounded-2xl">
+        <button type="button" onClick={onBack} className="text-[var(--color-glow-teal)] font-medium">
+          ← Назад
+        </button>
+        <h1 className="flex-1 text-center text-base font-semibold text-[var(--color-text-primary)]">
+          История
+        </h1>
+        <span className="w-14" />
+      </header>
+
+      <div className="flex flex-col gap-3 max-w-[420px] mx-auto w-full px-1">
+        {isLoading && (
+          <p className="text-center text-sm text-[var(--color-text-secondary)] py-8">Загрузка...</p>
+        )}
+        {!isLoading && items.length === 0 && (
+          <div className="glass-card p-6 text-center">
+            <p className="text-sm text-[var(--color-text-secondary)]">
+              Пока нет сохранённых результатов. Пройди тест из каталога.
+            </p>
+          </div>
+        )}
+        {items.map((item, i) => (
+          <motion.div
+            key={item.id}
+            className="glass-card p-4"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.05 }}
+          >
+            <h3 className="font-semibold text-[var(--color-text-primary)]">{item.testTitle}</h3>
+            <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+              {new Date(item.completedAt).toLocaleDateString('ru-RU', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              })}
+            </p>
+            <button
+              type="button"
+              onClick={() => openResult(item.id)}
+              className="mt-3 text-sm font-medium text-[var(--color-glow-teal)]"
+            >
+              Смотреть результат
+            </button>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  )
+}

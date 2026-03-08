@@ -1,0 +1,62 @@
+import { motion } from 'framer-motion'
+import { useAuthStore } from '../store/authStore'
+
+interface DashboardProps {
+  onOpenCatalog: () => void
+  onOpenHistory: () => void
+}
+
+export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
+  const authReady = useAuthStore((s) => s.isInitialized)
+  const tg = typeof window !== 'undefined' ? window.Telegram?.WebApp : undefined
+  const userName = tg?.initDataUnsafe?.user?.first_name || 'друг'
+
+  return (
+    <div className="min-h-screen flex flex-col safe-area">
+      <header className="glass-card h-14 flex items-center justify-between px-4 mb-4 rounded-2xl">
+        <span className="text-xl">🌱</span>
+        <h1 className="text-base font-semibold text-[var(--color-text-primary)]">Путь к Себе</h1>
+        <button
+          type="button"
+          onClick={onOpenHistory}
+          className="text-sm text-[var(--color-text-secondary)]"
+        >
+          История
+        </button>
+      </header>
+
+      <motion.div
+        className="glass-card p-5 mb-6 mx-auto w-full max-w-[420px]"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-1">
+          Привет, {userName}!
+        </h2>
+        <p className="text-sm text-[var(--color-text-secondary)] mb-4">
+          Твой сад растёт с каждым тестом.
+        </p>
+        <button
+          type="button"
+          onClick={onOpenCatalog}
+          className="w-full py-3.5 px-4 rounded-xl font-semibold text-[var(--color-text-primary)] bg-[var(--color-sunset-rose)] hover:opacity-95 active:scale-[0.98] transition-all shadow-md"
+        >
+          Каталог тестов
+        </button>
+      </motion.div>
+
+      {!authReady && (
+        <p className="text-center text-sm text-[var(--color-text-secondary)] px-4">
+          Загрузка...
+        </p>
+      )}
+
+      <div className="flex-1 flex items-center justify-center p-4">
+        <p className="text-sm text-[var(--color-text-secondary)] text-center max-w-[280px]">
+          Пройди тесты из каталога — здесь появятся твои результаты и рост сада.
+        </p>
+      </div>
+    </div>
+  )
+}

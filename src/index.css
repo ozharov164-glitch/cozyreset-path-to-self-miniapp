@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  --color-sunset-rose: #e8b4b8;
+  --color-sunset-orange: #f4d4a6;
+  --color-lavender: #c9b8e8;
+  --color-warm-beige: #f5e6d3;
+  --color-glow-teal: #7dd3c0;
+  --color-glow-teal-dim: #5ab8a8;
+  --color-petal-pink: #f8d7da;
+  --color-forest-dark: #2d3e2e;
+  --color-text-primary: #2d2a26;
+  --color-text-secondary: rgba(45, 42, 38, 0.75);
+  --font-sans: "DM Sans", "Segoe UI", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: transparent;
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Glass card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(45, 62, 46, 0.2);
+}
+
+/* Safe area for Telegram */
+.safe-area {
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+  padding-top: max(12px, env(safe-area-inset-top));
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
