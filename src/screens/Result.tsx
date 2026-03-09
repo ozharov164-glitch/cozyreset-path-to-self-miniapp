@@ -75,7 +75,7 @@ export function Result({ onBack }: ResultProps) {
           const err = 'error' in res ? String(res.error) : ''
           const noInitData = !getInitDataString()?.length
           const msg = noInitData
-            ? 'Открой приложение из Telegram: в боте нажми «🌱 Путь к Себе». Не открывай по ссылке в браузере — иначе сохранение не сработает.'
+            ? 'В боте нажми «🌱 Путь к Себе», затем нажми кнопку под сообщением — откроется приложение с сохранением в бот.'
             : err === 'network'
               ? 'Нет связи. Открой приложение заново из бота (кнопка «🌱 Путь к Себе»).'
               : err && (err.includes('Token') || err.includes('token') || err.includes('401'))
@@ -87,8 +87,8 @@ export function Result({ onBack }: ResultProps) {
       .catch(() => {
         const noInitData = !getInitDataString()?.length
         setError(noInitData
-          ? 'Открой приложение из Telegram: в боте нажми «🌱 Путь к Себе». Не открывай по ссылке в браузере.'
-          : 'Нет связи. Открой приложение заново из бота (кнопка «🌱 Путь к Себе»).')
+          ? 'В боте нажми «🌱 Путь к Себе», затем кнопку под сообщением — откроется приложение с сохранением.'
+          : 'Нет связи. В боте нажми «🌱 Путь к Себе» и кнопку под сообщением.')
       })
       .finally(() => setSaving(false))
   }, [saveKey, test, answers, saved, saving, isViewingHistory, setLastSavedResultId])
@@ -126,13 +126,13 @@ export function Result({ onBack }: ResultProps) {
           setSaved(true)
         } else {
           setError(!getInitDataString()?.length
-            ? 'Открой приложение из Telegram: в боте нажми «🌱 Путь к Себе».'
-            : 'Не удалось сохранить. Открой приложение заново из бота.')
+            ? 'В боте нажми «🌱 Путь к Себе», затем кнопку под сообщением.'
+            : 'Не удалось сохранить. В боте нажми «🌱 Путь к Себе» и кнопку под сообщением.')
         }
       })
       .catch(() => setError(!getInitDataString()?.length
-        ? 'Открой приложение из Telegram: в боте нажми «🌱 Путь к Себе».'
-        : 'Нет связи. Открой приложение из бота.'))
+        ? 'В боте нажми «🌱 Путь к Себе», затем кнопку под сообщением.'
+        : 'Нет связи. В боте нажми «🌱 Путь к Себе» и кнопку под сообщением.'))
       .finally(() => setSaving(false))
   }
 
