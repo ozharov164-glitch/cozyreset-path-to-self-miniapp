@@ -3,7 +3,17 @@ import { useAuthStore } from '../store/authStore'
 let backendUrlOverride: string | null = null
 
 const BACKEND_STORAGE_KEY = 'pts_backend_url'
+const BACKEND_LOCALSTORAGE_KEY = 'pts_last_backend'
 const DEBUG = true // диагностика «Нет связи» — потом убрать или по env
+
+function setBackendStored(url: string): void {
+  try {
+    sessionStorage.setItem(BACKEND_STORAGE_KEY, url)
+    localStorage.setItem(BACKEND_LOCALSTORAGE_KEY, url)
+  } catch {
+    /* ignore */
+  }
+}
 
 /** Загрузить backend URL: сначала из ссылки (бот передаёт ?backend=...), затем из config.json. */
 export async function loadBackendConfig(): Promise<void> {
@@ -18,14 +28,10 @@ export async function loadBackendConfig(): Promise<void> {
   }
   if (fromQuery && (fromQuery.startsWith('http://') || fromQuery.startsWith('https://'))) {
     backendUrlOverride = fromQuery.replace(/\/$/, '')
-    try {
-      sessionStorage.setItem(BACKEND_STORAGE_KEY, backendUrlOverride)
-    } catch {
-      /* ignore */
-    }
+    setBackendStored(backendUrlOverride)
     return
   }
-  // 2) Из sessionStorage (если уже открывали с backend= в этой сессии)
+  // 2) sessionStorage (сессия)
   try {
     const stored = sessionStorage.getItem(BACKEND_STORAGE_KEY)
     if (stored && (stored.startsWith('http://') || stored.startsWith('https://'))) {
@@ -35,7 +41,17 @@ export async function loadBackendConfig(): Promise<void> {
   } catch {
     /* ignore */
   }
-  // 3) Из config.json
+  // 3) localStorage (последний известный backend — если Telegram обрезал query)
+  try {
+    const local = localStorage.getItem(BACKEND_LOCALSTORAGE_KEY)
+    if (local && (local.startsWith('http://') || local.startsWith('https://'))) {
+      backendUrlOverride = local.replace(/\/$/, '')
+      return
+    }
+  } catch {
+    /* ignore */
+  }
+  // 4) config.json
   try {
     const base = (import.meta.env.VITE_BASE_PATH as string) || '/'
     const path = base.endsWith('/') ? `${base}config.json` : `${base}/config.json`
@@ -44,7 +60,10 @@ export async function loadBackendConfig(): Promise<void> {
     if (!r.ok) return
     const j = (await r.json()) as { backendUrl?: string }
     const u = j?.backendUrl && typeof j.backendUrl === 'string' ? j.backendUrl.replace(/\/$/, '') : null
-    if (u && (u.startsWith('http://') || u.startsWith('https://'))) backendUrlOverride = u
+    if (u && (u.startsWith('http://') || u.startsWith('https://'))) {
+      backendUrlOverride = u
+      setBackendStored(u)
+    }
   } catch {
     /* ignore */
   }
