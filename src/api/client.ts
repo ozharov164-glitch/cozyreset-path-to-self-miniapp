@@ -295,6 +295,9 @@ export async function apiSaveTestResult(payload: {
   completedAt: string
 }): Promise<SaveResult> {
   const body: Record<string, unknown> = { ...payload }
+  let token = useAuthStore.getState().appSaveToken
+  if (!token) token = await ensureAuth()
+  if (token) body.token = token
   const initData = getInitDataString()
   if (initData) body.initData = initData
 
