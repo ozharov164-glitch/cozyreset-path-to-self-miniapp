@@ -1,9 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { motion } from 'framer-motion'
 import { TESTS } from '../data/tests'
 import { useAppStore } from '../store/appStore'
 import { apiSaveTestResult, apiTestResult, ensureAuth, getInitDataString, loadBackendConfig, refreshInitData } from '../api/client'
+
+/** Краткое описание результата по среднему баллу — в духе поддержки и тематики бота. */
+function getScoreDescription(avg: number, _testTitle: string): string {
+  if (avg <= 2.5) {
+    return 'Уровень низкий. Это хорошая опора, чтобы замечать изменения и бережно поддерживать себя.'
+  }
+  if (avg <= 5) {
+    return 'Умеренный уровень. Маленькие шаги и регулярная забота о себе помогают двигаться вперёд.'
+  }
+  if (avg <= 7.5) {
+    return 'Заметный уровень. Важно давать себе отдых и обращаться к ресурсам, которые вас поддерживают.'
+  }
+  return 'Высокий уровень. Признание этого — уже шаг. Не стесняйтесь опираться на близких и специалистов.'
+}
 
 interface ResultProps {
   onBack: () => void
@@ -12,6 +26,7 @@ interface ResultProps {
 const BOT_LINK = 'https://t.me/CozyReset_bot'
 
 export function Result({ onBack }: ResultProps) {
+  const queryClient = useQueryClient()
   const currentTestId = useAppStore((s) => s.currentTestId)
   const answers = useAppStore((s) => s.answers)
   const setLastSavedResultId = useAppStore((s) => s.setLastSavedResultId)
@@ -74,6 +89,7 @@ export function Result({ onBack }: ResultProps) {
         if ('id' in res && res.id) {
           setLastSavedResultId(res.id)
           setSaved(true)
+          queryClient.invalidateQueries({ queryKey: ['test-history'] })
         } else {
           const err = 'error' in res ? String(res.error) : ''
           const noInitData = !getInitDataString()?.length
@@ -94,10 +110,12 @@ export function Result({ onBack }: ResultProps) {
           : 'Нет связи. В боте нажми «🌱 Путь к Себе» и кнопку под сообщением.')
       })
       .finally(() => setSaving(false))
-  }, [saveKey, test, answers, saved, saving, isViewingHistory, setLastSavedResultId])
+  }, [saveKey, test, answers, saved, saving, isViewingHistory, setLastSavedResultId, queryClient])
 
   const avg = displayAnswers.length ? displayAnswers.reduce((a, b) => a + b, 0) / displayAnswers.length : 0
-  const radarData = [{ subject: 'Общий', value: avg, fullMark: 10 }]
+  const avgRounded = Math.round(avg * 10) / 10
+  const scorePercent = Math.min(100, Math.max(0, (avg / 10) * 100))
+  const description = getScoreDescription(avgRounded, displayTest?.title ?? '')
 
   const openBot = () => {
     window.Telegram?.WebApp?.openTelegramLink?.(BOT_LINK)
@@ -127,6 +145,7 @@ export function Result({ onBack }: ResultProps) {
         if ('id' in res && res.id) {
           setLastSavedResultId(res.id)
           setSaved(true)
+          queryClient.invalidateQueries({ queryKey: ['test-history'] })
         } else {
           setError(!getInitDataString()?.length
             ? 'В боте нажми «🌱 Путь к Себе», затем кнопку под сообщением.'
@@ -157,31 +176,53 @@ export function Result({ onBack }: ResultProps) {
       </header>
 
       <div className="flex-1 flex flex-col max-w-[420px] mx-auto w-full px-3" style={{ minHeight: 0 }}>
-        {/* Карточка результата — одна секция, без наложения */}
-        <div
+        {/* Карточка результата: балл, шкала, описание — в тематике бота */}
+        <motion.div
           className="rounded-2xl p-5 mb-4 flex-shrink-0"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
           style={{
-            background: 'rgba(255,255,255,0.6)',
-            border: '1px solid rgba(0,0,0,0.08)',
+            background: 'linear-gradient(145deg, rgba(255,255,255,0.85) 0%, rgba(249,245,255,0.9) 100%)',
+            border: '1px solid rgba(201,184,232,0.4)',
+            boxShadow: '0 4px 24px rgba(45,42,38,0.08)',
           }}
         >
-          <h2 className="text-lg font-semibold mb-1" style={{ color: '#2d2a26' }}>
+          <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--color-forest-dark)' }}>
             {displayTest?.title ?? 'Тест'}
           </h2>
-          <p className="text-sm mb-4" style={{ color: '#5a5550' }}>
-            Средний балл: {avg.toFixed(1)} из 10
+          <p className="text-sm mb-3" style={{ color: 'var(--color-text-secondary)' }}>
+            Средний балл: <strong style={{ color: 'var(--color-glow-teal)' }}>{avgRounded}</strong> из 10
           </p>
-          <div className="w-full" style={{ height: 180 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={radarData}>
-                <PolarGrid stroke="var(--color-lavender)" />
-                <PolarAngleAxis dataKey="subject" tick={{ fill: '#5a5550', fontSize: 12 }} />
-                <PolarRadiusAxis angle={90} domain={[0, 10]} tick={{ fill: '#5a5550' }} />
-                <Radar name="Балл" dataKey="value" stroke="var(--color-glow-teal)" fill="var(--color-glow-teal)" fillOpacity={0.4} />
-              </RadarChart>
-            </ResponsiveContainer>
+          {/* Горизонтальная шкала 0–10 с заполнением до балла */}
+          <div className="w-full mb-4">
+            <div
+              className="h-3 rounded-full overflow-hidden"
+              style={{
+                background: 'rgba(201,184,232,0.35)',
+                border: '1px solid rgba(201,184,232,0.5)',
+              }}
+            >
+              <motion.div
+                className="h-full rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${scorePercent}%` }}
+                transition={{ duration: 0.6, ease: 'easeOut' }}
+                style={{
+                  background: 'linear-gradient(90deg, var(--color-glow-teal) 0%, var(--color-lavender) 100%)',
+                  boxShadow: '0 0 12px rgba(125,211,192,0.4)',
+                }}
+              />
+            </div>
+            <div className="flex justify-between mt-1 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              <span>0</span>
+              <span>10</span>
+            </div>
           </div>
-        </div>
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-primary)' }}>
+            {description}
+          </p>
+        </motion.div>
 
         {/* Одна секция статуса: сохранение | успех | ошибка — без наложения */}
         <div className="flex-shrink-0 space-y-3">
@@ -199,8 +240,8 @@ export function Result({ onBack }: ResultProps) {
               <button
                 type="button"
                 onClick={openBot}
-                className="w-full py-3.5 px-4 rounded-xl font-semibold rounded-xl border-0"
-                style={{ background: 'var(--color-sunset-rose)', color: '#2d2a26' }}
+                className="w-full py-3.5 px-4 rounded-xl font-semibold border-0 shadow-md hover:opacity-95 active:scale-[0.98] transition-all"
+                style={{ background: 'var(--color-sunset-rose)', color: 'var(--color-text-primary)' }}
               >
                 Открыть бота
               </button>
@@ -227,8 +268,8 @@ export function Result({ onBack }: ResultProps) {
             <button
               type="button"
               onClick={openBot}
-              className="w-full py-3.5 px-4 rounded-xl font-semibold border-0"
-              style={{ background: 'var(--color-sunset-rose)', color: '#2d2a26' }}
+              className="w-full py-3.5 px-4 rounded-xl font-semibold border-0 shadow-md hover:opacity-95 active:scale-[0.98] transition-all"
+              style={{ background: 'var(--color-sunset-rose)', color: 'var(--color-text-primary)' }}
             >
               Открыть бота
             </button>

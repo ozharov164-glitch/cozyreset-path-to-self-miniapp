@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion'
+import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../store/authStore'
+import { apiTestHistory } from '../api/client'
 
 interface DashboardProps {
   onOpenCatalog: () => void
@@ -10,6 +12,12 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
   const authReady = useAuthStore((s) => s.isInitialized)
   const tg = typeof window !== 'undefined' ? window.Telegram?.WebApp : undefined
   const userName = tg?.initDataUnsafe?.user?.first_name || 'друг'
+
+  const { data: historyData } = useQuery({
+    queryKey: ['test-history'],
+    queryFn: apiTestHistory,
+  })
+  const savedCount = historyData?.items?.length ?? 0
 
   return (
     <div className="min-h-screen flex flex-col safe-area">
@@ -35,7 +43,9 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
           Привет, {userName}!
         </h2>
         <p className="text-sm text-[var(--color-text-secondary)] mb-4">
-          Твой сад растёт с каждым тестом.
+          {savedCount > 0
+            ? `Твой сад растёт: уже ${savedCount} ${savedCount === 1 ? 'результат' : savedCount < 5 ? 'результата' : 'результатов'}. Продолжай в том же духе.`
+            : 'Твой сад растёт с каждым пройденным тестом. Начни с каталога — и здесь появятся деревья, цветы и кристаллы.'}
         </p>
         <button
           type="button"
@@ -54,7 +64,9 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
 
       <div className="flex-1 flex items-center justify-center p-4">
         <p className="text-sm text-[var(--color-text-secondary)] text-center max-w-[280px]">
-          Пройди тесты из каталога — здесь появятся твои результаты и рост сада.
+          {savedCount > 0
+            ? 'За спиной — уютный сад твоих ответов. Открой «История», чтобы пересмотреть результаты.'
+            : 'Пройди тесты из каталога — здесь появятся твои результаты и рост сада.'}
         </p>
       </div>
     </div>
