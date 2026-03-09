@@ -4,7 +4,8 @@ let backendUrlOverride: string | null = null
 
 const BACKEND_STORAGE_KEY = 'pts_backend_url'
 const BACKEND_LOCALSTORAGE_KEY = 'pts_last_backend'
-const DEBUG = true // диагностика «Нет связи» — потом убрать или по env
+const AUTH_TOKEN_SESSION_KEY = 'pts_app_save_token'
+const DEBUG = false
 
 function setBackendStored(url: string): void {
   try {
@@ -107,14 +108,39 @@ function getStartTokenFromUrl(): string {
   return params.get('start_token')?.trim() || params.get('startToken')?.trim() || ''
 }
 
-// Приоритет: токен в store → hash → start_token из URL → initData
+function getStoredToken(): string | null {
+  const fromStore = useAuthStore.getState().appSaveToken
+  if (fromStore) return fromStore
+  try {
+    const fromSession = sessionStorage.getItem(AUTH_TOKEN_SESSION_KEY)
+    if (fromSession) {
+      useAuthStore.getState().setToken(fromSession)
+      return fromSession
+    }
+  } catch {
+    /* ignore */
+  }
+  return null
+}
+
+function setTokenPersist(token: string | null): void {
+  useAuthStore.getState().setToken(token)
+  try {
+    if (token) sessionStorage.setItem(AUTH_TOKEN_SESSION_KEY, token)
+    else sessionStorage.removeItem(AUTH_TOKEN_SESSION_KEY)
+  } catch {
+    /* ignore */
+  }
+}
+
+// Приоритет: токен в store/session → hash → start_token из URL → initData
 export async function ensureAuth(): Promise<string | null> {
-  const token = useAuthStore.getState().appSaveToken
+  const token = getStoredToken()
   if (token) return token
 
   const fromHash = getTokenFromHash()
   if (fromHash) {
-    useAuthStore.getState().setToken(fromHash)
+    setTokenPersist(fromHash)
     useAuthStore.getState().setInitialized(true)
     return fromHash
   }
@@ -138,7 +164,7 @@ export async function ensureAuth(): Promise<string | null> {
         const data = await res.json()
         const newToken = (data as { app_save_token?: string }).app_save_token?.trim()
         if (newToken) {
-          useAuthStore.getState().setToken(newToken)
+          setTokenPersist(newToken)
           useAuthStore.getState().setInitialized(true)
           return newToken
         }
@@ -174,7 +200,7 @@ export async function ensureAuth(): Promise<string | null> {
       const data = await res.json()
       const newToken = (data as { app_save_token?: string }).app_save_token?.trim()
       if (newToken) {
-        useAuthStore.getState().setToken(newToken)
+        setTokenPersist(newToken)
         useAuthStore.getState().setInitialized(true)
         return newToken
       }
@@ -232,7 +258,7 @@ async function fetchWithAuth(
   const backend = getBackendUrl()
   if (!backend) return new Response(null, { status: 502 })
 
-  let token = useAuthStore.getState().appSaveToken
+  let token = getStoredToken()
   if (!token) token = await ensureAuth()
   if (!token && !options.skipRetry) {
     const initData = getInitDataString()
@@ -246,7 +272,7 @@ async function fetchWithAuth(
         const data = await res.json()
         const newToken = (data as { app_save_token?: string }).app_save_token?.trim()
         if (newToken) {
-          useAuthStore.getState().setToken(newToken)
+          setTokenPersist(newToken)
           token = newToken
         }
       }
@@ -273,7 +299,7 @@ async function fetchWithAuth(
 
   const res = await fetch(url, { ...options, headers, body })
   if (res.status === 401 && !options.skipRetry) {
-    useAuthStore.getState().setToken(null)
+    setTokenPersist(null)
     for (let attempt = 0; attempt < 3; attempt++) {
       const retryToken = await ensureAuth()
       if (retryToken) {
@@ -295,7 +321,7 @@ export async function apiSaveTestResult(payload: {
   completedAt: string
 }): Promise<SaveResult> {
   const body: Record<string, unknown> = { ...payload }
-  let token = useAuthStore.getState().appSaveToken
+  let token = getStoredToken()
   if (!token) token = await ensureAuth()
   if (token) body.token = token
   const initData = getInitDataString()
@@ -317,8 +343,8 @@ export async function apiSaveTestResult(payload: {
 
   let result = await trySave()
   if (('id' in result && result.id) || ('error' in result && result.error !== 'network')) return result
-  useAuthStore.getState().setToken(null)
-  await new Promise((r) => setTimeout(r, 300))
+  setTokenPersist(null)
+  await new Promise((r) => setTimeout(r, 400))
   const reToken = await ensureAuth()
   if (reToken) result = await trySave()
   return result

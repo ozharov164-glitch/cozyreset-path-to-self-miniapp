@@ -52,12 +52,15 @@ export function Result({ onBack }: ResultProps) {
     loadBackendConfig()
       .then(() => {
         refreshInitData()
-        return new Promise<void>((r) => setTimeout(r, 400))
+        return new Promise<void>((r) => setTimeout(r, 500))
       })
       .then(() => {
         setSaving(true)
         refreshInitData()
         return ensureAuth()
+      })
+      .then((token) => {
+        return new Promise<string | null>((r) => setTimeout(() => r(token), 150))
       })
       .then(() =>
         apiSaveTestResult({
