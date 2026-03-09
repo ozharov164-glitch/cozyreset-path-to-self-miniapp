@@ -95,7 +95,19 @@ export function getConnectionDiag(): { search: string; backend: string; initData
 
 const INIT_RETRY_DELAYS = [0, 100, 300, 1000, 2500] // 5 попыток, exponential backoff
 
-// Приоритет авторизации: токен из store → токен из hash → POST /mini-app/init с initData (с retry при 401/network)
+/** Одноразовый токен из ссылки (бот подставляет в URL) — связь без initData */
+function getStartTokenFromUrl(): string {
+  if (typeof window === 'undefined') return ''
+  const search = new URLSearchParams(window.location.search)
+  const fromSearch = search.get('start_token')?.trim() || search.get('startToken')?.trim()
+  if (fromSearch) return fromSearch
+  const hash = window.location.hash.slice(1)
+  if (!hash) return ''
+  const params = new URLSearchParams(hash)
+  return params.get('start_token')?.trim() || params.get('startToken')?.trim() || ''
+}
+
+// Приоритет: токен в store → hash → start_token из URL → initData
 export async function ensureAuth(): Promise<string | null> {
   const token = useAuthStore.getState().appSaveToken
   if (token) return token
@@ -107,16 +119,38 @@ export async function ensureAuth(): Promise<string | null> {
     return fromHash
   }
 
-  const initData = getInitDataString()
-  if (DEBUG) console.log('[PTS] ensureAuth: initData length=', initData?.length ?? 0)
-  if (!initData) {
+  const backend = getBackendUrl()
+  if (!backend) {
     useAuthStore.getState().setInitialized(true)
     return null
   }
 
-  const backend = getBackendUrl()
-  if (DEBUG) console.log('[PTS] ensureAuth: getBackendUrl()=', backend || '(empty)')
-  if (!backend) {
+  const startToken = getStartTokenFromUrl()
+  if (startToken) {
+    try {
+      if (DEBUG) console.log('[PTS] ensureAuth: по start_token')
+      const res = await fetch(`${backend}/mini-app/init`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ start_token: startToken }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        const newToken = (data as { app_save_token?: string }).app_save_token?.trim()
+        if (newToken) {
+          useAuthStore.getState().setToken(newToken)
+          useAuthStore.getState().setInitialized(true)
+          return newToken
+        }
+      }
+    } catch (e) {
+      if (DEBUG) console.warn('[PTS] ensureAuth: start_token error', e)
+    }
+  }
+
+  const initData = getInitDataString()
+  if (DEBUG) console.log('[PTS] ensureAuth: initData length=', initData?.length ?? 0)
+  if (!initData) {
     useAuthStore.getState().setInitialized(true)
     return null
   }
