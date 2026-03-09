@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../store/authStore'
 import { apiTestHistory, apiAiSuggestions } from '../api/client'
 import { useAppStore } from '../store/appStore'
-import { goBackToBot } from '../utils/telegram'
+import { goBackToBot, copyQuestionToClipboard } from '../utils/telegram'
 
 interface DashboardProps {
   onOpenCatalog: () => void
@@ -58,10 +58,14 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
         <button
           type="button"
           onClick={() => goBackToBot()}
-          className="min-h-[44px] min-w-[52px] flex items-center justify-center py-2 px-3 -my-1 -ml-1 rounded-xl text-sm font-medium text-[var(--color-glow-teal)] active:bg-white/20 select-none"
-          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+          className="min-h-[44px] min-w-[52px] flex items-center justify-center py-2 px-3 -my-1 -ml-1 rounded-xl text-sm font-semibold select-none tracking-tight"
+          style={{
+            touchAction: 'manipulation',
+            WebkitTapHighlightColor: 'transparent',
+            color: 'var(--color-forest-dark)',
+          }}
         >
-          В бота
+          ← В бота
         </button>
         <h1 className="text-base font-semibold text-[var(--color-text-primary)]">Путь к Себе</h1>
         <button
@@ -194,14 +198,23 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
             <h4 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-forest-dark)' }}>
               Проработать с ИИ в боте
             </h4>
-            <p className="text-xs text-[var(--color-text-secondary)] mb-3">
+            <p className="text-xs text-[var(--color-text-secondary)] mb-1">
               На основе твоих тестов — темы, которые стоит обсудить с поддержкой в боте:
+            </p>
+            <p className="text-xs mb-2" style={{ color: 'var(--color-glow-teal)' }}>
+              Нажми на вопрос — скопируется
             </p>
             <ul className="space-y-1.5 mb-3">
               {suggestions.slice(0, 4).map((s, i) => (
                 <li key={i} className="text-sm flex gap-2" style={{ color: 'var(--color-text-primary)' }}>
                   <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
-                  <span>{s}</span>
+                  <button
+                    type="button"
+                    onClick={() => copyQuestionToClipboard(s)}
+                    className="copyable-question text-left flex-1 min-h-[44px] py-1.5 px-2 -mx-2 rounded-lg"
+                  >
+                    {s}
+                  </button>
                 </li>
               ))}
             </ul>

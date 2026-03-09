@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { TESTS } from '../data/tests'
 import { useAppStore } from '../store/appStore'
 import { apiSaveTestResult, apiTestResult, apiAiSuggestions, ensureAuth, getInitDataString, loadBackendConfig, refreshInitData } from '../api/client'
-import { goBackToBot } from '../utils/telegram'
+import { goBackToBot, copyQuestionToClipboard } from '../utils/telegram'
 
 /** Краткое описание результата по среднему баллу — в духе поддержки и тематики бота. */
 function getScoreDescription(avg: number, _testTitle: string): string {
@@ -298,11 +298,20 @@ export function Result({ onBack }: ResultProps) {
                     <h5 className="text-xs font-semibold mb-2" style={{ color: 'var(--color-forest-dark)' }}>
                       Проработать с ИИ в боте:
                     </h5>
+                    <p className="text-xs mb-1.5" style={{ color: 'var(--color-glow-teal)' }}>
+                      Нажми на вопрос — скопируется
+                    </p>
                     <ul className="space-y-1 text-sm" style={{ color: 'var(--color-text-primary)' }}>
                       {aiSuggestions.slice(0, 4).map((s, idx) => (
                         <li key={idx} className="flex gap-2">
                           <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
-                          <span>{s}</span>
+                          <button
+                            type="button"
+                            onClick={() => copyQuestionToClipboard(s)}
+                            className="copyable-question text-left flex-1 min-h-[44px] py-1.5 px-2 -mx-2 rounded-lg"
+                          >
+                            {s}
+                          </button>
                         </li>
                       ))}
                     </ul>
@@ -349,11 +358,20 @@ export function Result({ onBack }: ResultProps) {
                   <h5 className="text-xs font-semibold mb-2" style={{ color: 'var(--color-forest-dark)' }}>
                     Проработать с ИИ в боте:
                   </h5>
+                  <p className="text-xs mb-1.5" style={{ color: 'var(--color-glow-teal)' }}>
+                    Нажми на вопрос — скопируется
+                  </p>
                   <ul className="space-y-1 text-sm mb-2" style={{ color: 'var(--color-text-primary)' }}>
                     {aiSuggestions.slice(0, 4).map((s, idx) => (
                       <li key={idx} className="flex gap-2">
                         <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
-                        <span>{s}</span>
+                        <button
+                          type="button"
+                          onClick={() => copyQuestionToClipboard(s)}
+                          className="copyable-question text-left flex-1 min-h-[44px] py-1.5 px-2 -mx-2 rounded-lg"
+                        >
+                          {s}
+                        </button>
                       </li>
                     ))}
                   </ul>

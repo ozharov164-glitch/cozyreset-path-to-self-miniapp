@@ -24,11 +24,29 @@ html, body, #root {
   padding: 0;
 }
 
+#root {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 body {
   font-family: var(--font-sans);
   background: transparent;
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Вопросы ИИ для проработки — копируются по нажатию, выделение отключено */
+.copyable-question {
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.copyable-question:active {
+  opacity: 0.85;
 }
 
 /* Glass card */
