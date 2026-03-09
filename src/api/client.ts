@@ -59,7 +59,9 @@ function getBackendUrl(): string {
   return ''
 }
 
-// Приоритет авторизации: токен из store → токен из hash (#s= или #token=) → POST /mini-app/init с initData из Telegram.WebApp
+const INIT_RETRY_DELAYS = [0, 100, 300, 1000, 2500] // 5 попыток, exponential backoff
+
+// Приоритет авторизации: токен из store → токен из hash → POST /mini-app/init с initData (с retry при 401/network)
 export async function ensureAuth(): Promise<string | null> {
   const token = useAuthStore.getState().appSaveToken
   if (token) return token
@@ -74,7 +76,6 @@ export async function ensureAuth(): Promise<string | null> {
   const initData = getInitDataString()
   if (DEBUG) console.log('[PTS] ensureAuth: initData length=', initData?.length ?? 0)
   if (!initData) {
-    // В браузере без Telegram — показываем интерфейс без сохранения (избегаем белого экрана)
     useAuthStore.getState().setInitialized(true)
     return null
   }
@@ -86,26 +87,32 @@ export async function ensureAuth(): Promise<string | null> {
     return null
   }
 
-  try {
-    if (DEBUG) console.log('[PTS] ensureAuth: POST', backend + '/mini-app/init')
-    const res = await fetch(`${backend}/mini-app/init`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ initData }),
-    })
-    if (!res.ok) {
-      useAuthStore.getState().setInitialized(true)
-      return null
+  for (let attempt = 0; attempt < INIT_RETRY_DELAYS.length; attempt++) {
+    if (attempt > 0) {
+      await new Promise((r) => setTimeout(r, INIT_RETRY_DELAYS[attempt]))
     }
-    const data = await res.json()
-    const newToken = (data as { app_save_token?: string }).app_save_token?.trim()
-    if (newToken) {
-      useAuthStore.getState().setToken(newToken)
-      useAuthStore.getState().setInitialized(true)
-      return newToken
+    try {
+      if (DEBUG) console.log('[PTS] ensureAuth: attempt', attempt + 1, 'POST', backend + '/mini-app/init')
+      const res = await fetch(`${backend}/mini-app/init`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ initData }),
+      })
+      if (!res.ok) {
+        if (res.status === 401 || res.status >= 500) continue
+        useAuthStore.getState().setInitialized(true)
+        return null
+      }
+      const data = await res.json()
+      const newToken = (data as { app_save_token?: string }).app_save_token?.trim()
+      if (newToken) {
+        useAuthStore.getState().setToken(newToken)
+        useAuthStore.getState().setInitialized(true)
+        return newToken
+      }
+    } catch (e) {
+      if (DEBUG) console.warn('[PTS] ensureAuth: attempt', attempt + 1, 'fetch error', e)
     }
-  } catch (e) {
-    if (DEBUG) console.warn('[PTS] ensureAuth: fetch error', e)
   }
   useAuthStore.getState().setInitialized(true)
   return null
@@ -201,20 +208,31 @@ export async function apiSaveTestResult(payload: {
   dimensions?: Record<string, number>
   completedAt: string
 }): Promise<SaveResult> {
-  try {
-    const body: Record<string, unknown> = { ...payload }
-    const initData = getInitDataString()
-    if (initData) body.initData = initData
-    const res = await fetchWithAuth('/mini-app/save-test-result', {
-      method: 'POST',
-      body: JSON.stringify(body),
-    })
-    const data = await res.json().catch(() => ({})) as { id?: string; error?: string }
-    if (res.ok && data.id) return { id: data.id }
-    return { error: data.error || 'Не удалось сохранить', status: res.status }
-  } catch {
-    return { error: 'network', status: 0 }
+  const body: Record<string, unknown> = { ...payload }
+  const initData = getInitDataString()
+  if (initData) body.initData = initData
+
+  const trySave = async (): Promise<SaveResult> => {
+    try {
+      const res = await fetchWithAuth('/mini-app/save-test-result', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      })
+      const data = await res.json().catch(() => ({})) as { id?: string; error?: string }
+      if (res.ok && data.id) return { id: data.id }
+      return { error: data.error || 'Не удалось сохранить', status: res.status }
+    } catch {
+      return { error: 'network', status: 0 }
+    }
   }
+
+  let result = await trySave()
+  if (('id' in result && result.id) || result.error !== 'network') return result
+  useAuthStore.getState().setToken(null)
+  await new Promise((r) => setTimeout(r, 300))
+  const reToken = await ensureAuth()
+  if (reToken) result = await trySave()
+  return result
 }
 
 export async function apiTestHistory(): Promise<{ items: Array<{ id: string; testId: string; testTitle: string; completedAt: string }> }> {
