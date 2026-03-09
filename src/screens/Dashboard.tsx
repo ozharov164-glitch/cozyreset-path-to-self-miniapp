@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../store/authStore'
@@ -30,12 +31,21 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
   const tg = typeof window !== 'undefined' ? window.Telegram?.WebApp : undefined
   const userName = tg?.initDataUnsafe?.user?.first_name || 'друг'
 
-  const { data: historyData } = useQuery({
+  const { data: historyData, refetch: refetchHistory } = useQuery({
     queryKey: ['test-history'],
     queryFn: apiTestHistory,
+    refetchOnMount: true,
+    staleTime: 0,
   })
   const items = historyData?.items ?? []
   const recentItems = items.slice(0, 5)
+
+  // Подгрузить историю, как только авторизация готова (чтобы не показывать «нет результатов» после первого входа)
+  useEffect(() => {
+    if (authReady) {
+      refetchHistory()
+    }
+  }, [authReady, refetchHistory])
 
   const openResult = (id: string) => {
     setOpenResultId(id)
@@ -49,8 +59,9 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
         <h1 className="text-base font-semibold text-[var(--color-text-primary)]">Путь к Себе</h1>
         <button
           type="button"
-          onClick={onOpenHistory}
-          className="text-sm text-[var(--color-text-secondary)]"
+          onClick={() => onOpenHistory()}
+          className="min-h-[44px] min-w-[52px] flex items-center justify-center py-2 px-3 -my-1 -mr-1 rounded-xl text-sm font-medium text-[var(--color-text-secondary)] active:bg-white/20 select-none"
+          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
         >
           История
         </button>

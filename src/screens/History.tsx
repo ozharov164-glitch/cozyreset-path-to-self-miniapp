@@ -11,12 +11,15 @@ export function History({ onBack }: HistoryProps) {
   const setScreen = useAppStore((s) => s.setScreen)
   const setOpenResultId = useAppStore((s) => s.setOpenResultId)
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching } = useQuery({
     queryKey: ['test-history'],
     queryFn: apiTestHistory,
+    refetchOnMount: true,
+    staleTime: 0,
   })
 
   const items = data?.items ?? []
+  const showLoading = isLoading || isFetching
 
   const openResult = (id: string) => {
     setOpenResultId(id)
@@ -26,7 +29,12 @@ export function History({ onBack }: HistoryProps) {
   return (
     <div className="min-h-screen flex flex-col safe-area pb-6">
       <header className="glass-card h-14 flex items-center px-4 mb-4 rounded-2xl">
-        <button type="button" onClick={onBack} className="text-[var(--color-glow-teal)] font-medium">
+        <button
+          type="button"
+          onClick={() => onBack()}
+          className="min-h-[44px] min-w-[52px] flex items-center justify-center -ml-1 rounded-xl text-[var(--color-glow-teal)] font-medium select-none"
+          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+        >
           ← Назад
         </button>
         <h1 className="flex-1 text-center text-base font-semibold text-[var(--color-text-primary)]">
@@ -36,10 +44,10 @@ export function History({ onBack }: HistoryProps) {
       </header>
 
       <div className="flex flex-col gap-3 max-w-[420px] mx-auto w-full px-1">
-        {isLoading && (
+        {showLoading && items.length === 0 && (
           <p className="text-center text-sm text-[var(--color-text-secondary)] py-8">Загрузка...</p>
         )}
-        {!isLoading && items.length === 0 && (
+        {!showLoading && items.length === 0 && (
           <div className="glass-card p-6 text-center">
             <p className="text-sm text-[var(--color-text-secondary)]">
               Пока нет сохранённых результатов. Пройди тест из каталога.
