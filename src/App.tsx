@@ -1,7 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
 import { Canvas } from '@react-three/fiber'
-import { ensureAuth, loadBackendConfig } from './api/client'
+import { ensureAuth, loadBackendConfig, getConnectionDiag } from './api/client'
 import { apiTestHistory } from './api/client'
 import { Dashboard } from './screens/Dashboard'
 import { Catalog } from './screens/Catalog'
@@ -20,10 +20,13 @@ function useSkip3DInTelegram(): boolean {
   return Boolean(window.Telegram?.WebApp?.initData || (window as unknown as { TelegramWebviewProxy?: unknown }).TelegramWebviewProxy)
 }
 
+const SHOW_CONNECTION_DIAG = true // диагностика «Нет связи» — свернуть после отладки
+
 function AppContent() {
   const screen = useAppStore((s) => s.screen)
   const setScreen = useAppStore((s) => s.setScreen)
   const skip3D = useSkip3DInTelegram()
+  const [connectionDiag, setConnectionDiag] = useState<{ search: string; backend: string; initDataLength: number } | null>(null)
 
   const { data: historyData } = useQuery({
     queryKey: ['test-history'],
@@ -37,9 +40,13 @@ function AppContent() {
     tg?.expand()
     let mounted = true
     loadBackendConfig().then(() => {
+      if (mounted && SHOW_CONNECTION_DIAG) setConnectionDiag(getConnectionDiag())
       const runAuth = () => {
         if (!mounted) return
-        ensureAuth().then(() => mounted && useAppStore.getState().setAuthReady(true))
+        ensureAuth().then(() => {
+          if (mounted && SHOW_CONNECTION_DIAG) setConnectionDiag(getConnectionDiag())
+          mounted && useAppStore.getState().setAuthReady(true)
+        })
       }
       runAuth()
       ;[300, 800, 1500].forEach((ms) => setTimeout(runAuth, ms))
@@ -79,6 +86,17 @@ function AppContent() {
       </div>
       {dimOverlay && (
         <div className="fixed inset-0 z-[5] pointer-events-none bg-black/30" aria-hidden />
+      )}
+      {SHOW_CONNECTION_DIAG && connectionDiag && (
+        <div
+          className="fixed bottom-0 left-0 right-0 z-20 bg-black/80 text-white text-xs p-2 font-mono max-h-24 overflow-auto pointer-events-auto"
+          style={{ fontSize: 10 }}
+          aria-label="Диагностика связи"
+        >
+          <div>query: {connectionDiag.search}</div>
+          <div>backend: {connectionDiag.backend ? `${connectionDiag.backend.slice(0, 40)}…` : '(empty)'}</div>
+          <div>initData length: {connectionDiag.initDataLength}</div>
+        </div>
       )}
       <div className="relative z-10 pointer-events-auto min-h-screen flex flex-col">
         {screen === 'catalog' && <Catalog onBack={() => setScreen('dashboard')} />}

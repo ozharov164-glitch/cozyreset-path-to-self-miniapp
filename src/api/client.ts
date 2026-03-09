@@ -51,12 +51,22 @@ export async function loadBackendConfig(): Promise<void> {
   if (DEBUG) console.log('[PTS] loadBackendConfig: final backendUrlOverride=', backendUrlOverride)
 }
 
-function getBackendUrl(): string {
+export function getBackendUrl(): string {
   if (backendUrlOverride) return backendUrlOverride
   const fromEnv = import.meta.env.VITE_BOT_BACKEND_URL
   if (fromEnv && typeof fromEnv === 'string') return fromEnv.replace(/\/$/, '')
   if (typeof window !== 'undefined' && window.location?.origin) return window.location.origin
   return ''
+}
+
+/** Для диагностики «Нет связи»: данные для debug UI. */
+export function getConnectionDiag(): { search: string; backend: string; initDataLength: number } {
+  if (typeof window === 'undefined') return { search: '', backend: '', initDataLength: 0 }
+  return {
+    search: window.location.search || '(empty)',
+    backend: getBackendUrl() || '(empty)',
+    initDataLength: getInitDataString()?.length ?? 0,
+  }
 }
 
 const INIT_RETRY_DELAYS = [0, 100, 300, 1000, 2500] // 5 попыток, exponential backoff
