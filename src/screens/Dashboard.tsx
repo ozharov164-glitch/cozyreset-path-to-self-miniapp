@@ -3,8 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../store/authStore'
 import { apiTestHistory, apiAiSuggestions } from '../api/client'
 import { useAppStore } from '../store/appStore'
-
-const BOT_LINK = 'https://t.me/CozyReset_bot'
+import { goBackToBot } from '../utils/telegram'
 
 interface DashboardProps {
   onOpenCatalog: () => void
@@ -56,7 +55,14 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
   return (
     <div className="min-h-screen flex flex-col safe-area">
       <header className="glass-card h-14 flex items-center justify-between px-4 mb-4 rounded-2xl">
-        <span className="text-xl">🌱</span>
+        <button
+          type="button"
+          onClick={() => goBackToBot()}
+          className="min-h-[44px] min-w-[52px] flex items-center justify-center py-2 px-3 -my-1 -ml-1 rounded-xl text-sm font-medium text-[var(--color-glow-teal)] active:bg-white/20 select-none"
+          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+        >
+          В бота
+        </button>
         <h1 className="text-base font-semibold text-[var(--color-text-primary)]">Путь к Себе</h1>
         <button
           type="button"
@@ -199,20 +205,13 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
                 </li>
               ))}
             </ul>
-            <a
-              href={BOT_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={() => goBackToBot()}
               className="block w-full py-2.5 px-4 rounded-xl font-medium text-center text-[var(--color-text-primary)] bg-[var(--color-sunset-rose)]/90 hover:opacity-95 active:scale-[0.98] transition-all"
-              onClick={(e) => {
-                if (window.Telegram?.WebApp?.openTelegramLink) {
-                  e.preventDefault()
-                  window.Telegram.WebApp.openTelegramLink(BOT_LINK)
-                }
-              }}
             >
-              Открыть бота
-            </a>
+              Вернуться в бота
+            </button>
           </motion.div>
         )}
 

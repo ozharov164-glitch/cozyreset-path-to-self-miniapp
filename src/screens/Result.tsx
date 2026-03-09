@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { TESTS } from '../data/tests'
 import { useAppStore } from '../store/appStore'
 import { apiSaveTestResult, apiTestResult, apiAiSuggestions, ensureAuth, getInitDataString, loadBackendConfig, refreshInitData } from '../api/client'
+import { goBackToBot } from '../utils/telegram'
 
 /** Краткое описание результата по среднему баллу — в духе поддержки и тематики бота. */
 function getScoreDescription(avg: number, _testTitle: string): string {
@@ -22,8 +23,6 @@ function getScoreDescription(avg: number, _testTitle: string): string {
 interface ResultProps {
   onBack: () => void
 }
-
-const BOT_LINK = 'https://t.me/CozyReset_bot'
 
 export function Result({ onBack }: ResultProps) {
   const queryClient = useQueryClient()
@@ -127,7 +126,7 @@ export function Result({ onBack }: ResultProps) {
   const aiSuggestions = suggestionsData?.suggestions ?? []
 
   const openBot = () => {
-    window.Telegram?.WebApp?.openTelegramLink?.(BOT_LINK)
+    goBackToBot()
   }
 
   const handleBack = () => {
@@ -316,7 +315,7 @@ export function Result({ onBack }: ResultProps) {
                 className="w-full py-3.5 px-4 rounded-xl font-semibold border-0 shadow-md hover:opacity-95 active:scale-[0.98] transition-all"
                 style={{ background: 'var(--color-sunset-rose)', color: 'var(--color-text-primary)' }}
               >
-                Открыть бота
+                Вернуться в бота
               </button>
             </div>
           )}
@@ -369,7 +368,7 @@ export function Result({ onBack }: ResultProps) {
                 className="w-full py-3.5 px-4 rounded-xl font-semibold border-0 shadow-md hover:opacity-95 active:scale-[0.98] transition-all"
                 style={{ background: 'var(--color-sunset-rose)', color: 'var(--color-text-primary)' }}
               >
-                Открыть бота
+                Вернуться в бота
               </button>
             </div>
           )}
