@@ -160,8 +160,10 @@ function getTokenFromHash(): string | null {
   return params.get('s')?.trim() || params.get('token')?.trim() || null
 }
 
-// initData: приоритет Telegram.WebApp.initData, затем hash/search tgWebAppData (для сохранения без токена)
-export function getInitDataString(): string {
+// Кэш initData на случай, если Telegram подставляет его асинхронно после ready()
+let cachedInitData: string | null = null
+
+function readInitDataSync(): string {
   if (typeof window === 'undefined') return ''
   const tg = window.Telegram?.WebApp
   if (tg?.initData?.trim()) return tg.initData.trim()
@@ -171,6 +173,22 @@ export function getInitDataString(): string {
   if (fromHash) return fromHash
   const search = new URLSearchParams(window.location.search)
   return search.get('tgWebAppData')?.trim() || ''
+}
+
+/** Вызвать при старте и после Telegram.WebApp.ready() — обновляет кэш, если Telegram подставил initData позже */
+export function refreshInitData(): void {
+  if (typeof window === 'undefined') return
+  const raw = readInitDataSync()
+  if (raw) cachedInitData = raw
+}
+
+// initData: кэш (после ready) → Telegram.WebApp.initData → hash/search tgWebAppData
+export function getInitDataString(): string {
+  if (typeof window === 'undefined') return ''
+  if (cachedInitData) return cachedInitData
+  const raw = readInitDataSync()
+  if (raw) cachedInitData = raw
+  return raw
 }
 
 async function fetchWithAuth(

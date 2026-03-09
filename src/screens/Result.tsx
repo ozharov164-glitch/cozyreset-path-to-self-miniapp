@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts'
 import { TESTS } from '../data/tests'
 import { useAppStore } from '../store/appStore'
-import { apiSaveTestResult, apiTestResult, ensureAuth, getInitDataString, loadBackendConfig } from '../api/client'
+import { apiSaveTestResult, apiTestResult, ensureAuth, getInitDataString, loadBackendConfig, refreshInitData } from '../api/client'
 
 interface ResultProps {
   onBack: () => void
@@ -51,7 +51,12 @@ export function Result({ onBack }: ResultProps) {
     saveStartedRef.current = true
     loadBackendConfig()
       .then(() => {
+        refreshInitData()
+        return new Promise<void>((r) => setTimeout(r, 400))
+      })
+      .then(() => {
         setSaving(true)
+        refreshInitData()
         return ensureAuth()
       })
       .then(() =>

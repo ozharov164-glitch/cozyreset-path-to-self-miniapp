@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
 import { Canvas } from '@react-three/fiber'
-import { ensureAuth, loadBackendConfig, getConnectionDiag } from './api/client'
+import { ensureAuth, loadBackendConfig, getConnectionDiag, refreshInitData } from './api/client'
 import { apiTestHistory } from './api/client'
 import { Dashboard } from './screens/Dashboard'
 import { Catalog } from './screens/Catalog'
@@ -36,10 +36,20 @@ function AppContent() {
 
   useEffect(() => {
     const tg = window.Telegram?.WebApp
+    refreshInitData()
     tg?.ready()
     tg?.expand()
     let mounted = true
+    const timers: number[] = []
+    ;[0, 200, 500, 1200, 2500].forEach((ms) => {
+      const t = window.setTimeout(() => {
+        refreshInitData()
+        if (mounted && SHOW_CONNECTION_DIAG) setConnectionDiag(getConnectionDiag())
+      }, ms)
+      timers.push(t)
+    })
     loadBackendConfig().then(() => {
+      refreshInitData()
       if (mounted && SHOW_CONNECTION_DIAG) setConnectionDiag(getConnectionDiag())
       const runAuth = () => {
         if (!mounted) return
@@ -51,10 +61,14 @@ function AppContent() {
       runAuth()
       ;[300, 800, 1500].forEach((ms) => setTimeout(runAuth, ms))
     })
-    const onHash = () => ensureAuth()
+    const onHash = () => {
+      refreshInitData()
+      ensureAuth()
+    }
     window.addEventListener('hashchange', onHash)
     return () => {
       mounted = false
+      timers.forEach((id) => clearTimeout(id))
       window.removeEventListener('hashchange', onHash)
     }
   }, [])
