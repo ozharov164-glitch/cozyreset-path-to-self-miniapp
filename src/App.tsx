@@ -20,7 +20,7 @@ function useSkip3DInTelegram(): boolean {
   return Boolean(window.Telegram?.WebApp?.initData || (window as unknown as { TelegramWebviewProxy?: unknown }).TelegramWebviewProxy)
 }
 
-const SHOW_CONNECTION_DIAG = true // диагностика «Нет связи» — свернуть после отладки
+const SHOW_CONNECTION_DIAG = false
 
 function AppContent() {
   const screen = useAppStore((s) => s.screen)
