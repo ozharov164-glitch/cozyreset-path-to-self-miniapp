@@ -3,6 +3,7 @@ import { useAuthStore } from '../store/authStore'
 let backendUrlOverride: string | null = null
 
 const BACKEND_STORAGE_KEY = 'pts_backend_url'
+const DEBUG = true // диагностика «Нет связи» — потом убрать или по env
 
 /** Загрузить backend URL: сначала из ссылки (бот передаёт ?backend=...), затем из config.json. */
 export async function loadBackendConfig(): Promise<void> {
@@ -10,6 +11,11 @@ export async function loadBackendConfig(): Promise<void> {
   // 1) Из ссылки при открытии из бота (?backend=https://...) — приоритет, связь с ботом
   const params = new URLSearchParams(window.location.search)
   const fromQuery = params.get('backend')?.trim()
+  if (DEBUG) {
+    console.log('[PTS] loadBackendConfig: location.href=', window.location.href)
+    console.log('[PTS] loadBackendConfig: location.search=', window.location.search)
+    console.log('[PTS] loadBackendConfig: backend from query=', fromQuery || '(empty)')
+  }
   if (fromQuery && (fromQuery.startsWith('http://') || fromQuery.startsWith('https://'))) {
     backendUrlOverride = fromQuery.replace(/\/$/, '')
     try {
@@ -42,6 +48,7 @@ export async function loadBackendConfig(): Promise<void> {
   } catch {
     /* ignore */
   }
+  if (DEBUG) console.log('[PTS] loadBackendConfig: final backendUrlOverride=', backendUrlOverride)
 }
 
 function getBackendUrl(): string {
@@ -65,6 +72,7 @@ export async function ensureAuth(): Promise<string | null> {
   }
 
   const initData = getInitDataString()
+  if (DEBUG) console.log('[PTS] ensureAuth: initData length=', initData?.length ?? 0)
   if (!initData) {
     // В браузере без Telegram — показываем интерфейс без сохранения (избегаем белого экрана)
     useAuthStore.getState().setInitialized(true)
@@ -72,12 +80,14 @@ export async function ensureAuth(): Promise<string | null> {
   }
 
   const backend = getBackendUrl()
+  if (DEBUG) console.log('[PTS] ensureAuth: getBackendUrl()=', backend || '(empty)')
   if (!backend) {
     useAuthStore.getState().setInitialized(true)
     return null
   }
 
   try {
+    if (DEBUG) console.log('[PTS] ensureAuth: POST', backend + '/mini-app/init')
     const res = await fetch(`${backend}/mini-app/init`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -94,8 +104,8 @@ export async function ensureAuth(): Promise<string | null> {
       useAuthStore.getState().setInitialized(true)
       return newToken
     }
-  } catch {
-    // ignore
+  } catch (e) {
+    if (DEBUG) console.warn('[PTS] ensureAuth: fetch error', e)
   }
   useAuthStore.getState().setInitialized(true)
   return null
