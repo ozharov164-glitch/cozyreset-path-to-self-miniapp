@@ -256,7 +256,7 @@ export async function apiSaveTestResult(payload: {
   }
 
   let result = await trySave()
-  if (('id' in result && result.id) || result.error !== 'network') return result
+  if (('id' in result && result.id) || ('error' in result && result.error !== 'network')) return result
   useAuthStore.getState().setToken(null)
   await new Promise((r) => setTimeout(r, 300))
   const reToken = await ensureAuth()
