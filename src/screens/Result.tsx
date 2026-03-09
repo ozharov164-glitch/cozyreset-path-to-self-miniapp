@@ -38,8 +38,9 @@ export function Result({ onBack }: ResultProps) {
     : test
   const displayAnswers = displayResult?.answers ?? answers
 
+  // Сохранение только один раз при открытии экрана; при ошибке не перезапускаем (избегаем мерцания)
   useEffect(() => {
-    if (isViewingHistory || !test || saved || saving) return
+    if (isViewingHistory || !test || saved || saving || error) return
     setSaving(true)
     setError(null)
     ensureAuth()
@@ -68,7 +69,7 @@ export function Result({ onBack }: ResultProps) {
       })
       .catch(() => setError('Нет связи. Открой приложение заново из бота (кнопка «🌱 Путь к Себе»).'))
       .finally(() => setSaving(false))
-  }, [test, answers, saved, saving, isViewingHistory, setLastSavedResultId])
+  }, [test, answers, saved, saving, error, isViewingHistory, setLastSavedResultId])
 
   const avg = displayAnswers.length ? displayAnswers.reduce((a, b) => a + b, 0) / displayAnswers.length : 0
   const radarData = [{ subject: 'Общий', value: avg, fullMark: 10 }]
