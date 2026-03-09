@@ -44,7 +44,7 @@ export function Result({ onBack }: ResultProps) {
   const isViewingHistory = !!openResultId
   const saveKey = test ? `${test.id}-${answers.length}` : ''
 
-  const { data: loadedResult } = useQuery({
+  const { data: loadedResult, isLoading: isLoadingResult } = useQuery({
     queryKey: ['test-result', openResultId ?? ''],
     queryFn: () => (openResultId ? apiTestResult(openResultId) : Promise.resolve(null)),
     enabled: !!openResultId,
@@ -55,6 +55,8 @@ export function Result({ onBack }: ResultProps) {
     ? { title: displayResult.testTitle, id: displayResult.testId }
     : test
   const displayAnswers = displayResult?.answers ?? answers
+
+  const isOpeningFromHistory = !!openResultId
 
   // Сохранение один раз при открытии экрана (результат теста). Без мерцания; при новом тесте сбрасываем ref.
   useEffect(() => {
@@ -158,9 +160,30 @@ export function Result({ onBack }: ResultProps) {
       .finally(() => setSaving(false))
   }
 
-  if (!displayTest && !loadedResult && !test) {
+  // Не вызывать onBack при открытии из истории, пока грузится результат — иначе сбрасывает на главную
+  if (!isOpeningFromHistory && !displayTest && !test) {
     onBack()
     return null
+  }
+  if (isOpeningFromHistory && !isLoadingResult && !loadedResult && !displayTest) {
+    onBack()
+    return null
+  }
+  if (isOpeningFromHistory && isLoadingResult) {
+    return (
+      <div className="min-h-screen flex flex-col safe-area pb-8">
+        <header className="glass-card h-14 flex items-center px-4 mb-4 rounded-2xl">
+          <button type="button" onClick={() => { setOpenResultId(null); onBack() }} className="text-[var(--color-glow-teal)] font-medium">
+            ← Назад
+          </button>
+          <h1 className="flex-1 text-center text-base font-semibold" style={{ color: '#2d2a26' }}>Результат</h1>
+          <span className="w-14" />
+        </header>
+        <div className="flex-1 flex items-center justify-center p-4">
+          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Загрузка...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

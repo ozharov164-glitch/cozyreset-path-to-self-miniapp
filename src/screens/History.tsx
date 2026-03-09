@@ -8,8 +8,7 @@ interface HistoryProps {
 }
 
 export function History({ onBack }: HistoryProps) {
-  const setScreen = useAppStore((s) => s.setScreen)
-  const setOpenResultId = useAppStore((s) => s.setOpenResultId)
+  const openResultFromHistory = useAppStore((s) => s.openResultFromHistory)
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['test-history'],
@@ -22,8 +21,7 @@ export function History({ onBack }: HistoryProps) {
   const showLoading = isLoading || isFetching
 
   const openResult = (id: string) => {
-    setOpenResultId(id)
-    setScreen('result')
+    openResultFromHistory(id)
   }
 
   return (
@@ -73,7 +71,8 @@ export function History({ onBack }: HistoryProps) {
             <button
               type="button"
               onClick={() => openResult(item.id)}
-              className="mt-3 text-sm font-medium text-[var(--color-glow-teal)]"
+              className="mt-3 min-h-[44px] flex items-center text-sm font-medium text-[var(--color-glow-teal)] select-none"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
               Смотреть результат
             </button>

@@ -38,7 +38,10 @@ function AppContent() {
         if (!mounted) return
         ensureAuth().then(() => {
           if (mounted && SHOW_CONNECTION_DIAG) setConnectionDiag(getConnectionDiag())
-          mounted && useAppStore.getState().setAuthReady(true)
+          if (mounted) {
+            useAppStore.getState().setAuthReady(true)
+            queryClient.invalidateQueries({ queryKey: ['test-history'] })
+          }
         })
       }
       runAuth()

@@ -19,6 +19,8 @@ interface AppState {
   openResultId: string | null
   setOpenResultId: (id: string | null) => void
   resetTest: () => void
+  /** Открыть экран результата по id из истории — один вызов, без промежуточного рендера */
+  openResultFromHistory: (resultId: string) => void
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -38,4 +40,5 @@ export const useAppStore = create<AppState>((set) => ({
   openResultId: null,
   setOpenResultId: (openResultId) => set({ openResultId }),
   resetTest: () => set({ currentTestId: null, currentQuestionIndex: 0, answers: [] }),
+  openResultFromHistory: (resultId) => set({ openResultId: resultId, screen: 'result' }),
 }))

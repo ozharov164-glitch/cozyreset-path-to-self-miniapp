@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../store/authStore'
@@ -26,30 +25,23 @@ function formatDate(iso: string): string {
 
 export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
   const authReady = useAuthStore((s) => s.isInitialized)
-  const setScreen = useAppStore((s) => s.setScreen)
-  const setOpenResultId = useAppStore((s) => s.setOpenResultId)
+  const openResultFromHistory = useAppStore((s) => s.openResultFromHistory)
   const tg = typeof window !== 'undefined' ? window.Telegram?.WebApp : undefined
   const userName = tg?.initDataUnsafe?.user?.first_name || 'друг'
 
-  const { data: historyData, refetch: refetchHistory } = useQuery({
+  const { data: historyData, isLoading: historyLoading } = useQuery({
     queryKey: ['test-history'],
     queryFn: apiTestHistory,
+    enabled: authReady,
     refetchOnMount: true,
     staleTime: 0,
   })
   const items = historyData?.items ?? []
   const recentItems = items.slice(0, 5)
-
-  // Подгрузить историю, как только авторизация готова (чтобы не показывать «нет результатов» после первого входа)
-  useEffect(() => {
-    if (authReady) {
-      refetchHistory()
-    }
-  }, [authReady, refetchHistory])
+  const showHistoryLoading = !authReady || (authReady && historyLoading && items.length === 0)
 
   const openResult = (id: string) => {
-    setOpenResultId(id)
-    setScreen('result')
+    openResultFromHistory(id)
   }
 
   return (
@@ -108,7 +100,11 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
             Пройденные тесты — это точки на карте. Регулярные замеры помогают видеть прогресс и бережнее относиться к себе.
           </p>
 
-          {items.length === 0 ? (
+          {showHistoryLoading ? (
+            <p className="text-sm text-[var(--color-text-secondary)] py-2">
+              Загрузка…
+            </p>
+          ) : items.length === 0 ? (
             <p className="text-sm text-[var(--color-text-secondary)] py-2">
               Пока нет сохранённых результатов. Пройди первый тест из каталога — он станет началом твоей карты.
             </p>
@@ -140,10 +136,12 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
                     <button
                       type="button"
                       onClick={() => openResult(item.id)}
-                      className="w-full text-left py-2.5 px-3 rounded-xl transition-all hover:bg-white/60 active:scale-[0.99]"
+                      className="w-full text-left min-h-[44px] py-2.5 px-3 rounded-xl transition-all hover:bg-white/60 active:scale-[0.99] select-none"
                       style={{
                         border: '1px solid rgba(201,184,232,0.35)',
                         color: 'var(--color-text-primary)',
+                        touchAction: 'manipulation',
+                        WebkitTapHighlightColor: 'transparent',
                       }}
                     >
                       <span className="block text-sm font-medium truncate">{item.testTitle}</span>
