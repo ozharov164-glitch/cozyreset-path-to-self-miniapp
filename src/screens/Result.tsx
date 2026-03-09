@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts'
 import { TESTS } from '../data/tests'
 import { useAppStore } from '../store/appStore'
-import { apiSaveTestResult, apiTestResult, ensureAuth, loadBackendConfig } from '../api/client'
+import { apiSaveTestResult, apiTestResult, ensureAuth, getInitDataString, loadBackendConfig } from '../api/client'
 
 interface ResultProps {
   onBack: () => void
@@ -68,8 +68,10 @@ export function Result({ onBack }: ResultProps) {
           setSaved(true)
         } else {
           const err = 'error' in res ? String(res.error) : ''
-          const msg =
-            err === 'network'
+          const noInitData = !getInitDataString()?.length
+          const msg = noInitData
+            ? 'Открой приложение из Telegram: в боте нажми «🌱 Путь к Себе». Не открывай по ссылке в браузере — иначе сохранение не сработает.'
+            : err === 'network'
               ? 'Нет связи. Открой приложение заново из бота (кнопка «🌱 Путь к Себе»).'
               : err && (err.includes('Token') || err.includes('token') || err.includes('401'))
                 ? 'Сессия истекла. Закрой приложение и открой снова из бота.'
@@ -77,7 +79,12 @@ export function Result({ onBack }: ResultProps) {
           setError(msg)
         }
       })
-      .catch(() => setError('Нет связи. Открой приложение заново из бота (кнопка «🌱 Путь к Себе»).'))
+      .catch(() => {
+        const noInitData = !getInitDataString()?.length
+        setError(noInitData
+          ? 'Открой приложение из Telegram: в боте нажми «🌱 Путь к Себе». Не открывай по ссылке в браузере.'
+          : 'Нет связи. Открой приложение заново из бота (кнопка «🌱 Путь к Себе»).')
+      })
       .finally(() => setSaving(false))
   }, [saveKey, test, answers, saved, saving, isViewingHistory, setLastSavedResultId])
 
@@ -113,10 +120,14 @@ export function Result({ onBack }: ResultProps) {
           setLastSavedResultId(res.id)
           setSaved(true)
         } else {
-          setError('Не удалось сохранить. Открой приложение заново из бота.')
+          setError(!getInitDataString()?.length
+            ? 'Открой приложение из Telegram: в боте нажми «🌱 Путь к Себе».'
+            : 'Не удалось сохранить. Открой приложение заново из бота.')
         }
       })
-      .catch(() => setError('Нет связи. Открой приложение из бота.'))
+      .catch(() => setError(!getInitDataString()?.length
+        ? 'Открой приложение из Telegram: в боте нажми «🌱 Путь к Себе».'
+        : 'Нет связи. Открой приложение из бота.'))
       .finally(() => setSaving(false))
   }
 

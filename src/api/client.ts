@@ -15,43 +15,48 @@ function setBackendStored(url: string): void {
   }
 }
 
-/** Загрузить backend URL: сначала из ссылки (бот передаёт ?backend=...), затем из config.json. */
+/** Временные туннели (Cloudflare и т.п.) — игнорируем, используем постоянный backend из config.json */
+function isUnreliableBackend(url: string): boolean {
+  const u = url.toLowerCase()
+  return u.includes('trycloudflare.com') || u.includes('ngrok') || u.includes('localtunnel')
+}
+
+/** Загрузить backend URL: из ссылки (бот ?backend=...), затем config.json. trycloudflare не используем. */
 export async function loadBackendConfig(): Promise<void> {
   if (typeof window === 'undefined') return
-  // 1) Из ссылки при открытии из бота (?backend=https://...) — приоритет, связь с ботом
   const params = new URLSearchParams(window.location.search)
   const fromQuery = params.get('backend')?.trim()
   if (DEBUG) {
-    console.log('[PTS] loadBackendConfig: location.href=', window.location.href)
     console.log('[PTS] loadBackendConfig: location.search=', window.location.search)
     console.log('[PTS] loadBackendConfig: backend from query=', fromQuery || '(empty)')
   }
-  if (fromQuery && (fromQuery.startsWith('http://') || fromQuery.startsWith('https://'))) {
+  // 1) Из ссылки при открытии из бота — только если не временный туннель
+  if (fromQuery && (fromQuery.startsWith('http://') || fromQuery.startsWith('https://')) && !isUnreliableBackend(fromQuery)) {
     backendUrlOverride = fromQuery.replace(/\/$/, '')
     setBackendStored(backendUrlOverride)
     return
   }
-  // 2) sessionStorage (сессия)
+  // 2) sessionStorage — игнорируем trycloudflare
   try {
     const stored = sessionStorage.getItem(BACKEND_STORAGE_KEY)
-    if (stored && (stored.startsWith('http://') || stored.startsWith('https://'))) {
+    if (stored && (stored.startsWith('http://') || stored.startsWith('https://')) && !isUnreliableBackend(stored)) {
       backendUrlOverride = stored.replace(/\/$/, '')
       return
     }
   } catch {
     /* ignore */
   }
-  // 3) localStorage (последний известный backend — если Telegram обрезал query)
+  // 3) localStorage — игнорируем trycloudflare
   try {
     const local = localStorage.getItem(BACKEND_LOCALSTORAGE_KEY)
-    if (local && (local.startsWith('http://') || local.startsWith('https://'))) {
+    if (local && (local.startsWith('http://') || local.startsWith('https://')) && !isUnreliableBackend(local)) {
       backendUrlOverride = local.replace(/\/$/, '')
       return
     }
   } catch {
     /* ignore */
   }
-  // 4) config.json
+  // 4) config.json (постоянный HTTPS, например 217-114-11-97.sslip.io)
   try {
     const base = (import.meta.env.VITE_BASE_PATH as string) || '/'
     const path = base.endsWith('/') ? `${base}config.json` : `${base}/config.json`
