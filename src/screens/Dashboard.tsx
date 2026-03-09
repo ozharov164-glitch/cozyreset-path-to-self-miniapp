@@ -1,8 +1,10 @@
 import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../store/authStore'
-import { apiTestHistory } from '../api/client'
+import { apiTestHistory, apiAiSuggestions } from '../api/client'
 import { useAppStore } from '../store/appStore'
+
+const BOT_LINK = 'https://t.me/CozyReset_bot'
 
 interface DashboardProps {
   onOpenCatalog: () => void
@@ -39,6 +41,13 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
   const items = historyData?.items ?? []
   const recentItems = items.slice(0, 5)
   const showHistoryLoading = !authReady || (authReady && historyLoading && items.length === 0)
+
+  const { data: suggestionsData } = useQuery({
+    queryKey: ['ai-suggestions-dashboard'],
+    queryFn: () => apiAiSuggestions(),
+    enabled: authReady && items.length > 0,
+  })
+  const suggestions = suggestionsData?.suggestions ?? []
 
   const openResult = (id: string) => {
     openResultFromHistory(id)
@@ -97,7 +106,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
             Твоё состояние
           </h3>
           <p className="text-xs text-[var(--color-text-secondary)] mb-4">
-            Пройденные тесты — это точки на карте. Регулярные замеры помогают видеть прогресс и бережнее относиться к себе.
+            Регулярные замеры помогают видеть прогресс и бережнее относиться к себе. Здесь — твой срез.
           </p>
 
           {showHistoryLoading ? (
@@ -164,6 +173,48 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
             </>
           )}
         </motion.div>
+
+        {items.length > 0 && suggestions.length > 0 && (
+          <motion.div
+            className="rounded-2xl p-4 mb-4"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.15 }}
+            style={{
+              background: 'linear-gradient(145deg, rgba(125,211,192,0.18) 0%, rgba(201,184,232,0.12) 100%)',
+              border: '1px solid rgba(125,211,192,0.35)',
+            }}
+          >
+            <h4 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-forest-dark)' }}>
+              Проработать с ИИ в боте
+            </h4>
+            <p className="text-xs text-[var(--color-text-secondary)] mb-3">
+              На основе твоих тестов — темы, которые стоит обсудить с поддержкой в боте:
+            </p>
+            <ul className="space-y-1.5 mb-3">
+              {suggestions.slice(0, 4).map((s, i) => (
+                <li key={i} className="text-sm flex gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                  <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
+                  <span>{s}</span>
+                </li>
+              ))}
+            </ul>
+            <a
+              href={BOT_LINK}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full py-2.5 px-4 rounded-xl font-medium text-center text-[var(--color-text-primary)] bg-[var(--color-sunset-rose)]/90 hover:opacity-95 active:scale-[0.98] transition-all"
+              onClick={(e) => {
+                if (window.Telegram?.WebApp?.openTelegramLink) {
+                  e.preventDefault()
+                  window.Telegram.WebApp.openTelegramLink(BOT_LINK)
+                }
+              }}
+            >
+              Открыть бота
+            </a>
+          </motion.div>
+        )}
 
         {!authReady && (
           <p className="text-center text-sm text-[var(--color-text-secondary)] px-4 py-2">

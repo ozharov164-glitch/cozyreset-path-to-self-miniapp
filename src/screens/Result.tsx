@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { TESTS } from '../data/tests'
 import { useAppStore } from '../store/appStore'
-import { apiSaveTestResult, apiTestResult, ensureAuth, getInitDataString, loadBackendConfig, refreshInitData } from '../api/client'
+import { apiSaveTestResult, apiTestResult, apiAiSuggestions, ensureAuth, getInitDataString, loadBackendConfig, refreshInitData } from '../api/client'
 
 /** Краткое описание результата по среднему баллу — в духе поддержки и тематики бота. */
 function getScoreDescription(avg: number, _testTitle: string): string {
@@ -118,6 +118,13 @@ export function Result({ onBack }: ResultProps) {
   const avgRounded = Math.round(avg * 10) / 10
   const scorePercent = Math.min(100, Math.max(0, (avg / 10) * 100))
   const description = getScoreDescription(avgRounded, displayTest?.title ?? '')
+
+  const { data: suggestionsData } = useQuery({
+    queryKey: ['ai-suggestions-result', displayTest?.title ?? '', avgRounded],
+    queryFn: () => apiAiSuggestions(displayTest?.title ?? '', avgRounded),
+    enabled: !!(displayTest?.title && displayAnswers.length > 0),
+  })
+  const aiSuggestions = suggestionsData?.suggestions ?? []
 
   const openBot = () => {
     window.Telegram?.WebApp?.openTelegramLink?.(BOT_LINK)
@@ -273,7 +280,7 @@ export function Result({ onBack }: ResultProps) {
                 <h4 className="text-sm font-semibold mb-3" style={{ color: 'var(--color-forest-dark)' }}>
                   Что дальше?
                 </h4>
-                <ul className="space-y-2 text-sm" style={{ color: 'var(--color-text-primary)' }}>
+                <ul className="space-y-2 text-sm mb-3" style={{ color: 'var(--color-text-primary)' }}>
                   <li className="flex gap-2">
                     <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
                     <span>Терапия и регулярные практики усиливают эффект — в боте есть поддержка и инструменты для каждого дня.</span>
@@ -287,6 +294,21 @@ export function Result({ onBack }: ResultProps) {
                     <span>Твоя дорога к себе продолжается в боте — открой его и сделай следующий шаг.</span>
                   </li>
                 </ul>
+                {aiSuggestions.length > 0 && (
+                  <>
+                    <h5 className="text-xs font-semibold mb-2" style={{ color: 'var(--color-forest-dark)' }}>
+                      Проработать с ИИ в боте:
+                    </h5>
+                    <ul className="space-y-1 text-sm" style={{ color: 'var(--color-text-primary)' }}>
+                      {aiSuggestions.slice(0, 4).map((s, idx) => (
+                        <li key={idx} className="flex gap-2">
+                          <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
+                          <span>{s}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
               </motion.div>
               <button
                 type="button"
@@ -317,6 +339,27 @@ export function Result({ onBack }: ResultProps) {
 
           {!saving && !saved && !error && isViewingHistory && (
             <div className="space-y-3">
+              {aiSuggestions.length > 0 && (
+                <div
+                  className="rounded-2xl p-4"
+                  style={{
+                    background: 'linear-gradient(145deg, rgba(125,211,192,0.12) 0%, rgba(201,184,232,0.1) 100%)',
+                    border: '1px solid rgba(125,211,192,0.3)',
+                  }}
+                >
+                  <h5 className="text-xs font-semibold mb-2" style={{ color: 'var(--color-forest-dark)' }}>
+                    Проработать с ИИ в боте:
+                  </h5>
+                  <ul className="space-y-1 text-sm mb-2" style={{ color: 'var(--color-text-primary)' }}>
+                    {aiSuggestions.slice(0, 4).map((s, idx) => (
+                      <li key={idx} className="flex gap-2">
+                        <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
+                        <span>{s}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               <p className="text-center text-sm text-[var(--color-text-secondary)]">
                 Продолжить путь и получить поддержку — в боте.
               </p>

@@ -380,3 +380,19 @@ export async function apiTestResult(id: string): Promise<{
   const data = await res.json()
   return data as { id: string; testId: string; testTitle: string; answers: number[]; dimensions?: Record<string, number>; completedAt: string }
 }
+
+/** Темы для проработки с ИИ в боте. Без аргументов — по последнему результату пользователя. */
+export async function apiAiSuggestions(testTitle?: string, avg?: number): Promise<{ suggestions: string[] }> {
+  const body: Record<string, unknown> = {}
+  if (testTitle != null && avg != null) {
+    body.test_title = testTitle
+    body.avg = avg
+  }
+  const res = await fetchWithAuth('/mini-app/ai-suggestions', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) return { suggestions: [] }
+  const data = await res.json().catch(() => ({})) as { suggestions?: string[] }
+  return { suggestions: Array.isArray(data.suggestions) ? data.suggestions : [] }
+}
