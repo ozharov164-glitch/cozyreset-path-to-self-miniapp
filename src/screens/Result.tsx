@@ -59,14 +59,14 @@ export function Result({ onBack }: ResultProps) {
           const err = 'error' in res ? String(res.error) : ''
           const msg =
             err === 'network'
-              ? 'Ошибка сети. Откройте приложение из бота.'
+              ? 'Нет связи. Открой приложение заново из бота (кнопка «🌱 Путь к Себе»).'
               : err && (err.includes('Token') || err.includes('token') || err.includes('401'))
-                ? 'Не удалось сохранить. Закройте приложение и откройте снова из бота.'
-                : err || 'Не удалось сохранить'
+                ? 'Сессия истекла. Закрой приложение и открой снова из бота.'
+                : err || 'Не удалось сохранить. Открой приложение из бота.'
           setError(msg)
         }
       })
-      .catch(() => setError('Ошибка сети. Откройте приложение из бота.'))
+      .catch(() => setError('Нет связи. Открой приложение заново из бота (кнопка «🌱 Путь к Себе»).'))
       .finally(() => setSaving(false))
   }, [test, answers, saved, saving, isViewingHistory, setLastSavedResultId])
 
@@ -101,10 +101,10 @@ export function Result({ onBack }: ResultProps) {
           setLastSavedResultId(res.id)
           setSaved(true)
         } else {
-          setError('Не удалось сохранить. Закройте приложение и откройте снова из бота.')
+          setError('Не удалось сохранить. Открой приложение заново из бота.')
         }
       })
-      .catch(() => setError('Ошибка сети.'))
+                .catch(() => setError('Нет связи. Открой приложение из бота.'))
       .finally(() => setSaving(false))
   }
 

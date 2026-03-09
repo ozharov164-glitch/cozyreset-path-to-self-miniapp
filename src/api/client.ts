@@ -2,9 +2,34 @@ import { useAuthStore } from '../store/authStore'
 
 let backendUrlOverride: string | null = null
 
-/** Загрузить config.json с того же origin (позволяет задать HTTPS без пересборки). */
+const BACKEND_STORAGE_KEY = 'pts_backend_url'
+
+/** Загрузить backend URL: сначала из ссылки (бот передаёт ?backend=...), затем из config.json. */
 export async function loadBackendConfig(): Promise<void> {
   if (typeof window === 'undefined') return
+  // 1) Из ссылки при открытии из бота (?backend=https://...) — приоритет, связь с ботом
+  const params = new URLSearchParams(window.location.search)
+  const fromQuery = params.get('backend')?.trim()
+  if (fromQuery && (fromQuery.startsWith('http://') || fromQuery.startsWith('https://'))) {
+    backendUrlOverride = fromQuery.replace(/\/$/, '')
+    try {
+      sessionStorage.setItem(BACKEND_STORAGE_KEY, backendUrlOverride)
+    } catch {
+      /* ignore */
+    }
+    return
+  }
+  // 2) Из sessionStorage (если уже открывали с backend= в этой сессии)
+  try {
+    const stored = sessionStorage.getItem(BACKEND_STORAGE_KEY)
+    if (stored && (stored.startsWith('http://') || stored.startsWith('https://'))) {
+      backendUrlOverride = stored.replace(/\/$/, '')
+      return
+    }
+  } catch {
+    /* ignore */
+  }
+  // 3) Из config.json
   try {
     const base = (import.meta.env.VITE_BASE_PATH as string) || '/'
     const path = base.endsWith('/') ? `${base}config.json` : `${base}/config.json`
