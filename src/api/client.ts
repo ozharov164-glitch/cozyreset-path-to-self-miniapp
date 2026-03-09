@@ -131,13 +131,13 @@ async function fetchWithAuth(
     ...(options.headers as Record<string, string>),
   }
   let body = options.body
-  if (token && options.method === 'POST' && typeof body === 'string') {
+  if (options.method === 'POST' && typeof body === 'string') {
     try {
       const parsed = JSON.parse(body) as Record<string, unknown>
-      if (!parsed.token) {
-        parsed.token = token
-        body = JSON.stringify(parsed)
-      }
+      if (token && !parsed.token) parsed.token = token
+      const initData = getInitDataString()
+      if (initData && !parsed.initData) parsed.initData = initData
+      body = JSON.stringify(parsed)
     } catch {
       // leave body as is
     }
@@ -146,9 +146,12 @@ async function fetchWithAuth(
   const res = await fetch(url, { ...options, headers, body })
   if (res.status === 401 && !options.skipRetry) {
     useAuthStore.getState().setToken(null)
-    const retryToken = await ensureAuth()
-    if (retryToken) {
-      return fetchWithAuth(path, { ...options, skipRetry: true })
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const retryToken = await ensureAuth()
+      if (retryToken) {
+        const retryRes = await fetchWithAuth(path, { ...options, skipRetry: true })
+        if (retryRes.status !== 401) return retryRes
+      }
     }
   }
   return res
