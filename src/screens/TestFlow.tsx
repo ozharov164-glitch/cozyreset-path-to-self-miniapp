@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { TESTS } from '../data/tests'
 import { useAppStore } from '../store/appStore'
@@ -7,8 +8,6 @@ interface TestFlowProps {
 }
 
 const SCALE = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-
-const QUESTION_LABEL = 'Оцени по шкале от 1 до 10: 1 — совсем нет, 10 — полностью согласен.'
 
 export function TestFlow({ onBack }: TestFlowProps) {
   const currentTestId = useAppStore((s) => s.currentTestId)
@@ -24,8 +23,16 @@ export function TestFlow({ onBack }: TestFlowProps) {
 
   const total = test.questions.length
   const isLast = currentQuestionIndex === total - 1
+  const currentQ = test.questions[currentQuestionIndex]
+  const questionText = currentQ?.text ?? `Вопрос ${currentQuestionIndex + 1} из ${total}. Оцени по шкале от 1 до 10.`
   const n = currentQuestionIndex + 1
   const progress = (n / total) * 100
+
+  useEffect(() => {
+    if (typeof console !== 'undefined' && console.log) {
+      console.log('[TestFlow] question text', n, total, questionText.slice(0, 80) + '...')
+    }
+  }, [n, total, questionText])
 
   const handleAnswer = (value: number) => {
     addAnswer(value)
@@ -33,7 +40,7 @@ export function TestFlow({ onBack }: TestFlowProps) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col safe-area pb-6">
+    <div className="min-h-screen flex flex-col safe-area pb-6" style={{ overflow: 'visible' }}>
       <header className="glass-card h-14 flex items-center px-4 mb-4 rounded-2xl">
         <button type="button" onClick={onBack} className="text-[var(--color-glow-teal)] font-medium">
           ← Назад
@@ -58,14 +65,29 @@ export function TestFlow({ onBack }: TestFlowProps) {
         </p>
       </div>
 
-      <div className="flex-1 flex flex-col max-w-[420px] mx-auto w-full px-2">
-        <div className="flex flex-col flex-1 min-h-[120px]">
+      <div className="flex-1 flex flex-col max-w-[420px] mx-auto w-full px-2" style={{ overflow: 'visible' }}>
+        <div className="flex flex-col flex-1 min-h-[120px]" style={{ overflow: 'visible' }}>
           <div
-            className="rounded-xl px-4 py-4 mb-6 min-h-[4em] flex items-center"
-            style={{ background: 'rgba(255,255,255,0.5)', border: '1px solid rgba(0,0,0,0.08)' }}
+            className="rounded-xl mb-6"
+            style={{
+              padding: 20,
+              background: 'rgba(255,255,255,0.6)',
+              border: '1px solid rgba(0,0,0,0.08)',
+              overflow: 'visible',
+              minHeight: 80,
+            }}
           >
-            <p className="m-0 break-words" style={{ color: '#1a1a1a', fontSize: '18px', fontWeight: 600, lineHeight: 1.4 }}>
-              Вопрос {n} из {total}. {QUESTION_LABEL}
+            <p
+              className="m-0 break-words"
+              style={{
+                color: '#000',
+                fontSize: 16,
+                textAlign: 'center',
+                lineHeight: 1.45,
+                overflow: 'visible',
+              }}
+            >
+              {questionText}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
