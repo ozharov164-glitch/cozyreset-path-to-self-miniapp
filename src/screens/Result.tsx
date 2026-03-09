@@ -49,9 +49,11 @@ export function Result({ onBack }: ResultProps) {
     }
     if (isViewingHistory || !test || saved || saving || saveStartedRef.current) return
     saveStartedRef.current = true
-    setSaving(true)
     loadBackendConfig()
-      .then(() => ensureAuth())
+      .then(() => {
+        setSaving(true)
+        return ensureAuth()
+      })
       .then(() =>
         apiSaveTestResult({
           testId: test.id,
