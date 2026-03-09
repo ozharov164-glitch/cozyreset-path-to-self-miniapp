@@ -233,10 +233,38 @@ export function Result({ onBack }: ResultProps) {
           )}
 
           {!saving && saved && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <p className="text-center text-sm font-medium py-2" style={{ color: '#0d9488' }}>
                 Результат сохранён в истории ✅
               </p>
+              <motion.div
+                className="rounded-2xl p-4"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.2 }}
+                style={{
+                  background: 'linear-gradient(145deg, rgba(125,211,192,0.15) 0%, rgba(201,184,232,0.12) 100%)',
+                  border: '1px solid rgba(125,211,192,0.35)',
+                }}
+              >
+                <h4 className="text-sm font-semibold mb-3" style={{ color: 'var(--color-forest-dark)' }}>
+                  Что дальше?
+                </h4>
+                <ul className="space-y-2 text-sm" style={{ color: 'var(--color-text-primary)' }}>
+                  <li className="flex gap-2">
+                    <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
+                    <span>Терапия и регулярные практики усиливают эффект — в боте есть поддержка и инструменты для каждого дня.</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
+                    <span>Чек-ины, аффирмации и ИИ-поддержка помогут закрепить прогресс и замечать изменения.</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
+                    <span>Твоя дорога к себе продолжается в боте — открой его и сделай следующий шаг.</span>
+                  </li>
+                </ul>
+              </motion.div>
               <button
                 type="button"
                 onClick={openBot}
@@ -265,14 +293,19 @@ export function Result({ onBack }: ResultProps) {
           )}
 
           {!saving && !saved && !error && isViewingHistory && (
-            <button
-              type="button"
-              onClick={openBot}
-              className="w-full py-3.5 px-4 rounded-xl font-semibold border-0 shadow-md hover:opacity-95 active:scale-[0.98] transition-all"
-              style={{ background: 'var(--color-sunset-rose)', color: 'var(--color-text-primary)' }}
-            >
-              Открыть бота
-            </button>
+            <div className="space-y-3">
+              <p className="text-center text-sm text-[var(--color-text-secondary)]">
+                Продолжить путь и получить поддержку — в боте.
+              </p>
+              <button
+                type="button"
+                onClick={openBot}
+                className="w-full py-3.5 px-4 rounded-xl font-semibold border-0 shadow-md hover:opacity-95 active:scale-[0.98] transition-all"
+                style={{ background: 'var(--color-sunset-rose)', color: 'var(--color-text-primary)' }}
+              >
+                Открыть бота
+              </button>
+            </div>
           )}
         </div>
       </div>

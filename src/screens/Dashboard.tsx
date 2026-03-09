@@ -2,14 +2,31 @@ import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../store/authStore'
 import { apiTestHistory } from '../api/client'
+import { useAppStore } from '../store/appStore'
 
 interface DashboardProps {
   onOpenCatalog: () => void
   onOpenHistory: () => void
 }
 
+function formatDate(iso: string): string {
+  try {
+    const d = new Date(iso)
+    const now = new Date()
+    const diffDays = Math.floor((now.getTime() - d.getTime()) / (24 * 60 * 60 * 1000))
+    if (diffDays === 0) return 'Сегодня'
+    if (diffDays === 1) return 'Вчера'
+    if (diffDays < 7) return `${diffDays} дн. назад`
+    return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+  } catch {
+    return ''
+  }
+}
+
 export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
   const authReady = useAuthStore((s) => s.isInitialized)
+  const setScreen = useAppStore((s) => s.setScreen)
+  const setOpenResultId = useAppStore((s) => s.setOpenResultId)
   const tg = typeof window !== 'undefined' ? window.Telegram?.WebApp : undefined
   const userName = tg?.initDataUnsafe?.user?.first_name || 'друг'
 
@@ -17,7 +34,13 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
     queryKey: ['test-history'],
     queryFn: apiTestHistory,
   })
-  const savedCount = historyData?.items?.length ?? 0
+  const items = historyData?.items ?? []
+  const recentItems = items.slice(0, 5)
+
+  const openResult = (id: string) => {
+    setOpenResultId(id)
+    setScreen('result')
+  }
 
   return (
     <div className="min-h-screen flex flex-col safe-area">
@@ -33,41 +56,121 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
         </button>
       </header>
 
-      <motion.div
-        className="glass-card p-5 mb-6 mx-auto w-full max-w-[420px]"
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
-        <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-1">
-          Привет, {userName}!
-        </h2>
-        <p className="text-sm text-[var(--color-text-secondary)] mb-4">
-          {savedCount > 0
-            ? `Твой сад растёт: уже ${savedCount} ${savedCount === 1 ? 'результат' : savedCount < 5 ? 'результата' : 'результатов'}. Продолжай в том же духе.`
-            : 'Твой сад растёт с каждым пройденным тестом. Начни с каталога — и здесь появятся деревья, цветы и кристаллы.'}
-        </p>
-        <button
-          type="button"
-          onClick={onOpenCatalog}
-          className="w-full py-3.5 px-4 rounded-xl font-semibold text-[var(--color-text-primary)] bg-[var(--color-sunset-rose)] hover:opacity-95 active:scale-[0.98] transition-all shadow-md"
+      <div className="flex-1 flex flex-col max-w-[420px] mx-auto w-full px-3 pb-6">
+        <motion.div
+          className="glass-card p-5 mb-4"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
         >
-          Каталог тестов
-        </button>
-      </motion.div>
+          <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-1">
+            Привет, {userName}!
+          </h2>
+          <p className="text-sm text-[var(--color-text-secondary)] mb-4">
+            Здесь — срез твоего состояния. Каждый тест помогает заметить динамику и опереться на себя.
+          </p>
+          <button
+            type="button"
+            onClick={onOpenCatalog}
+            className="w-full py-3.5 px-4 rounded-xl font-semibold text-[var(--color-text-primary)] bg-[var(--color-sunset-rose)] hover:opacity-95 active:scale-[0.98] transition-all shadow-md"
+          >
+            Каталог тестов
+          </button>
+        </motion.div>
 
-      {!authReady && (
-        <p className="text-center text-sm text-[var(--color-text-secondary)] px-4">
-          Загрузка...
-        </p>
-      )}
+        {/* Блок: Общая статистика состояния */}
+        <motion.div
+          className="rounded-2xl p-5 mb-4"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          style={{
+            background: 'linear-gradient(145deg, rgba(255,255,255,0.85) 0%, rgba(249,245,255,0.9) 100%)',
+            border: '1px solid rgba(201,184,232,0.4)',
+            boxShadow: '0 4px 24px rgba(45,42,38,0.08)',
+          }}
+        >
+          <h3 className="text-base font-semibold text-[var(--color-forest-dark)] mb-1">
+            Твоё состояние
+          </h3>
+          <p className="text-xs text-[var(--color-text-secondary)] mb-4">
+            Пройденные тесты — это точки на карте. Регулярные замеры помогают видеть прогресс и бережнее относиться к себе.
+          </p>
 
-      <div className="flex-1 flex items-center justify-center p-4">
-        <p className="text-sm text-[var(--color-text-secondary)] text-center max-w-[280px]">
-          {savedCount > 0
-            ? 'За спиной — уютный сад твоих ответов. Открой «История», чтобы пересмотреть результаты.'
-            : 'Пройди тесты из каталога — здесь появятся твои результаты и рост сада.'}
-        </p>
+          {items.length === 0 ? (
+            <p className="text-sm text-[var(--color-text-secondary)] py-2">
+              Пока нет сохранённых результатов. Пройди первый тест из каталога — он станет началом твоей карты.
+            </p>
+          ) : (
+            <>
+              <div className="flex items-center gap-2 mb-4">
+                <motion.span
+                  className="text-2xl font-bold"
+                  style={{ color: 'var(--color-glow-teal)' }}
+                  initial={{ scale: 0.8 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                >
+                  {items.length}
+                </motion.span>
+                <span className="text-sm text-[var(--color-text-secondary)]">
+                  {items.length === 1 ? 'тест пройден' : items.length < 5 ? 'теста пройдено' : 'тестов пройдено'}
+                </span>
+              </div>
+              <p className="text-xs text-[var(--color-text-secondary)] mb-3">Последние результаты:</p>
+              <ul className="space-y-2">
+                {recentItems.map((item, i) => (
+                  <motion.li
+                    key={item.id}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 0.15 + i * 0.05 }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => openResult(item.id)}
+                      className="w-full text-left py-2.5 px-3 rounded-xl transition-all hover:bg-white/60 active:scale-[0.99]"
+                      style={{
+                        border: '1px solid rgba(201,184,232,0.35)',
+                        color: 'var(--color-text-primary)',
+                      }}
+                    >
+                      <span className="block text-sm font-medium truncate">{item.testTitle}</span>
+                      <span className="block text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
+                        {formatDate(item.completedAt)}
+                      </span>
+                    </button>
+                  </motion.li>
+                ))}
+              </ul>
+              {items.length > 5 && (
+                <button
+                  type="button"
+                  onClick={onOpenHistory}
+                  className="mt-3 text-sm font-medium w-full py-2 rounded-xl border border-[var(--color-lavender)]/50 text-[var(--color-glow-teal)] hover:bg-white/50 transition-colors"
+                >
+                  Вся история
+                </button>
+              )}
+            </>
+          )}
+        </motion.div>
+
+        {!authReady && (
+          <p className="text-center text-sm text-[var(--color-text-secondary)] px-4 py-2">
+            Загрузка...
+          </p>
+        )}
+
+        <motion.p
+          className="text-sm text-center mt-auto pt-4"
+          style={{ color: 'var(--color-text-secondary)' }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          Глубже работа с состоянием — в боте: поддержка, практики и ежедневная забота о себе.
+        </motion.p>
       </div>
     </div>
   )
