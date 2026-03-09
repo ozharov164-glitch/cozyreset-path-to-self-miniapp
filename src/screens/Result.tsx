@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts'
 import { TESTS } from '../data/tests'
 import { useAppStore } from '../store/appStore'
-import { apiSaveTestResult, apiTestResult, ensureAuth } from '../api/client'
+import { apiSaveTestResult, apiTestResult, ensureAuth, loadBackendConfig } from '../api/client'
 
 interface ResultProps {
   onBack: () => void
@@ -22,9 +22,12 @@ export function Result({ onBack }: ResultProps) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const saveStartedRef = useRef(false)
+  const lastSaveKeyRef = useRef<string>('')
 
   const test = TESTS.find((t) => t.id === currentTestId)
   const isViewingHistory = !!openResultId
+  const saveKey = test ? `${test.id}-${answers.length}` : ''
 
   const { data: loadedResult } = useQuery({
     queryKey: ['test-result', openResultId ?? ''],
@@ -38,12 +41,17 @@ export function Result({ onBack }: ResultProps) {
     : test
   const displayAnswers = displayResult?.answers ?? answers
 
-  // Сохранение только один раз при открытии экрана; при ошибке не перезапускаем (избегаем мерцания)
+  // Сохранение один раз при открытии экрана (результат теста). Без мерцания; при новом тесте сбрасываем ref.
   useEffect(() => {
-    if (isViewingHistory || !test || saved || saving || error) return
+    if (saveKey && saveKey !== lastSaveKeyRef.current) {
+      lastSaveKeyRef.current = saveKey
+      saveStartedRef.current = false
+    }
+    if (isViewingHistory || !test || saved || saving || saveStartedRef.current) return
+    saveStartedRef.current = true
     setSaving(true)
-    setError(null)
-    ensureAuth()
+    loadBackendConfig()
+      .then(() => ensureAuth())
       .then(() =>
         apiSaveTestResult({
           testId: test.id,
@@ -69,7 +77,7 @@ export function Result({ onBack }: ResultProps) {
       })
       .catch(() => setError('Нет связи. Открой приложение заново из бота (кнопка «🌱 Путь к Себе»).'))
       .finally(() => setSaving(false))
-  }, [test, answers, saved, saving, error, isViewingHistory, setLastSavedResultId])
+  }, [saveKey, test, answers, saved, saving, isViewingHistory, setLastSavedResultId])
 
   const avg = displayAnswers.length ? displayAnswers.reduce((a, b) => a + b, 0) / displayAnswers.length : 0
   const radarData = [{ subject: 'Общий', value: avg, fullMark: 10 }]
@@ -88,7 +96,8 @@ export function Result({ onBack }: ResultProps) {
     if (!test) return
     setError(null)
     setSaving(true)
-    ensureAuth()
+    loadBackendConfig()
+      .then(() => ensureAuth())
       .then(() =>
         apiSaveTestResult({
           testId: test.id,
@@ -105,7 +114,7 @@ export function Result({ onBack }: ResultProps) {
           setError('Не удалось сохранить. Открой приложение заново из бота.')
         }
       })
-                .catch(() => setError('Нет связи. Открой приложение из бота.'))
+      .catch(() => setError('Нет связи. Открой приложение из бота.'))
       .finally(() => setSaving(false))
   }
 
