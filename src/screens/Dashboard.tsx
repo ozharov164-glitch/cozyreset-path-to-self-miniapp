@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../store/authStore'
-import { apiTestHistory, apiAiSuggestions } from '../api/client'
+import { apiTestHistory, apiAiSuggestions, getBackendUrl } from '../api/client'
 import { useAppStore } from '../store/appStore'
 import { goBackToBot, copyQuestionToClipboard } from '../utils/telegram'
 
@@ -97,6 +97,33 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
             className="w-full py-3.5 px-4 rounded-xl font-semibold text-[var(--color-text-primary)] bg-[var(--color-sunset-rose)] hover:opacity-95 active:scale-[0.98] transition-all shadow-md"
           >
             Каталог тестов
+          </button>
+        </motion.div>
+
+        {/* Игра «Ритм Сердца» — тап в такт дыханию, комментарий ИИ после сессии */}
+        <motion.div
+          className="glass-card p-5 mb-4"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.05 }}
+        >
+          <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-1 flex items-center gap-2">
+            <span aria-hidden>❤️</span> Ритм Сердца
+          </h3>
+          <p className="text-sm text-[var(--color-text-secondary)] mb-4">
+            Тап в такт дыханию — 90 секунд, затем комментарий от ИИ и короткая мелодия.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              const backend = getBackendUrl()
+              const token = useAuthStore.getState().appSaveToken
+              const gameUrl = `${backend}/heart-rhythm/${token ? `?token=${encodeURIComponent(token)}` : ''}`
+              window.location.href = gameUrl
+            }}
+            className="w-full py-3.5 px-4 rounded-xl font-semibold text-[var(--color-text-primary)] border-2 border-[var(--color-lavender)] hover:bg-white/20 active:scale-[0.98] transition-all"
+          >
+            Играть
           </button>
         </motion.div>
 
