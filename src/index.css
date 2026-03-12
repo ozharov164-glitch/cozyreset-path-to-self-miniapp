@@ -66,3 +66,34 @@ body {
   padding-top: max(12px, env(safe-area-inset-top));
   padding-bottom: max(12px, env(safe-area-inset-bottom));
 }
+
+/* Премиальный ползунок в плеере голосовой поддержки */
+.voice-progress {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 4px;
+}
+.voice-progress::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #7dd3c0 0%, #5ab8a8 100%);
+  box-shadow: 0 2px 10px rgba(90, 184, 168, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.voice-progress::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+.voice-progress::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #7dd3c0 0%, #5ab8a8 100%);
+  box-shadow: 0 2px 10px rgba(90, 184, 168, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+}

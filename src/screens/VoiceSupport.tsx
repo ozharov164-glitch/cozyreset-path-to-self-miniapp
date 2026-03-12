@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { apiVoiceReply } from '../api/client'
 
@@ -15,6 +15,15 @@ const item = {
   show: { opacity: 1, y: 0 },
 }
 
+const SPEEDS = [0.75, 1, 1.25, 1.5] as const
+
+function formatTime(sec: number): string {
+  if (!Number.isFinite(sec) || sec < 0) return '0:00'
+  const m = Math.floor(sec / 60)
+  const s = Math.floor(sec % 60)
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
 interface VoiceSupportProps {
   onBack: () => void
 }
@@ -25,12 +34,60 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   const [error, setError] = useState<string | null>(null)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [playbackRate, setPlaybackRate] = useState<number>(1)
 
   useEffect(() => {
     return () => {
       if (audioUrl) URL.revokeObjectURL(audioUrl)
     }
   }, [audioUrl])
+
+  const audio = audioRef.current
+  useEffect(() => {
+    if (!audio || !audioUrl) return
+    const onTimeUpdate = () => setCurrentTime(audio.currentTime)
+    const onLoadedMetadata = () => setDuration(audio.duration)
+    const onEnded = () => setIsPlaying(false)
+    const onPlay = () => setIsPlaying(true)
+    const onPause = () => setIsPlaying(false)
+    audio.addEventListener('timeupdate', onTimeUpdate)
+    audio.addEventListener('loadedmetadata', onLoadedMetadata)
+    audio.addEventListener('ended', onEnded)
+    audio.addEventListener('play', onPlay)
+    audio.addEventListener('pause', onPause)
+    if (audio.duration) setDuration(audio.duration)
+    return () => {
+      audio.removeEventListener('timeupdate', onTimeUpdate)
+      audio.removeEventListener('loadedmetadata', onLoadedMetadata)
+      audio.removeEventListener('ended', onEnded)
+      audio.removeEventListener('play', onPlay)
+      audio.removeEventListener('pause', onPause)
+    }
+  }, [audioUrl, audio])
+
+  useEffect(() => {
+    if (audio) audio.playbackRate = playbackRate
+  }, [audio, playbackRate])
+
+  const togglePlay = useCallback(() => {
+    if (!audio) return
+    if (isPlaying) audio.pause()
+    else audio.play()
+  }, [audio, isPlaying])
+
+  const seek = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const v = parseFloat(e.target.value)
+      if (audio && Number.isFinite(v)) {
+        audio.currentTime = v
+        setCurrentTime(v)
+      }
+    },
+    [audio]
+  )
 
   const handleSubmit = async () => {
     const trimmed = text.trim()
@@ -253,43 +310,115 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
               exit={{ opacity: 0, y: 10 }}
               transition={{ type: 'spring', stiffness: 280, damping: 24 }}
               style={{
-                background: 'linear-gradient(145deg, rgba(125,211,192,0.12) 0%, rgba(255,255,255,0.2) 100%)',
-                backdropFilter: 'blur(14px)',
-                WebkitBackdropFilter: 'blur(14px)',
-                border: '1px solid rgba(125,211,192,0.35)',
-                boxShadow: '0 8px 32px rgba(90,184,168,0.15), inset 0 1px 0 rgba(255,255,255,0.3)',
+                background: 'linear-gradient(160deg, rgba(125,211,192,0.18) 0%, rgba(255,255,255,0.22) 40%, rgba(248,252,251,0.2) 100%)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid rgba(125,211,192,0.4)',
+                boxShadow: '0 12px 40px rgba(90,184,168,0.18), inset 0 1px 0 rgba(255,255,255,0.5), 0 0 0 1px rgba(125,211,192,0.08)',
               }}
             >
               <div
-                className="absolute inset-0 pointer-events-none opacity-50"
+                className="absolute inset-0 pointer-events-none opacity-60"
                 style={{
-                  background: 'radial-gradient(ellipse 70% 60% at 50% 0%, rgba(125,211,192,0.2), transparent)',
+                  background: 'radial-gradient(ellipse 90% 70% at 50% -10%, rgba(125,211,192,0.25), transparent 60%), radial-gradient(ellipse 50% 50% at 100% 100%, rgba(255,255,255,0.15), transparent)',
                 }}
               />
-              <div className="relative flex items-center gap-3 mb-3">
-                <motion.span
-                  className="text-lg"
-                  animate={{ rotate: [0, 10, -10, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+              <audio ref={audioRef} src={audioUrl} preload="metadata" className="hidden" />
+              <div className="relative">
+                <div className="flex items-center gap-3 mb-4">
+                  <motion.span
+                    className="text-xl"
+                    animate={isPlaying ? { scale: [1, 1.1, 1], opacity: [1, 0.9, 1] } : {}}
+                    transition={{ duration: 1.5, repeat: isPlaying ? Infinity : 0 }}
+                  >
+                    ✨
+                  </motion.span>
+                  <p className="text-sm font-semibold text-[var(--color-forest-dark)] tracking-tight">Ответ ИИ</p>
+                </div>
+
+                <div
+                  className="rounded-2xl p-4 mb-4"
+                  style={{
+                    background: 'linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.35) 100%)',
+                    boxShadow: 'inset 0 2px 12px rgba(255,255,255,0.6), 0 4px 16px rgba(45,62,46,0.08)',
+                    border: '1px solid rgba(255,255,255,0.6)',
+                  }}
                 >
-                  ✨
-                </motion.span>
-                <p className="text-sm font-semibold text-[var(--color-forest-dark)]">Ответ ИИ</p>
-              </div>
-              <div
-                className="rounded-xl overflow-hidden p-2"
-                style={{
-                  background: 'rgba(255,255,255,0.4)',
-                  boxShadow: 'inset 0 2px 8px rgba(255,255,255,0.5)',
-                }}
-              >
-                <audio
-                  ref={audioRef}
-                  src={audioUrl}
-                  controls
-                  className="w-full h-12"
-                  style={{ accentColor: 'var(--color-glow-teal)' }}
-                />
+                  <div className="flex items-center gap-3">
+                    <motion.button
+                      type="button"
+                      onClick={togglePlay}
+                      className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-white transition-all active:scale-95"
+                      style={{
+                        background: 'linear-gradient(145deg, #5ab8a8 0%, #7dd3c0 100%)',
+                        boxShadow: '0 4px 14px rgba(90,184,168,0.4), inset 0 1px 0 rgba(255,255,255,0.3)',
+                        border: '1px solid rgba(255,255,255,0.35)',
+                      }}
+                      whileHover={{ scale: 1.05, boxShadow: '0 6px 20px rgba(90,184,168,0.45)' }}
+                      whileTap={{ scale: 0.96 }}
+                    >
+                      {isPlaying ? (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                          <rect x="6" y="4" width="4" height="16" rx="1" />
+                          <rect x="14" y="4" width="4" height="16" rx="1" />
+                        </svg>
+                      ) : (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden style={{ marginLeft: 2 }}>
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      )}
+                    </motion.button>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <span className="text-xs font-medium tabular-nums text-[var(--color-text-secondary)]">
+                          {formatTime(currentTime)}
+                        </span>
+                        <span className="text-xs font-medium tabular-nums text-[var(--color-text-secondary)]">
+                          {formatTime(duration)}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={0}
+                        max={duration || 100}
+                        value={currentTime}
+                        onChange={seek}
+                        className="voice-progress w-full cursor-pointer"
+                        style={{
+                          background: `linear-gradient(to right, var(--color-glow-teal) 0%, var(--color-glow-teal) ${(duration ? (currentTime / duration) * 100 : 0)}%, rgba(201,184,232,0.35) ${(duration ? (currentTime / duration) * 100 : 0)}%, rgba(201,184,232,0.35) 100%)`,
+                          WebkitAppearance: 'none',
+                          appearance: 'none',
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-[var(--color-text-secondary)]">Скорость</span>
+                  <div className="flex gap-1.5">
+                    {SPEEDS.map((speed) => (
+                      <motion.button
+                        key={speed}
+                        type="button"
+                        onClick={() => setPlaybackRate(speed)}
+                        className="min-w-[2.5rem] py-1.5 px-2 rounded-lg text-xs font-semibold transition-colors"
+                        style={{
+                          background: playbackRate === speed
+                            ? 'linear-gradient(145deg, rgba(125,211,192,0.5) 0%, rgba(90,184,168,0.4) 100%)'
+                            : 'rgba(255,255,255,0.4)',
+                          color: playbackRate === speed ? 'var(--color-forest-dark)' : 'var(--color-text-secondary)',
+                          border: `1px solid ${playbackRate === speed ? 'rgba(125,211,192,0.5)' : 'rgba(255,255,255,0.5)'}`,
+                          boxShadow: playbackRate === speed ? 'inset 0 1px 0 rgba(255,255,255,0.4)' : 'none',
+                        }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        {speed === 1 ? '1×' : `${speed}×`}
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </motion.div>
           )}
