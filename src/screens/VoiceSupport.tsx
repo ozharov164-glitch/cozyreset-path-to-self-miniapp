@@ -93,6 +93,11 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
               {error}
             </p>
           )}
+          {loading && (
+            <p className="text-xs text-[var(--color-text-secondary)] mb-2">
+              Ответ готовится (до 2 минут): генерирую текст и голос…
+            </p>
+          )}
           <button
             type="button"
             onClick={handleSubmit}

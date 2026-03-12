@@ -397,20 +397,41 @@ export async function apiAiSuggestions(testTitle?: string, avg?: number): Promis
   return { suggestions: Array.isArray(data.suggestions) ? data.suggestions : [] }
 }
 
+/** Таймаут запроса голосового ответа (LLM + TTS может занять до 1–2 минут). */
+const VOICE_REPLY_TIMEOUT_MS = 120000
+
 /** Голосовой ответ ИИ: пользователь отправляет текст, получает MP3. */
 export async function apiVoiceReply(text: string): Promise<{ blob: Blob } | { error: string; status?: number }> {
-  const res = await fetchWithAuth('/mini-app/voice-reply', {
-    method: 'POST',
-    body: JSON.stringify({ text: text.trim() }),
-  })
-  if (!res.ok) {
-    const ct = res.headers.get('content-type') || ''
-    const errorMsg =
-      ct.includes('application/json')
-        ? ((await res.json().catch(() => ({})) as { error?: string }).error) || res.statusText
-        : res.statusText
-    return { error: errorMsg || 'Ошибка запроса', status: res.status }
+  const controller = new AbortController()
+  const timeoutId = window.setTimeout(() => controller.abort(), VOICE_REPLY_TIMEOUT_MS)
+  try {
+    const res = await fetchWithAuth('/mini-app/voice-reply', {
+      method: 'POST',
+      body: JSON.stringify({ text: text.trim() }),
+      signal: controller.signal,
+    })
+    if (!res.ok) {
+      const ct = res.headers.get('content-type') || ''
+      const errorMsg =
+        ct.includes('application/json')
+          ? ((await res.json().catch(() => ({})) as { error?: string }).error) || res.statusText
+          : res.statusText
+      const message =
+        res.status === 401
+          ? 'Открой приложение заново из чата с ботом — нужна авторизация'
+          : res.status === 429
+            ? 'Слишком много запросов. Подожди минуту и попробуй снова.'
+            : errorMsg || 'Ошибка запроса'
+      return { error: message, status: res.status }
+    }
+    const blob = await res.blob()
+    return { blob }
+  } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') {
+      return { error: 'Превышено время ожидания. Попробуй ещё раз или сократи текст.', status: 0 }
+    }
+    return { error: 'Нет связи с сервером. Проверь интернет и попробуй снова.', status: 0 }
+  } finally {
+    window.clearTimeout(timeoutId)
   }
-  const blob = await res.blob()
-  return { blob }
 }
