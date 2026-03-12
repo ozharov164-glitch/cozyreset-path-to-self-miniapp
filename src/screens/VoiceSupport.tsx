@@ -38,6 +38,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [playbackRate, setPlaybackRate] = useState<number>(1)
+  const [audioReady, setAudioReady] = useState(false)
 
   useEffect(() => {
     return () => {
@@ -45,8 +46,22 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     }
   }, [audioUrl])
 
-  const audio = audioRef.current
   useEffect(() => {
+    if (!audioUrl) {
+      setAudioReady(false)
+      setIsPlaying(false)
+      setCurrentTime(0)
+      setDuration(0)
+    }
+  }, [audioUrl])
+
+  const setAudioRef = useCallback((el: HTMLAudioElement | null) => {
+    audioRef.current = el
+    setAudioReady(!!el)
+  }, [])
+
+  useEffect(() => {
+    const audio = audioRef.current
     if (!audio || !audioUrl) return
     const onTimeUpdate = () => setCurrentTime(audio.currentTime)
     const onLoadedMetadata = () => setDuration(audio.duration)
@@ -58,7 +73,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     audio.addEventListener('ended', onEnded)
     audio.addEventListener('play', onPlay)
     audio.addEventListener('pause', onPause)
-    if (audio.duration) setDuration(audio.duration)
+    if (Number.isFinite(audio.duration)) setDuration(audio.duration)
     return () => {
       audio.removeEventListener('timeupdate', onTimeUpdate)
       audio.removeEventListener('loadedmetadata', onLoadedMetadata)
@@ -66,28 +81,28 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
       audio.removeEventListener('play', onPlay)
       audio.removeEventListener('pause', onPause)
     }
-  }, [audioUrl, audio])
+  }, [audioUrl, audioReady])
 
   useEffect(() => {
+    const audio = audioRef.current
     if (audio) audio.playbackRate = playbackRate
-  }, [audio, playbackRate])
+  }, [audioReady, playbackRate])
 
   const togglePlay = useCallback(() => {
+    const audio = audioRef.current
     if (!audio) return
     if (isPlaying) audio.pause()
     else audio.play()
-  }, [audio, isPlaying])
+  }, [isPlaying])
 
-  const seek = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const v = parseFloat(e.target.value)
-      if (audio && Number.isFinite(v)) {
-        audio.currentTime = v
-        setCurrentTime(v)
-      }
-    },
-    [audio]
-  )
+  const seek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = parseFloat(e.target.value)
+    const audio = audioRef.current
+    if (audio && Number.isFinite(v)) {
+      audio.currentTime = v
+      setCurrentTime(v)
+    }
+  }, [])
 
   const handleSubmit = async () => {
     const trimmed = text.trim()
@@ -323,7 +338,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                   background: 'radial-gradient(ellipse 90% 70% at 50% -10%, rgba(125,211,192,0.25), transparent 60%), radial-gradient(ellipse 50% 50% at 100% 100%, rgba(255,255,255,0.15), transparent)',
                 }}
               />
-              <audio ref={audioRef} src={audioUrl} preload="metadata" className="hidden" />
+              <audio ref={setAudioRef} src={audioUrl} preload="metadata" className="hidden" />
               <div className="relative">
                 <div className="flex items-center gap-3 mb-4">
                   <motion.span
