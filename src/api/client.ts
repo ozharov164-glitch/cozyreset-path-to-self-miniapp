@@ -396,3 +396,21 @@ export async function apiAiSuggestions(testTitle?: string, avg?: number): Promis
   const data = await res.json().catch(() => ({})) as { suggestions?: string[] }
   return { suggestions: Array.isArray(data.suggestions) ? data.suggestions : [] }
 }
+
+/** Голосовой ответ ИИ: пользователь отправляет текст, получает MP3. */
+export async function apiVoiceReply(text: string): Promise<{ blob: Blob } | { error: string; status?: number }> {
+  const res = await fetchWithAuth('/mini-app/voice-reply', {
+    method: 'POST',
+    body: JSON.stringify({ text: text.trim() }),
+  })
+  if (!res.ok) {
+    const ct = res.headers.get('content-type') || ''
+    const errorMsg =
+      ct.includes('application/json')
+        ? ((await res.json().catch(() => ({})) as { error?: string }).error) || res.statusText
+        : res.statusText
+    return { error: errorMsg || 'Ошибка запроса', status: res.status }
+  }
+  const blob = await res.blob()
+  return { blob }
+}
