@@ -109,15 +109,17 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     const blob = audioBlobRef.current
     if (!blob) return
     const url = URL.createObjectURL(blob)
+    const dateStr = new Date().toISOString().slice(0, 10)
+    const filename = `golosovaya-podderzhka-${dateStr}.mp3`
     const a = document.createElement('a')
     a.href = url
-    const now = new Date()
-    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-    a.download = `golosovaya-podderzhka-${dateStr}.mp3`
+    a.download = filename
+    a.style.display = 'none'
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    // Отложенный revoke: даём браузеру/WebView время начать загрузку (иначе файл не сохраняется)
+    setTimeout(() => URL.revokeObjectURL(url), 2000)
   }, [])
 
   const handleSubmit = async () => {
@@ -441,14 +443,19 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                   </div>
                 </div>
 
-                <motion.button
-                  type="button"
-                  onClick={handleDownload}
-                  className="w-full py-3.5 px-4 rounded-xl min-h-[48px] flex items-center justify-center gap-2.5 font-semibold text-[var(--color-forest-dark)] relative overflow-hidden transition-all duration-300"
+                <motion.a
+                  href={audioUrl ?? '#'}
+                  download={audioUrl ? `golosovaya-podderzhka-${new Date().toISOString().slice(0, 10)}.mp3` : undefined}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    handleDownload()
+                  }}
+                  className="w-full py-3.5 px-4 rounded-xl min-h-[48px] flex items-center justify-center gap-2.5 font-semibold text-[var(--color-forest-dark)] relative overflow-hidden transition-all duration-300 no-underline"
                   style={{
                     background: 'linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(248,252,251,0.9) 100%)',
                     border: '2px solid rgba(125,211,192,0.6)',
                     boxShadow: '0 4px 16px rgba(90,184,168,0.25), inset 0 1px 0 rgba(255,255,255,0.8)',
+                    color: 'var(--color-forest-dark)',
                   }}
                   whileHover={{
                     scale: 1.02,
@@ -463,7 +470,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                     <line x1="12" y1="15" x2="12" y2="3" />
                   </svg>
                   <span>Скачать на телефон</span>
-                </motion.button>
+                </motion.a>
               </div>
             </motion.div>
           )}
