@@ -254,12 +254,21 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
               Ответ голосом
             </motion.h2>
             <motion.p
-              className="text-sm text-[var(--color-text-secondary)] mb-4"
+              className="text-sm text-[var(--color-text-secondary)] mb-2"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.15 }}
             >
               Напиши, что чувствуешь или о чём хочешь поговорить — ИИ-поддержка ответит тёплым голосом.
+            </motion.p>
+            <motion.p
+              className="text-xs text-[var(--color-text-secondary)] mb-4 opacity-90"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              style={{ fontStyle: 'italic' }}
+            >
+              Голосовой ответ не сохраняется после выхода из раздела или приложения. Чтобы слушать повторно — сохрани его в Файлы внизу.
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 6 }}
@@ -380,7 +389,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
               />
               <audio ref={setAudioRef} src={audioUrl} preload="metadata" className="hidden" />
               <div className="relative">
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-3 mb-3">
                   <motion.span
                     className="text-xl"
                     animate={isPlaying ? { scale: [1, 1.1, 1], opacity: [1, 0.9, 1] } : {}}
@@ -389,6 +398,22 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                     ✨
                   </motion.span>
                   <p className="text-sm font-semibold text-[var(--color-forest-dark)] tracking-tight">Ответ ИИ</p>
+                </div>
+
+                <div
+                  className="rounded-xl p-3.5 mb-4 flex items-start gap-3"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(244,212,166,0.22) 0%, rgba(232,220,235,0.18) 100%)',
+                    border: '1px solid rgba(184,164,224,0.35)',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5)',
+                  }}
+                >
+                  <span className="flex-shrink-0 text-lg leading-none mt-0.5" aria-hidden>
+                    💡
+                  </span>
+                  <p className="text-xs font-medium text-[var(--color-text-primary)] leading-snug" style={{ color: 'var(--color-forest-dark)' }}>
+                    Ответ в голосовом формате не сохраняется после выхода из раздела или закрытия приложения. Чтобы прослушивать его повторно — сохрани файл кнопкой ниже.
+                  </p>
                 </div>
 
                 <div
