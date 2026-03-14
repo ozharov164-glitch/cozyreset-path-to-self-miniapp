@@ -67,7 +67,7 @@ function AppContent() {
       <div
         className="fixed inset-0 z-0 pointer-events-none"
         style={{
-          background: 'linear-gradient(180deg, #c9b8e8 0%, #b8a8d8 45%, #a898c8 100%)',
+          background: 'linear-gradient(165deg, #e8e0f4 0%, #d4c8f0 28%, #c4b4e8 55%, #b8a4e0 82%, #a894d8 100%)',
         }}
         aria-hidden
       />

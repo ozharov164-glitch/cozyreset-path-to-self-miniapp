@@ -28,43 +28,44 @@ export function Catalog({ onBack }: CatalogProps) {
 
   return (
     <div className="min-h-screen flex flex-col safe-area pb-6">
-      <header className="glass-card h-14 flex items-center px-4 mb-4 rounded-2xl">
-        <button type="button" onClick={onBack} className="text-[var(--color-glow-teal)] font-medium">
+      <header className="card-premium h-14 flex items-center px-4 mb-5 rounded-2xl">
+        <button type="button" onClick={onBack} className="text-[var(--color-glow-teal)] font-semibold min-h-[44px] min-w-[52px] flex items-center -ml-1" style={{ WebkitTapHighlightColor: 'transparent' }}>
           ← Назад
         </button>
-        <h1 className="flex-1 text-center text-base font-semibold text-[var(--color-text-primary)]">
+        <h1 className="flex-1 text-center text-base font-bold text-[var(--color-text-primary)] tracking-tight">
           Каталог тестов
         </h1>
         <span className="w-14" />
       </header>
 
-      <div className="flex flex-col gap-3 max-w-[420px] mx-auto w-full px-1">
+      <div className="flex flex-col gap-4 max-w-[420px] mx-auto w-full px-1">
         {TESTS.map((test, i) => {
           const isCompleted = completedTestIds.has(test.id)
           return (
             <motion.div
               key={test.id}
-              className="glass-card p-4"
+              className="card-premium p-5"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.08, duration: 0.4 }}
+              transition={{ delay: i * 0.07, duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
-              <div className="flex items-start justify-between gap-2 mb-1">
-                <h3 className="font-semibold text-[var(--color-text-primary)]">{test.title}</h3>
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <h3 className="font-bold text-[var(--color-text-primary)] text-base">{test.title}</h3>
                 {isCompleted && (
-                  <span className="shrink-0 text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--color-glow-teal)]/25 text-[var(--color-glow-teal)]">
+                  <span className="shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full bg-[var(--color-glow-teal)]/20 text-[var(--color-glow-teal)]">
                     Пройден
                   </span>
                 )}
               </div>
-              <p className="text-sm text-[var(--color-text-secondary)] mb-3">{test.description}</p>
-              <p className="text-xs text-[var(--color-text-secondary)] mb-3">
+              <p className="text-sm text-[var(--color-text-secondary)] mb-3 leading-relaxed">{test.description}</p>
+              <p className="text-xs text-[var(--color-text-secondary)] mb-4">
                 {test.questionCount} вопросов
               </p>
               <button
                 type="button"
                 onClick={() => startTest(test.id)}
-                className="w-full py-2.5 px-4 rounded-xl font-medium border-2 border-[var(--color-lavender)] text-[var(--color-text-primary)] hover:bg-white/10 active:scale-[0.98] transition-all"
+                className="w-full py-3 px-4 rounded-xl btn-secondary min-h-[48px]"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               >
                 {isCompleted ? 'Пройти снова (после терапии с ботом)' : 'Пройти'}
               </button>

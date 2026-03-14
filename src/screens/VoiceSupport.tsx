@@ -141,14 +141,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
       transition={{ duration: 0.35 }}
     >
       <motion.header
-        className="flex items-center px-4 mb-4 rounded-2xl h-14"
-        style={{
-          background: 'linear-gradient(135deg, rgba(255,255,255,0.22) 0%, rgba(249,245,255,0.18) 100%)',
-          backdropFilter: 'blur(14px)',
-          WebkitBackdropFilter: 'blur(14px)',
-          border: '1px solid rgba(255,255,255,0.35)',
-          boxShadow: '0 4px 24px rgba(45,62,46,0.12), inset 0 1px 0 rgba(255,255,255,0.4)',
-        }}
+        className="card-premium flex items-center px-4 mb-5 rounded-2xl h-14"
         initial={{ y: -8, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -156,12 +149,12 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
         <button
           type="button"
           onClick={onBack}
-          className="min-w-[52px] text-left font-medium text-[var(--color-forest-dark)] active:opacity-80 transition-opacity"
+          className="min-w-[52px] text-left font-semibold text-[var(--color-forest-dark)] active:opacity-80 transition-opacity"
           style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
         >
           ← Назад
         </button>
-        <h1 className="flex-1 text-center text-base font-semibold text-[var(--color-text-primary)] tracking-tight">
+        <h1 className="flex-1 text-center text-base font-bold text-[var(--color-text-primary)] tracking-tight">
           Голосовая поддержка
         </h1>
         <span className="w-14" />
@@ -298,13 +291,8 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
               type="button"
               onClick={handleSubmit}
               disabled={loading}
-              className="w-full py-3.5 px-4 rounded-xl font-semibold text-[var(--color-text-primary)] relative overflow-hidden transition-all duration-300 disabled:opacity-60 disabled:pointer-events-none"
-              style={{
-                background: 'linear-gradient(135deg, #e8b4b8 0%, #f0c4c8 50%, #e8b4b8 100%)',
-                boxShadow: '0 6px 20px rgba(232,180,184,0.45), inset 0 1px 0 rgba(255,255,255,0.5)',
-                border: '1px solid rgba(255,255,255,0.4)',
-              }}
-              whileHover={!loading ? { scale: 1.02, boxShadow: '0 8px 28px rgba(232,180,184,0.5)' } : {}}
+              className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] relative overflow-hidden transition-all duration-300 disabled:opacity-60 disabled:pointer-events-none"
+              whileHover={!loading ? { scale: 1.02 } : {}}
               whileTap={!loading ? { scale: 0.98 } : {}}
             >
               <span className="relative z-10">

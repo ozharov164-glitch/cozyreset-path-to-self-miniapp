@@ -54,24 +54,20 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
 
   return (
     <div className="min-h-screen flex flex-col safe-area">
-      <header className="glass-card h-14 flex items-center justify-between px-4 mb-4 rounded-2xl">
+      <header className="card-premium h-14 flex items-center justify-between px-4 mb-5 rounded-2xl">
         <button
           type="button"
           onClick={() => goBackToBot()}
-          className="min-h-[44px] min-w-[52px] flex items-center justify-center py-2 px-3 -my-1 -ml-1 rounded-xl text-sm font-semibold select-none tracking-tight"
-          style={{
-            touchAction: 'manipulation',
-            WebkitTapHighlightColor: 'transparent',
-            color: 'var(--color-forest-dark)',
-          }}
+          className="min-h-[44px] min-w-[52px] flex items-center justify-center py-2 px-3 -my-1 -ml-1 rounded-xl text-sm font-semibold select-none tracking-tight text-[var(--color-forest-dark)]"
+          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
         >
           ← В бота
         </button>
-        <h1 className="text-base font-semibold text-[var(--color-text-primary)]">Путь к Себе</h1>
+        <h1 className="text-base font-bold text-[var(--color-text-primary)] tracking-tight">Путь к Себе</h1>
         <button
           type="button"
           onClick={() => onOpenHistory()}
-          className="min-h-[44px] min-w-[52px] flex items-center justify-center py-2 px-3 -my-1 -mr-1 rounded-xl text-sm font-medium text-[var(--color-text-secondary)] active:bg-white/20 select-none"
+          className="min-h-[44px] min-w-[52px] flex items-center justify-center py-2 px-3 -my-1 -mr-1 rounded-xl text-sm font-medium text-[var(--color-glow-teal)] active:opacity-80 select-none"
           style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
         >
           История
@@ -80,59 +76,59 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
 
       <div className="flex-1 flex flex-col max-w-[420px] mx-auto w-full px-3 pb-6">
         <motion.div
-          className="glass-card p-5 mb-4"
-          initial={{ opacity: 0, y: 12 }}
+          className="card-premium p-5 mb-4"
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
+          transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
-          <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-1">
+          <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-1 tracking-tight">
             Привет, {userName}!
           </h2>
-          <p className="text-sm text-[var(--color-text-secondary)] mb-4">
+          <p className="text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
             Здесь — срез твоего состояния. Каждый тест помогает заметить динамику и опереться на себя.
           </p>
           <button
             type="button"
             onClick={onOpenCatalog}
-            className="w-full py-3.5 px-4 rounded-xl font-semibold text-[var(--color-text-primary)] bg-[var(--color-sunset-rose)] hover:opacity-95 active:scale-[0.98] transition-all shadow-md"
+            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px]"
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
             Каталог тестов
           </button>
         </motion.div>
 
-        {/* Голосовая поддержка — текст → ответ ИИ голосом */}
         <motion.div
-          className="glass-card p-5 mb-4"
-          initial={{ opacity: 0, y: 10 }}
+          className="card-premium p-5 mb-4"
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.05 }}
+          transition={{ duration: 0.45, delay: 0.06, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
-          <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-1 flex items-center gap-2">
+          <h3 className="text-base font-bold text-[var(--color-text-primary)] mb-1 flex items-center gap-2">
             <span aria-hidden>🎙️</span> Голосовая поддержка
           </h3>
-          <p className="text-sm text-[var(--color-text-secondary)] mb-4">
+          <p className="text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
             Напиши, что на душе — ИИ ответит тёплым голосом, в стиле психологической поддержки.
           </p>
           <button
             type="button"
             onClick={() => useAppStore.getState().setScreen('voiceSupport')}
-            className="w-full py-3.5 px-4 rounded-xl font-semibold text-[var(--color-text-primary)] bg-[var(--color-sunset-rose)] hover:opacity-95 active:scale-[0.98] transition-all shadow-md"
+            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px]"
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
             Ответ голосом
           </button>
         </motion.div>
 
-        {/* Игра «Ритм Сердца» — тап в такт дыханию, комментарий ИИ после сессии */}
         <motion.div
-          className="glass-card p-5 mb-4"
-          initial={{ opacity: 0, y: 10 }}
+          className="card-premium p-5 mb-4"
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.08 }}
+          transition={{ duration: 0.45, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
-          <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-1 flex items-center gap-2">
+          <h3 className="text-base font-bold text-[var(--color-text-primary)] mb-1 flex items-center gap-2">
             <span aria-hidden>❤️</span> Ритм Сердца
           </h3>
-          <p className="text-sm text-[var(--color-text-secondary)] mb-4">
+          <p className="text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
             Тап в такт дыханию — 90 секунд, затем комментарий от ИИ и короткая мелодия.
           </p>
           <button
@@ -143,28 +139,23 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
               const gameUrl = `${backend}/heart-rhythm/${token ? `?token=${encodeURIComponent(token)}` : ''}`
               window.location.href = gameUrl
             }}
-            className="w-full py-3.5 px-4 rounded-xl font-semibold text-[var(--color-text-primary)] border-2 border-[var(--color-lavender)] hover:bg-white/20 active:scale-[0.98] transition-all"
+            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px]"
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
             Играть
           </button>
         </motion.div>
 
-        {/* Блок: Общая статистика состояния */}
         <motion.div
-          className="rounded-2xl p-5 mb-4"
-          initial={{ opacity: 0, y: 10 }}
+          className="card-premium rounded-2xl p-5 mb-4"
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          style={{
-            background: 'linear-gradient(145deg, rgba(255,255,255,0.85) 0%, rgba(249,245,255,0.9) 100%)',
-            border: '1px solid rgba(201,184,232,0.4)',
-            boxShadow: '0 4px 24px rgba(45,42,38,0.08)',
-          }}
+          transition={{ duration: 0.45, delay: 0.14, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
-          <h3 className="text-base font-semibold text-[var(--color-forest-dark)] mb-1">
+          <h3 className="text-base font-bold text-[var(--color-forest-dark)] mb-1">
             Твоё состояние
           </h3>
-          <p className="text-xs text-[var(--color-text-secondary)] mb-4">
+          <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
             Регулярные замеры помогают видеть прогресс и бережнее относиться к себе. Здесь — твой срез.
           </p>
 
@@ -204,13 +195,8 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
                     <button
                       type="button"
                       onClick={() => openResult(item.id)}
-                      className="w-full text-left min-h-[44px] py-2.5 px-3 rounded-xl transition-all hover:bg-white/60 active:scale-[0.99] select-none"
-                      style={{
-                        border: '1px solid rgba(201,184,232,0.35)',
-                        color: 'var(--color-text-primary)',
-                        touchAction: 'manipulation',
-                        WebkitTapHighlightColor: 'transparent',
-                      }}
+                      className="w-full text-left min-h-[44px] py-2.5 px-3 rounded-xl transition-all hover:bg-[var(--color-lavender-soft)]/20 active:scale-[0.99] select-none border border-[var(--color-lavender)]/30 text-[var(--color-text-primary)]"
+                      style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                     >
                       <span className="block text-sm font-medium truncate">{item.testTitle}</span>
                       <span className="block text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
@@ -224,7 +210,8 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
                 <button
                   type="button"
                   onClick={onOpenHistory}
-                  className="mt-3 text-sm font-medium w-full py-2 rounded-xl border border-[var(--color-lavender)]/50 text-[var(--color-glow-teal)] hover:bg-white/50 transition-colors"
+                  className="mt-3 text-sm font-semibold w-full py-2.5 rounded-xl btn-secondary"
+                  style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                 >
                   Вся история
                 </button>
@@ -235,32 +222,28 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
 
         {items.length > 0 && suggestions.length > 0 && (
           <motion.div
-            className="rounded-2xl p-4 mb-4"
-            initial={{ opacity: 0, y: 8 }}
+            className="card-premium rounded-2xl p-5 mb-4"
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: 0.15 }}
-            style={{
-              background: 'linear-gradient(145deg, rgba(125,211,192,0.18) 0%, rgba(201,184,232,0.12) 100%)',
-              border: '1px solid rgba(125,211,192,0.35)',
-            }}
+            transition={{ duration: 0.4, delay: 0.18, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
-            <h4 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-forest-dark)' }}>
+            <h4 className="text-base font-bold text-[var(--color-forest-dark)] mb-2">
               Проработать с ИИ в боте
             </h4>
-            <p className="text-xs text-[var(--color-text-secondary)] mb-1">
+            <p className="text-sm text-[var(--color-text-secondary)] mb-1 leading-relaxed">
               На основе твоих тестов — темы, которые стоит обсудить с поддержкой в боте:
             </p>
-            <p className="text-xs mb-2" style={{ color: 'var(--color-glow-teal)' }}>
+            <p className="text-xs mb-3 text-[var(--color-glow-teal)] font-medium">
               Нажми на вопрос — скопируется
             </p>
-            <ul className="space-y-1.5 mb-3">
+            <ul className="space-y-2 mb-4">
               {suggestions.slice(0, 4).map((s, i) => (
-                <li key={i} className="text-sm flex gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                <li key={i} className="text-sm flex gap-2 text-[var(--color-text-primary)]">
                   <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
                   <button
                     type="button"
                     onClick={() => copyQuestionToClipboard(s)}
-                    className="copyable-question text-left flex-1 min-h-[44px] py-1.5 px-2 -mx-2 rounded-lg"
+                    className="copyable-question text-left flex-1 min-h-[44px] py-2 px-2 -mx-2 rounded-lg hover:bg-[var(--color-lavender-soft)]/15 transition-colors"
                   >
                     {s}
                   </button>
@@ -270,7 +253,8 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
             <button
               type="button"
               onClick={() => goBackToBot()}
-              className="block w-full py-2.5 px-4 rounded-xl font-medium text-center text-[var(--color-text-primary)] bg-[var(--color-sunset-rose)]/90 hover:opacity-95 active:scale-[0.98] transition-all"
+              className="block w-full py-3 px-4 rounded-xl btn-primary min-h-[48px]"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
               Вернуться в бота
             </button>

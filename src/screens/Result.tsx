@@ -178,8 +178,8 @@ export function Result({ onBack }: ResultProps) {
   if (isOpeningFromHistory && isLoadingResult) {
     return (
       <div className="min-h-screen flex flex-col safe-area pb-8">
-        <header className="glass-card h-14 flex items-center px-4 mb-4 rounded-2xl">
-          <button type="button" onClick={() => { setOpenResultId(null); onBack() }} className="text-[var(--color-glow-teal)] font-medium">
+        <header className="card-premium h-14 flex items-center px-4 mb-5 rounded-2xl">
+          <button type="button" onClick={() => { setOpenResultId(null); onBack() }} className="text-[var(--color-glow-teal)] font-semibold min-h-[44px] min-w-[52px] flex items-center -ml-1">
             ← Назад
           </button>
           <h1 className="flex-1 text-center text-base font-semibold" style={{ color: '#2d2a26' }}>Результат</h1>
@@ -194,8 +194,8 @@ export function Result({ onBack }: ResultProps) {
 
   return (
     <div className="min-h-screen flex flex-col safe-area pb-8" style={{ overflow: 'auto' }}>
-      <header className="glass-card h-14 flex items-center px-4 mb-4 rounded-2xl flex-shrink-0">
-        <button type="button" onClick={handleBack} className="text-[var(--color-glow-teal)] font-medium">
+      <header className="card-premium h-14 flex items-center px-4 mb-5 rounded-2xl flex-shrink-0">
+        <button type="button" onClick={handleBack} className="text-[var(--color-glow-teal)] font-semibold min-h-[44px] min-w-[52px] flex items-center -ml-1">
           ← Назад
         </button>
         <h1 className="flex-1 text-center text-base font-semibold" style={{ color: '#2d2a26' }}>
