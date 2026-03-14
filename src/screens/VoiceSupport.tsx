@@ -33,6 +33,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
   const audioBlobRef = useRef<Blob | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -106,21 +107,27 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   }, [])
 
   const handleDownload = useCallback(() => {
+    // Во внешнем браузере ссылка откроется с Content-Disposition: attachment — файл сохранится; в WebView blob открывался как плеер
+    const url = downloadUrl || null
+    const openLink = (window as unknown as { Telegram?: { WebApp?: { openLink?: (u: string) => void } } }).Telegram?.WebApp?.openLink
+    if (url && typeof openLink === 'function') {
+      openLink(url)
+      return
+    }
     const blob = audioBlobRef.current
     if (!blob) return
-    const url = URL.createObjectURL(blob)
+    const blobUrl = URL.createObjectURL(blob)
     const dateStr = new Date().toISOString().slice(0, 10)
     const filename = `golosovaya-podderzhka-${dateStr}.mp3`
     const a = document.createElement('a')
-    a.href = url
+    a.href = blobUrl
     a.download = filename
     a.style.display = 'none'
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
-    // Отложенный revoke: даём браузеру/WebView время начать загрузку (иначе файл не сохраняется)
-    setTimeout(() => URL.revokeObjectURL(url), 2000)
-  }, [])
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 2000)
+  }, [downloadUrl])
 
   const handleSubmit = async () => {
     const trimmed = text.trim()
@@ -138,6 +145,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
       setAudioUrl(null)
     }
     audioBlobRef.current = null
+    setDownloadUrl(null)
     setLoading(true)
     try {
       const result = await apiVoiceReply(trimmed)
@@ -146,6 +154,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
         return
       }
       audioBlobRef.current = result.blob
+      if (result.downloadUrl) setDownloadUrl(result.downloadUrl)
       const url = URL.createObjectURL(result.blob)
       setAudioUrl(url)
     } finally {

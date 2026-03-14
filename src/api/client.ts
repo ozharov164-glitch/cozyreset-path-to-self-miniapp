@@ -400,8 +400,8 @@ export async function apiAiSuggestions(testTitle?: string, avg?: number): Promis
 /** Таймаут запроса голосового ответа (LLM + TTS может занять до 1–2 минут). */
 const VOICE_REPLY_TIMEOUT_MS = 120000
 
-/** Голосовой ответ ИИ: пользователь отправляет текст, получает MP3. */
-export async function apiVoiceReply(text: string): Promise<{ blob: Blob } | { error: string; status?: number }> {
+/** Голосовой ответ ИИ: пользователь отправляет текст, получает MP3. downloadUrl — временная ссылка для скачивания во внешнем браузере. */
+export async function apiVoiceReply(text: string): Promise<{ blob: Blob; downloadUrl?: string | null } | { error: string; status?: number }> {
   const controller = new AbortController()
   const timeoutId = window.setTimeout(() => controller.abort(), VOICE_REPLY_TIMEOUT_MS)
   try {
@@ -425,7 +425,8 @@ export async function apiVoiceReply(text: string): Promise<{ blob: Blob } | { er
       return { error: message, status: res.status }
     }
     const blob = await res.blob()
-    return { blob }
+    const downloadUrl = res.headers.get('X-Voice-Download-URL')?.trim() || null
+    return { blob, downloadUrl }
   } catch (e) {
     if (e instanceof Error && e.name === 'AbortError') {
       return { error: 'Превышено время ожидания. Попробуй ещё раз или сократи текст.', status: 0 }
