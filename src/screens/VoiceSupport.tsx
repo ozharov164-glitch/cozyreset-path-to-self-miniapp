@@ -34,6 +34,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   const [error, setError] = useState<string | null>(null)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
+  const [copyDone, setCopyDone] = useState(false)
   const audioBlobRef = useRef<Blob | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -106,19 +107,40 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     }
   }, [])
 
-  const handleDownload = useCallback(() => {
-    // Во внешнем браузере ссылка откроется с Content-Disposition: attachment — файл сохранится; в WebView blob открывался как плеер
-    const url = downloadUrl || null
-    const openLink = (window as unknown as { Telegram?: { WebApp?: { openLink?: (u: string) => void } } }).Telegram?.WebApp?.openLink
-    if (url && typeof openLink === 'function') {
-      openLink(url)
-      return
-    }
+  const copyDownloadLink = useCallback(() => {
+    if (!downloadUrl) return
+    navigator.clipboard?.writeText(downloadUrl).then(() => {
+      setCopyDone(true)
+      setTimeout(() => setCopyDone(false), 2500)
+    })
+  }, [downloadUrl])
+
+  const handleDownload = useCallback(async () => {
     const blob = audioBlobRef.current
     if (!blob) return
-    const blobUrl = URL.createObjectURL(blob)
     const dateStr = new Date().toISOString().slice(0, 10)
     const filename = `golosovaya-podderzhka-${dateStr}.mp3`
+    const file = new File([blob], filename, { type: 'audio/mpeg' })
+
+    // Web Share API: меню «Поделиться» → «Сохранить в Файлы»; пользователь остаётся в приложении
+    if (typeof navigator.share === 'function') {
+      try {
+        const canShare = typeof navigator.canShare === 'function' ? navigator.canShare({ files: [file] }) : true
+        if (canShare) {
+          await navigator.share({
+            files: [file],
+            title: 'Голосовая поддержка',
+            text: 'Ответ ИИ',
+          })
+          return
+        }
+      } catch (e) {
+        if ((e as Error)?.name === 'AbortError') return // пользователь закрыл меню
+      }
+    }
+
+    // Fallback: программная загрузка (десктоп)
+    const blobUrl = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = blobUrl
     a.download = filename
@@ -127,7 +149,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     a.click()
     document.body.removeChild(a)
     setTimeout(() => URL.revokeObjectURL(blobUrl), 2000)
-  }, [downloadUrl])
+  }, [])
 
   const handleSubmit = async () => {
     const trimmed = text.trim()
@@ -146,6 +168,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     }
     audioBlobRef.current = null
     setDownloadUrl(null)
+    setCopyDone(false)
     setLoading(true)
     try {
       const result = await apiVoiceReply(trimmed)
@@ -452,14 +475,10 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                   </div>
                 </div>
 
-                <motion.a
-                  href={audioUrl ?? '#'}
-                  download={audioUrl ? `golosovaya-podderzhka-${new Date().toISOString().slice(0, 10)}.mp3` : undefined}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    handleDownload()
-                  }}
-                  className="w-full py-3.5 px-4 rounded-xl min-h-[48px] flex items-center justify-center gap-2.5 font-semibold text-[var(--color-forest-dark)] relative overflow-hidden transition-all duration-300 no-underline"
+                <motion.button
+                  type="button"
+                  onClick={() => void handleDownload()}
+                  className="w-full py-3.5 px-4 rounded-xl min-h-[48px] flex items-center justify-center gap-2.5 font-semibold text-[var(--color-forest-dark)] relative overflow-hidden transition-all duration-300"
                   style={{
                     background: 'linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(248,252,251,0.9) 100%)',
                     border: '2px solid rgba(125,211,192,0.6)',
@@ -478,8 +497,20 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                     <polyline points="7 10 12 15 17 10" />
                     <line x1="12" y1="15" x2="12" y2="3" />
                   </svg>
-                  <span>Скачать на телефон</span>
-                </motion.a>
+                  <span>Сохранить в Файлы</span>
+                </motion.button>
+                {downloadUrl && (
+                  <button
+                    type="button"
+                    onClick={copyDownloadLink}
+                    className="mt-2 w-full py-2 px-3 rounded-xl text-sm font-medium text-[var(--color-text-secondary)] border border-[rgba(125,211,192,0.4)] bg-transparent active:opacity-80"
+                  >
+                    {copyDone ? 'Ссылка скопирована' : 'Скопировать ссылку для скачивания'}
+                  </button>
+                )}
+                <p className="text-xs text-[var(--color-text-secondary)] text-center mt-2">
+                  Меню «Поделиться» → «Сохранить в Файлы». Можно вернуться и слушать здесь, потом — из сохранённого
+                </p>
               </div>
             </motion.div>
           )}
