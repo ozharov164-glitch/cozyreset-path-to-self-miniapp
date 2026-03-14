@@ -33,6 +33,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const audioBlobRef = useRef<Blob | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -104,6 +105,21 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     }
   }, [])
 
+  const handleDownload = useCallback(() => {
+    const blob = audioBlobRef.current
+    if (!blob) return
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    const now = new Date()
+    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    a.download = `golosovaya-podderzhka-${dateStr}.mp3`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }, [])
+
   const handleSubmit = async () => {
     const trimmed = text.trim()
     if (!trimmed) {
@@ -119,6 +135,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
       URL.revokeObjectURL(audioUrl)
       setAudioUrl(null)
     }
+    audioBlobRef.current = null
     setLoading(true)
     try {
       const result = await apiVoiceReply(trimmed)
@@ -126,6 +143,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
         setError(result.error || 'Ошибка запроса')
         return
       }
+      audioBlobRef.current = result.blob
       const url = URL.createObjectURL(result.blob)
       setAudioUrl(url)
     } finally {
@@ -397,7 +415,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center justify-between gap-2 mb-4">
                   <span className="text-xs text-[var(--color-text-secondary)]">Скорость</span>
                   <div className="flex gap-1.5">
                     {SPEEDS.map((speed) => (
@@ -422,6 +440,30 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                     ))}
                   </div>
                 </div>
+
+                <motion.button
+                  type="button"
+                  onClick={handleDownload}
+                  className="w-full py-3.5 px-4 rounded-xl min-h-[48px] flex items-center justify-center gap-2.5 font-semibold text-[var(--color-forest-dark)] relative overflow-hidden transition-all duration-300"
+                  style={{
+                    background: 'linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(248,252,251,0.9) 100%)',
+                    border: '2px solid rgba(125,211,192,0.6)',
+                    boxShadow: '0 4px 16px rgba(90,184,168,0.25), inset 0 1px 0 rgba(255,255,255,0.8)',
+                  }}
+                  whileHover={{
+                    scale: 1.02,
+                    boxShadow: '0 6px 24px rgba(90,184,168,0.35), inset 0 1px 0 rgba(255,255,255,0.9)',
+                    borderColor: 'rgba(125,211,192,0.85)',
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  <span>Скачать на телефон</span>
+                </motion.button>
               </div>
             </motion.div>
           )}
