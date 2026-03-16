@@ -24,15 +24,19 @@ export function TestFlow({ onBack }: TestFlowProps) {
   const total = test.questions.length
   const isLast = currentQuestionIndex === total - 1
   const currentQ = test.questions[currentQuestionIndex]
-  const questionText = currentQ?.text ?? `Вопрос ${currentQuestionIndex + 1} из ${total}. Оцени по шкале от 1 до 10.`
+  const rawText = currentQ?.text ?? `Вопрос ${currentQuestionIndex + 1} из ${total}. Оцени по шкале от 1 до 10.`
+  const scaleHintMarker = ' Оцени по шкале от 1 до 10:'
+  const scaleHintIdx = rawText.indexOf(scaleHintMarker)
+  const questionPart = scaleHintIdx >= 0 ? rawText.slice(0, scaleHintIdx).trim() : rawText
+  const scalePart = scaleHintIdx >= 0 ? rawText.slice(scaleHintIdx + scaleHintMarker.length).trim() : null
   const n = currentQuestionIndex + 1
   const progress = (n / total) * 100
 
   useEffect(() => {
     if (typeof console !== 'undefined' && console.log) {
-      console.log('[TestFlow] question text', n, total, questionText.slice(0, 80) + '...')
+      console.log('[TestFlow] question text', n, total, questionPart.slice(0, 80) + '...')
     }
-  }, [n, total, questionText])
+  }, [n, total, questionPart])
 
   const handleAnswer = (value: number) => {
     addAnswer(value)
@@ -71,7 +75,7 @@ export function TestFlow({ onBack }: TestFlowProps) {
           <AnimatePresence mode="wait">
             <motion.div
               key={currentQuestionIndex}
-              className="rounded-2xl mb-6 p-6 relative overflow-hidden"
+              className="rounded-2xl mb-6 p-6 relative overflow-hidden test-question-card"
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
@@ -84,12 +88,16 @@ export function TestFlow({ onBack }: TestFlowProps) {
               }}
             >
               <div className="absolute inset-0 pointer-events-none opacity-40" style={{ background: 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(125,211,192,0.15), transparent)' }} />
-              <p
-                className="relative m-0 break-words text-[var(--color-text-primary)] text-center leading-relaxed font-medium"
-                style={{ fontSize: 16, lineHeight: 1.55 }}
-              >
-                {questionText}
-              </p>
+              <div className="relative flex flex-col gap-4 text-center">
+                <p className="test-question-main m-0 break-words text-[var(--color-text-primary)] font-semibold leading-[1.5] tracking-tight">
+                  {questionPart}
+                </p>
+                {scalePart && (
+                  <p className="test-question-scale m-0 break-words text-[var(--color-text-secondary)] font-normal leading-[1.5] text-sm tracking-wide">
+                    {scalePart}
+                  </p>
+                )}
+              </div>
             </motion.div>
           </AnimatePresence>
           <div className="flex flex-wrap gap-2.5">
