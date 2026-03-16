@@ -357,6 +357,20 @@ export async function apiTestHistory(): Promise<{ items: Array<{ id: string; tes
   return data as { items: Array<{ id: string; testId: string; testTitle: string; completedAt: string }> }
 }
 
+export async function apiClearTestHistory(): Promise<{ ok: boolean; deleted: number } | { error: string }> {
+  const res = await fetchWithAuth('/mini-app/clear-test-history', { method: 'POST', body: '{}' })
+  const data = await res.json().catch(() => ({})) as { ok?: boolean; deleted?: number; error?: string }
+  if (!res.ok) return { error: data.error || 'Ошибка удаления' }
+  return { ok: !!data.ok, deleted: data.deleted ?? 0 }
+}
+
+export async function apiClearHeartRhythmHistory(): Promise<{ ok: boolean; deleted: number } | { error: string }> {
+  const res = await fetchWithAuth('/mini-app/clear-heart-rhythm-history', { method: 'POST', body: '{}' })
+  const data = await res.json().catch(() => ({})) as { ok?: boolean; deleted?: number; error?: string }
+  if (!res.ok) return { error: data.error || 'Ошибка удаления' }
+  return { ok: !!data.ok, deleted: data.deleted ?? 0 }
+}
+
 export async function apiTestResult(id: string): Promise<{
   id: string
   testId: string

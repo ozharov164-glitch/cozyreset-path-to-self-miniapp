@@ -51,16 +51,17 @@ export function TestFlow({ onBack }: TestFlowProps) {
         <span className="w-14" />
       </header>
 
-      <div className="px-2 mb-2">
-        <div className="h-1 rounded-full bg-white/20 overflow-hidden">
+      <div className="px-3 mb-4">
+        <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(184,164,224,0.2)', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)' }}>
           <motion.div
-            className="h-full rounded-full bg-gradient-to-r from-[var(--color-sunset-rose)] to-[var(--color-lavender)]"
+            className="h-full rounded-full"
+            style={{ background: 'linear-gradient(90deg, var(--color-glow-teal) 0%, var(--color-lavender) 100%)', boxShadow: '0 0 12px rgba(107,196,181,0.4)' }}
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.3 }}
+            transition={{ type: 'spring', stiffness: 80, damping: 20 }}
           />
         </div>
-        <p className="text-xs mt-1 text-[var(--color-text-secondary)]">
+        <p className="text-xs mt-2 font-medium text-[var(--color-text-secondary)] tabular-nums">
           Вопрос {n} из {total}
         </p>
       </div>
@@ -70,37 +71,47 @@ export function TestFlow({ onBack }: TestFlowProps) {
           <AnimatePresence mode="wait">
             <motion.div
               key={currentQuestionIndex}
-              className="rounded-2xl mb-6 p-5"
-              initial={{ opacity: 0, y: 12 }}
+              className="rounded-2xl mb-6 p-6 relative overflow-hidden"
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
               style={{
-                background: 'linear-gradient(145deg, rgba(255,255,255,0.92) 0%, rgba(252,250,255,0.88) 100%)',
-                border: '1px solid rgba(184,164,224,0.25)',
-                boxShadow: '0 4px 16px rgba(30,43,31,0.06), inset 0 1px 0 rgba(255,255,255,0.9)',
-                overflow: 'visible',
-                minHeight: 80,
+                background: 'linear-gradient(160deg, rgba(255,255,255,0.98) 0%, rgba(252,250,255,0.95) 50%, rgba(248,245,255,0.92) 100%)',
+                border: '1px solid rgba(184,164,224,0.35)',
+                boxShadow: '0 8px 32px rgba(30,43,31,0.08), 0 0 0 1px rgba(255,255,255,0.8) inset',
+                minHeight: 88,
               }}
             >
+              <div className="absolute inset-0 pointer-events-none opacity-40" style={{ background: 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(125,211,192,0.15), transparent)' }} />
               <p
-                className="m-0 break-words text-[var(--color-text-primary)] text-center leading-relaxed"
-                style={{ fontSize: 16, lineHeight: 1.5 }}
+                className="relative m-0 break-words text-[var(--color-text-primary)] text-center leading-relaxed font-medium"
+                style={{ fontSize: 16, lineHeight: 1.55 }}
               >
                 {questionText}
               </p>
             </motion.div>
           </AnimatePresence>
-          <div className="flex flex-wrap gap-2">
-            {SCALE.map((num) => (
-              <button
+          <div className="flex flex-wrap gap-2.5">
+            {SCALE.map((num, idx) => (
+              <motion.button
                 key={num}
                 type="button"
                 onClick={() => handleAnswer(num)}
-                className="flex-1 min-w-[52px] py-3 px-3 rounded-xl font-semibold btn-secondary transition-all active:scale-[0.98]"
+                className="flex-1 min-w-[52px] py-3.5 px-3 rounded-xl font-bold text-[var(--color-text-primary)] transition-colors"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: idx * 0.02, duration: 0.2 }}
+                whileHover={{ scale: 1.05, boxShadow: '0 6px 20px rgba(107,196,181,0.3)' }}
+                whileTap={{ scale: 0.96 }}
+                style={{
+                  background: 'linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(248,252,251,0.9) 100%)',
+                  border: '2px solid rgba(125,211,192,0.4)',
+                  boxShadow: '0 2px 12px rgba(30,43,31,0.06), inset 0 1px 0 rgba(255,255,255,0.9)',
+                }}
               >
                 {num}
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>

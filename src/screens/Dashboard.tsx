@@ -10,15 +10,16 @@ interface DashboardProps {
   onOpenHistory: () => void
 }
 
-function formatDate(iso: string): string {
+function formatDateWithTime(iso: string): string {
   try {
     const d = new Date(iso)
+    const timeStr = d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
     const now = new Date()
     const diffDays = Math.floor((now.getTime() - d.getTime()) / (24 * 60 * 60 * 1000))
-    if (diffDays === 0) return 'Сегодня'
-    if (diffDays === 1) return 'Вчера'
-    if (diffDays < 7) return `${diffDays} дн. назад`
-    return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+    if (diffDays === 0) return `Сегодня, ${timeStr}`
+    if (diffDays === 1) return `Вчера, ${timeStr}`
+    if (diffDays < 7) return `${diffDays} дн. назад, ${timeStr}`
+    return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) + ', ' + timeStr
   } catch {
     return ''
   }
@@ -200,7 +201,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
                     >
                       <span className="block text-sm font-medium truncate">{item.testTitle}</span>
                       <span className="block text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
-                        {formatDate(item.completedAt)}
+                        {formatDateWithTime(item.completedAt)}
                       </span>
                     </button>
                   </motion.li>
