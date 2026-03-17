@@ -124,6 +124,7 @@ export function Result({ onBack }: ResultProps) {
     enabled: !!(displayTest?.title && displayAnswers.length > 0),
   })
   const aiSuggestions = suggestionsData?.suggestions ?? []
+  const aiMovies = suggestionsData?.movies ?? []
 
   const openBot = () => {
     goBackToBot()
@@ -317,6 +318,49 @@ export function Result({ onBack }: ResultProps) {
                     </ul>
                   </>
                 )}
+                {aiMovies.length > 0 && (
+                  <motion.div
+                    className="mt-4 pt-4"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.15 }}
+                    style={{ borderTop: '1px solid rgba(125,211,192,0.3)' }}
+                  >
+                    <h5 className="text-sm font-semibold mb-3" style={{ color: 'var(--color-forest-dark)' }}>
+                      🎬 Фильмы, которые могут откликнуться в твоём состоянии
+                    </h5>
+                    <div className="space-y-3">
+                      {aiMovies.slice(0, 3).map((movie) => (
+                        <div
+                          key={movie.id}
+                          className="rounded-xl p-3.5"
+                          style={{
+                            background: 'rgba(255,255,255,0.6)',
+                            border: '1px solid rgba(201,184,232,0.35)',
+                            boxShadow: '0 2px 12px rgba(45,42,38,0.06)',
+                          }}
+                        >
+                          <p className="text-sm font-semibold mb-0.5" style={{ color: 'var(--color-forest-dark)' }}>
+                            {movie.title}{movie.year ? ` • ${movie.year}` : ''}
+                          </p>
+                          <p className="text-xs mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+                            {movie.director && `Режиссёр: ${movie.director}`}
+                            {Array.isArray(movie.actors) && movie.actors.length > 0 && ` • ${movie.actors.join(', ')}`}
+                          </p>
+                          <p className="text-xs leading-relaxed mb-1.5" style={{ color: 'var(--color-text-primary)' }}>
+                            {movie.plot}
+                          </p>
+                          <p className="text-xs leading-relaxed italic" style={{ color: 'var(--color-glow-teal)' }}>
+                            {movie.whyWatch}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[10px] mt-2" style={{ color: 'var(--color-text-secondary)' }}>
+                      Фильмы не заменяют работу со специалистом, но могут помочь мягче прожить своё состояние 💛
+                    </p>
+                  </motion.div>
+                )}
               </motion.div>
               <button
                 type="button"
@@ -375,6 +419,48 @@ export function Result({ onBack }: ResultProps) {
                       </li>
                     ))}
                   </ul>
+                </div>
+              )}
+              {aiMovies.length > 0 && (
+                <div
+                  className="rounded-2xl p-4"
+                  style={{
+                    background: 'linear-gradient(145deg, rgba(255,255,255,0.7) 0%, rgba(249,245,255,0.75) 100%)',
+                    border: '1px solid rgba(201,184,232,0.35)',
+                  }}
+                >
+                  <h5 className="text-sm font-semibold mb-3" style={{ color: 'var(--color-forest-dark)' }}>
+                    🎬 Фильмы, которые могут откликнуться
+                  </h5>
+                  <div className="space-y-3">
+                    {aiMovies.slice(0, 3).map((movie) => (
+                      <div
+                        key={movie.id}
+                        className="rounded-xl p-3"
+                        style={{
+                          background: 'rgba(255,255,255,0.6)',
+                          border: '1px solid rgba(201,184,232,0.3)',
+                        }}
+                      >
+                        <p className="text-sm font-semibold mb-0.5" style={{ color: 'var(--color-forest-dark)' }}>
+                          {movie.title}{movie.year ? ` • ${movie.year}` : ''}
+                        </p>
+                        <p className="text-xs mb-1" style={{ color: 'var(--color-text-secondary)' }}>
+                          {movie.director && `Режиссёр: ${movie.director}`}
+                          {Array.isArray(movie.actors) && movie.actors.length > 0 && ` • ${movie.actors.join(', ')}`}
+                        </p>
+                        <p className="text-xs leading-relaxed mb-1" style={{ color: 'var(--color-text-primary)' }}>
+                          {movie.plot}
+                        </p>
+                        <p className="text-xs leading-relaxed italic" style={{ color: 'var(--color-glow-teal)' }}>
+                          {movie.whyWatch}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[10px] mt-2" style={{ color: 'var(--color-text-secondary)' }}>
+                    Фильмы не заменяют работу со специалистом 💛
+                  </p>
                 </div>
               )}
               <p className="text-center text-sm text-[var(--color-text-secondary)]">
