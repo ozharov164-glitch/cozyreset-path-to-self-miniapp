@@ -148,6 +148,28 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
         </motion.div>
 
         <motion.div
+          className="card-premium p-5 mb-4"
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.12, ease: [0.25, 0.46, 0.45, 0.94] }}
+        >
+          <h3 className="text-base font-bold text-[var(--color-text-primary)] mb-1 flex items-center gap-2">
+            <span aria-hidden>🌱</span> Самореализация
+          </h3>
+          <p className="text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
+            Уверенность, учёба, цели, анти‑прокрастинация — опиши трудности и работай над ними в тандеме с ИИ.
+          </p>
+          <button
+            type="button"
+            onClick={() => useAppStore.getState().setScreen('selfRealization')}
+            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px]"
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+          >
+            Открыть раздел
+          </button>
+        </motion.div>
+
+        <motion.div
           className="card-premium rounded-2xl p-5 mb-4"
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}

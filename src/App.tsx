@@ -7,6 +7,7 @@ import { TestFlow } from './screens/TestFlow'
 import { Result } from './screens/Result'
 import { History } from './screens/History'
 import { VoiceSupport } from './screens/VoiceSupport'
+import { SelfRealization } from './screens/SelfRealization'
 import { useAppStore } from './store/appStore'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 0 } } })
@@ -91,6 +92,7 @@ function AppContent() {
         {screen === 'result' && <Result onBack={() => setScreen('dashboard')} />}
         {screen === 'history' && <History onBack={() => setScreen('dashboard')} />}
         {screen === 'voiceSupport' && <VoiceSupport onBack={() => setScreen('dashboard')} />}
+        {screen === 'selfRealization' && <SelfRealization onBack={() => setScreen('dashboard')} />}
         {screen === 'dashboard' && (
           <Dashboard onOpenCatalog={() => setScreen('catalog')} onOpenHistory={() => setScreen('history')} />
         )}

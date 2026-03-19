@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type Screen = 'dashboard' | 'catalog' | 'test' | 'result' | 'history' | 'voiceSupport'
+export type Screen = 'dashboard' | 'catalog' | 'test' | 'result' | 'history' | 'voiceSupport' | 'selfRealization'
 
 interface AppState {
   screen: Screen
