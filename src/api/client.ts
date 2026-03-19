@@ -511,3 +511,36 @@ export async function apiSelfRealizationChat(payload: {
     return { error: 'Нет связи с сервером', status: 0 }
   }
 }
+
+export async function apiSelfRealizationHistory(direction: string): Promise<
+  { items: Array<{ role: 'user' | 'assistant'; content: string; createdAt: string }> } | { error: string; status?: number }
+> {
+  try {
+    const res = await fetchWithAuth('/mini-app/self-realization-history', {
+      method: 'POST',
+      body: JSON.stringify({ direction }),
+    })
+    const data = (await res.json().catch(() => ({}))) as {
+      items?: Array<{ role: 'user' | 'assistant'; content: string; createdAt: string }>
+      error?: string
+    }
+    if (!res.ok) return { error: data.error || 'Ошибка загрузки истории', status: res.status }
+    return { items: Array.isArray(data.items) ? data.items : [] }
+  } catch {
+    return { error: 'Нет связи с сервером', status: 0 }
+  }
+}
+
+export async function apiSelfRealizationClearHistory(direction: string): Promise<{ ok: true } | { error: string; status?: number }> {
+  try {
+    const res = await fetchWithAuth('/mini-app/self-realization-clear-history', {
+      method: 'POST',
+      body: JSON.stringify({ direction }),
+    })
+    const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string }
+    if (!res.ok || !data.ok) return { error: data.error || 'Ошибка очистки истории', status: res.status }
+    return { ok: true }
+  } catch {
+    return { error: 'Нет связи с сервером', status: 0 }
+  }
+}

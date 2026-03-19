@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { goBackToBot } from '../utils/telegram'
-import { apiSelfRealizationWelcome, apiSelfRealizationChat } from '../api/client'
+import { apiSelfRealizationWelcome, apiSelfRealizationChat, apiSelfRealizationHistory, apiSelfRealizationClearHistory } from '../api/client'
 
-const BG_MUSIC_VOLUME = 0.07
-const FADE_OUT_MS = 900
+const BG_MUSIC_VOLUME = 0.03
+const FADE_OUT_MS = 1200
 
 const DIRECTIONS = [
   {
@@ -112,6 +112,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
   const [error, setError] = useState<string | null>(null)
   const [musicMuted, setMusicMuted] = useState(false)
   const [isFadingOut, setIsFadingOut] = useState(false)
+  const [historyLoading, setHistoryLoading] = useState(false)
 
   const bgMusicRef = useRef<HTMLAudioElement | null>(null)
   const voiceRef = useRef<HTMLAudioElement | null>(null)
@@ -202,10 +203,27 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
 
   useEffect(() => {
     if (!selectedDirection) return
+    let mounted = true
     setMessages([{ role: 'assistant', content: directionWelcome }])
     setSelectedDifficulties([])
     setInputText('')
     setError(null)
+    setHistoryLoading(true)
+    apiSelfRealizationHistory(selectedDirection.title).then((res) => {
+      if (!mounted) return
+      if ('error' in res) {
+        setHistoryLoading(false)
+        return
+      }
+      if (res.items.length > 0) {
+        const mapped = res.items.map((m) => ({ role: m.role, content: m.content }))
+        setMessages(mapped)
+      }
+      setHistoryLoading(false)
+    })
+    return () => {
+      mounted = false
+    }
   }, [selectedDirection, directionWelcome])
 
   const openDirection = useCallback(async (dir: Direction) => {
@@ -224,6 +242,17 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
       prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value]
     )
   }, [])
+
+  const clearDirectionHistory = useCallback(async () => {
+    if (!selectedDirection) return
+    const result = await apiSelfRealizationClearHistory(selectedDirection.title)
+    if ('error' in result) {
+      setError(result.error)
+      return
+    }
+    setMessages([{ role: 'assistant', content: directionWelcome }])
+    setError(null)
+  }, [selectedDirection, directionWelcome])
 
   const sendMessage = useCallback(async () => {
     const text = inputText.trim()
@@ -270,17 +299,27 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
           >
             ← Назад
           </button>
-          <h1 className="text-base font-bold text-[var(--color-text-primary)] tracking-tight truncate max-w-[180px]">
+          <h1 className="text-base font-bold text-[var(--color-text-primary)] tracking-tight truncate max-w-[170px]">
             {selectedDirection.title}
           </h1>
-          <button
-            type="button"
-            onClick={() => goBackToBot()}
-            className="min-h-[44px] min-w-[52px] flex items-center justify-center py-2 px-3 rounded-xl text-sm font-medium text-[var(--color-glow-teal)]"
-            style={{ WebkitTapHighlightColor: 'transparent' }}
-          >
-            В бота
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={clearDirectionHistory}
+              className="min-h-[40px] px-3 rounded-xl text-xs font-semibold text-[var(--color-forest-dark)] border border-[var(--color-lavender)]/45 bg-white/70"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
+            >
+              Очистить
+            </button>
+            <button
+              type="button"
+              onClick={() => goBackToBot()}
+              className="min-h-[44px] min-w-[52px] flex items-center justify-center py-2 px-3 rounded-xl text-sm font-medium text-[var(--color-glow-teal)]"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
+            >
+              В бота
+            </button>
+          </div>
         </header>
 
         <div className="flex-1 flex flex-col max-w-[460px] mx-auto w-full px-3 pb-4 overflow-hidden">
@@ -370,6 +409,13 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                       </motion.div>
                     ))}
                   </AnimatePresence>
+                  {historyLoading && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
+                      <div className="card-premium rounded-2xl px-4 py-3 text-sm text-[var(--color-text-secondary)] border border-[var(--color-lavender)]/20">
+                        Загружаем историю диалога...
+                      </div>
+                    </motion.div>
+                  )}
                   {loadingReply && (
                     <motion.div
                       initial={{ opacity: 0 }}
@@ -425,20 +471,30 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
           <button
             type="button"
             onClick={toggleMute}
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-[var(--color-text-secondary)] hover:bg-black/5"
+            className="min-h-[40px] px-3 flex items-center gap-2 rounded-xl text-xs font-semibold text-[var(--color-forest-dark)] border border-[var(--color-lavender)]/45 bg-white/70"
             style={{ WebkitTapHighlightColor: 'transparent' }}
             aria-label={musicMuted ? 'Включить музыку' : 'Выключить музыку'}
           >
-            {musicMuted ? '🔇' : '🔊'}
+            <span>{musicMuted ? '🔇' : '🔊'}</span><span>Музыка</span>
           </button>
-          <button
-            type="button"
-            onClick={() => goBackToBot()}
-            className="min-h-[44px] min-w-[52px] flex items-center justify-center py-2 px-3 rounded-xl text-sm font-medium text-[var(--color-glow-teal)]"
-            style={{ WebkitTapHighlightColor: 'transparent' }}
-          >
-            В бота
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={clearDirectionHistory}
+              className="min-h-[40px] px-3 rounded-xl text-xs font-semibold text-[var(--color-forest-dark)] border border-[var(--color-lavender)]/45 bg-white/70"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
+            >
+              Очистить
+            </button>
+            <button
+              type="button"
+              onClick={() => goBackToBot()}
+              className="min-h-[44px] min-w-[52px] flex items-center justify-center py-2 px-3 rounded-xl text-sm font-medium text-[var(--color-glow-teal)]"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
+            >
+              В бота
+            </button>
+          </div>
         </div>
       </header>
 
@@ -451,6 +507,9 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
         >
           Выбери направление — откроется страница для глубокой работы в диалоге с ИИ.
         </motion.p>
+        <div className="card-premium rounded-2xl px-4 py-3 mb-4 text-xs text-[var(--color-text-secondary)]">
+          Фоновая музыка играет очень тихо. Кнопка «Музыка» вверху включает/выключает звук.
+        </div>
 
         <motion.ul
           className="space-y-4"
