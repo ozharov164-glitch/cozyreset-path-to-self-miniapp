@@ -493,6 +493,7 @@ export async function apiSelfRealizationWelcome(): Promise<
 export async function apiSelfRealizationChat(payload: {
   direction: string
   text: string
+  difficulties?: string[]
   history: Array<{ role: 'user' | 'assistant'; content: string }>
 }): Promise<{ reply: string } | { error: string; status?: number }> {
   try {
