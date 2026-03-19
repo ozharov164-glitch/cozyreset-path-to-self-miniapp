@@ -464,9 +464,9 @@ export async function apiVoiceReply(text: string): Promise<{ blob: Blob; downloa
   }
 }
 
-/** Приветствие раздела «Самореализация»: первый визит или возврат, URL приветствия голосом (мужской TTS). */
+/** Приветствие раздела «Самореализация»: MP3 из одного ответа (без доп. подзагрузки). */
 export async function apiSelfRealizationWelcome(): Promise<
-  { firstVisit: boolean; audioUrl: string | null } | { error: string; status?: number }
+  { firstVisit: boolean; blob: Blob } | { error: string; status?: number }
 > {
   try {
     const res = await fetchWithAuth('/mini-app/self-realization-welcome', {
@@ -480,10 +480,10 @@ export async function apiSelfRealizationWelcome(): Promise<
         status: res.status,
       }
     }
-    const data = (await res.json()) as { firstVisit?: boolean; audioUrl?: string | null }
+    const blob = await res.blob()
     return {
-      firstVisit: !!data.firstVisit,
-      audioUrl: typeof data.audioUrl === 'string' ? data.audioUrl : null,
+      firstVisit: res.headers.get('X-First-Visit') === '1',
+      blob,
     }
   } catch {
     return { error: 'Нет связи с сервером', status: 0 }
