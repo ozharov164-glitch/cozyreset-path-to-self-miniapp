@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { goBackToBot } from '../utils/telegram'
@@ -186,11 +186,6 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
       setWelcomeDone(!text)
     })
   }, [])
-
-  const directionWelcome = useMemo(() => {
-    if (!selectedDirection) return ''
-    return getDirectionWelcome(selectedDirection)
-  }, [selectedDirection])
 
   const openDirection = useCallback((dir: Direction) => {
     setSelectedDirection(dir)
