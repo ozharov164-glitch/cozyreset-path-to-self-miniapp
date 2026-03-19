@@ -55,7 +55,6 @@ interface SelfRealizationProps {
 const TYPEWRITER_MS = 34
 const CURSOR_BLINK_MS = 540
 const MAX_ANIM_CHARS = 900
-const ASSISTANT_FIRST_PART_CHARS = 260
 
 function getDirectionWelcome(dir: Direction): string {
   return `Отличный выбор — ${dir.title.toLowerCase()}. Отметь, что сейчас откликается, и опиши ситуацию — будем разбирать по шагам в диалоге.`
@@ -260,9 +259,6 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
 
   const [welcomeText, setWelcomeText] = useState('')
   const [welcomeDone, setWelcomeDone] = useState(false)
-  const [directionIntroDone, setDirectionIntroDone] = useState(false)
-  const [typingAssistantIndex, setTypingAssistantIndex] = useState<number | null>(null)
-  const [typedAssistantIndices, setTypedAssistantIndices] = useState<Record<number, true>>({})
 
   const chatEndRef = useRef<HTMLDivElement | null>(null)
   const directionTitleRef = useRef<string | null>(null)
@@ -289,9 +285,6 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     setError(null)
     setHistoryLoading(true)
     setLoadingReply(false)
-    setDirectionIntroDone(false)
-    setTypingAssistantIndex(null)
-    setTypedAssistantIndices({})
   }, [])
 
   const goBackToList = useCallback(() => {
@@ -302,9 +295,6 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     setError(null)
     setHistoryLoading(false)
     setLoadingReply(false)
-    setDirectionIntroDone(false)
-    setTypingAssistantIndex(null)
-    setTypedAssistantIndices({})
   }, [])
 
   useEffect(() => {
@@ -314,7 +304,6 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     setError(null)
     setHistoryLoading(true)
     setLoadingReply(false)
-    setDirectionIntroDone(false)
 
     apiSelfRealizationHistory(directionTitle).then((res) => {
       if (directionTitleRef.current !== directionTitle) return
@@ -322,16 +311,13 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
       if ('error' in res) {
         setHistoryLoading(false)
         setMessages([{ role: 'assistant', content: 'Не удалось загрузить историю. Попробуй ещё раз.' }])
-        setDirectionIntroDone(true)
         return
       }
 
       if (res.items.length > 0) {
         setMessages(res.items.map((m) => ({ role: m.role, content: m.content })))
-        setDirectionIntroDone(true)
       } else {
         setMessages([{ role: 'assistant', content: getDirectionWelcome(selectedDirection) }])
-        setDirectionIntroDone(false)
       }
       setHistoryLoading(false)
     })
@@ -360,9 +346,6 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     setInputText('')
     setLoadingReply(false)
     setHistoryLoading(false)
-    setDirectionIntroDone(false)
-    setTypingAssistantIndex(null)
-    setTypedAssistantIndices({})
   }, [selectedDirection])
 
   const sendMessage = useCallback(async () => {
@@ -370,15 +353,11 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     if (!selectedDirection || !text || loadingReply) return
 
     setError(null)
-    if (messages.length === 1 && messages[0]?.role === 'assistant') {
-      setDirectionIntroDone(true)
-    }
 
     const nextMessages: ChatMessage[] = [...messages, { role: 'user', content: text }]
     setMessages(nextMessages)
     setInputText('')
     setLoadingReply(true)
-    setTypingAssistantIndex(nextMessages.length) // index of the assistant message after it gets appended
 
     const result = await apiSelfRealizationChat({
       direction: selectedDirection.title,
@@ -390,7 +369,6 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     if ('error' in result) {
       setError(result.error)
       setLoadingReply(false)
-      setTypingAssistantIndex(null)
       return
     }
 
@@ -398,13 +376,9 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     setLoadingReply(false)
   }, [selectedDirection, messages, inputText, loadingReply, selectedDifficulties])
 
-  // Keep the same layout while waiting for the first assistant reply.
-  // This prevents any visible jumps right after the user presses "send".
   const isSetupMode =
-    (messages.length <= 1 && messages[0]?.role === 'assistant') ||
-    (loadingReply && messages.length === 2 && messages[1]?.role === 'user')
+    messages.length <= 1 && messages[0]?.role === 'assistant'
   const canStartChat = inputText.trim().length > 0
-  const isIntroTyping = isSetupMode && !directionIntroDone && !historyLoading
 
   if (selectedDirection) {
     return (
@@ -446,7 +420,6 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
 
             <AnimatePresence initial={false}>
               {messages.map((m, i) => {
-                const showIntroTypewriter = i === 0 && m.role === 'assistant' && isIntroTyping
                 return (
                   <motion.div
                     key={`${selectedDirection.id}-${i}`}
@@ -462,39 +435,22 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                           : 'bg-gradient-to-br from-[var(--color-glow-teal)]/25 to-[var(--color-glow-teal)]/10 border border-[var(--color-glow-teal)]/30 text-[var(--color-forest-dark)] shadow-md'
                       }`}
                     >
-                      {showIntroTypewriter ? (
-                        <>
-                          <div className="text-[11px] font-semibold text-[var(--color-text-secondary)] mb-2">
+                      <div className="space-y-2">
+                        {m.role === 'assistant' && (
+                          <div className="text-[11px] font-semibold text-[var(--color-text-secondary)]">
                             Самореализация • шаг
                           </div>
-                          <TypewriterText
+                        )}
+                        {m.role === 'assistant' ? (
+                          <TypewriterFirstPartNoReflow
                             text={m.content}
-                            animate={true}
-                            onComplete={() => setDirectionIntroDone(true)}
+                            animate={false}
+                            maxChars={MAX_ANIM_CHARS}
                           />
-                        </>
-                      ) : (
-                        <div className="space-y-2">
-                          {m.role === 'assistant' && (
-                            <div className="text-[11px] font-semibold text-[var(--color-text-secondary)]">
-                              Самореализация • шаг
-                            </div>
-                          )}
-                          {m.role === 'assistant' && (typingAssistantIndex === i || typedAssistantIndices[i]) ? (
-                            <TypewriterFirstPartNoReflow
-                              text={m.content}
-                              animate={typingAssistantIndex === i}
-                              maxChars={ASSISTANT_FIRST_PART_CHARS}
-                              onComplete={() => {
-                                setTypedAssistantIndices((prev) => ({ ...prev, [i]: true }))
-                                setTypingAssistantIndex(null)
-                              }}
-                            />
-                          ) : (
-                            <span style={{ whiteSpace: 'pre-wrap' }}>{m.content}</span>
-                          )}
-                        </div>
-                      )}
+                        ) : (
+                          <span style={{ whiteSpace: 'pre-wrap' }}>{m.content}</span>
+                        )}
+                      </div>
                     </div>
                   </motion.div>
                 )
@@ -504,7 +460,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
             {loadingReply && (
               <div className="flex justify-start">
                 <div className="card-premium rounded-2xl px-4 py-3 text-sm text-[var(--color-text-secondary)] border border-[var(--color-lavender)]/20">
-                  ИИ печатает ответ…
+                  ИИ думает…
                 </div>
               </div>
             )}
