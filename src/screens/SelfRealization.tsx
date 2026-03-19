@@ -181,7 +181,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
             },
           }}
         >
-          {DIRECTIONS.map((dir, i) => (
+          {DIRECTIONS.map((dir) => (
             <motion.li
               key={dir.id}
               variants={{
