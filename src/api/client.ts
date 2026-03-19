@@ -466,24 +466,23 @@ export async function apiVoiceReply(text: string): Promise<{ blob: Blob; downloa
 
 /** Приветствие раздела «Самореализация»: MP3 из одного ответа (без доп. подзагрузки). */
 export async function apiSelfRealizationWelcome(): Promise<
-  { firstVisit: boolean; blob: Blob } | { error: string; status?: number }
+  { firstVisit: boolean; welcomeText: string } | { error: string; status?: number }
 > {
   try {
     const res = await fetchWithAuth('/mini-app/self-realization-welcome', {
       method: 'POST',
       body: '{}',
     })
+    const data = (await res.json().catch(() => ({}))) as { firstVisit?: boolean; welcomeText?: string; error?: string }
     if (!res.ok) {
-      const data = (await res.json().catch(() => ({}))) as { error?: string }
       return {
         error: data.error || (res.status === 401 ? 'Нужна авторизация' : 'Ошибка приветствия'),
         status: res.status,
       }
     }
-    const blob = await res.blob()
     return {
-      firstVisit: res.headers.get('X-First-Visit') === '1',
-      blob,
+      firstVisit: !!data.firstVisit,
+      welcomeText: typeof data.welcomeText === 'string' ? data.welcomeText : '',
     }
   } catch {
     return { error: 'Нет связи с сервером', status: 0 }
