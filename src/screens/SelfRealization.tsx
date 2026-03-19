@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { goBackToBot } from '../utils/telegram'
@@ -55,6 +55,7 @@ interface SelfRealizationProps {
 const TYPEWRITER_MS = 34
 const CURSOR_BLINK_MS = 540
 const MAX_ANIM_CHARS = 900
+const ASSISTANT_FIRST_PART_CHARS = 260
 
 function getDirectionWelcome(dir: Direction): string {
   return `Отличный выбор — ${dir.title.toLowerCase()}. Отметь, что сейчас откликается, и опиши ситуацию — будем разбирать по шагам в диалоге.`
@@ -130,6 +131,97 @@ function TypewriterText({
   )
 }
 
+function TypewriterFirstPartNoReflow({
+  text,
+  animate,
+  maxChars,
+  onComplete,
+}: {
+  text: string
+  animate: boolean
+  maxChars: number
+  onComplete?: () => void
+}) {
+  const [visibleLength, setVisibleLength] = useState(animate ? 0 : text.length)
+  const [cursorVisible, setCursorVisible] = useState(true)
+  const [fixedHeight, setFixedHeight] = useState<number | null>(null)
+  const onCompleteRef = useRef(onComplete)
+  onCompleteRef.current = onComplete
+
+  const measureRef = useRef<HTMLSpanElement | null>(null)
+  const targetLength = Math.min((text || '').length, Math.max(0, maxChars))
+
+  useLayoutEffect(() => {
+    const el = measureRef.current
+    if (!el) return
+    const h = el.getBoundingClientRect().height
+    setFixedHeight(h)
+  }, [text])
+
+  useEffect(() => {
+    if (!animate) {
+      setVisibleLength(text.length)
+      return
+    }
+    setVisibleLength(0)
+  }, [animate, text])
+
+  useEffect(() => {
+    if (!animate) return
+    if (!text) return
+
+    const t = window.setInterval(() => {
+      setVisibleLength((prev) => {
+        if (prev >= targetLength) {
+          window.clearInterval(t)
+          window.setTimeout(() => {
+            setVisibleLength(text.length)
+            onCompleteRef.current?.()
+          }, 30)
+          return prev
+        }
+        return prev + 1
+      })
+    }, TYPEWRITER_MS)
+
+    return () => window.clearInterval(t)
+  }, [animate, text, targetLength])
+
+  useEffect(() => {
+    if (!animate) return
+    const blink = window.setInterval(() => setCursorVisible((v) => !v), CURSOR_BLINK_MS)
+    return () => window.clearInterval(blink)
+  }, [animate])
+
+  const done = visibleLength >= text.length
+  const shown = text.slice(0, visibleLength)
+
+  return (
+    <span
+      className="relative block overflow-hidden"
+      style={fixedHeight != null ? { height: fixedHeight } : undefined}
+    >
+      {/* Hidden full text: used only for measuring, doesn't affect layout */}
+      <span
+        ref={measureRef}
+        className="absolute left-0 top-0 w-full"
+        style={{ visibility: 'hidden', whiteSpace: 'pre-wrap', pointerEvents: 'none' }}
+      >
+        {text}
+      </span>
+
+      <span style={{ whiteSpace: 'pre-wrap' }}>
+        {shown}
+        {!done && (
+          <motion.span animate={{ opacity: cursorVisible ? 1 : 0 }} transition={{ duration: 0.15 }}>
+            |
+          </motion.span>
+        )}
+      </span>
+    </span>
+  )
+}
+
 function PremiumHoloCard({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div className={`card-premium relative overflow-hidden ${className || ''}`}>
@@ -169,6 +261,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
   const [welcomeText, setWelcomeText] = useState('')
   const [welcomeDone, setWelcomeDone] = useState(false)
   const [directionIntroDone, setDirectionIntroDone] = useState(false)
+  const [typingAssistantIndex, setTypingAssistantIndex] = useState<number | null>(null)
 
   const chatEndRef = useRef<HTMLDivElement | null>(null)
   const directionTitleRef = useRef<string | null>(null)
@@ -196,6 +289,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     setHistoryLoading(true)
     setLoadingReply(false)
     setDirectionIntroDone(false)
+    setTypingAssistantIndex(null)
   }, [])
 
   const goBackToList = useCallback(() => {
@@ -207,6 +301,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     setHistoryLoading(false)
     setLoadingReply(false)
     setDirectionIntroDone(false)
+    setTypingAssistantIndex(null)
   }, [])
 
   useEffect(() => {
@@ -263,6 +358,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     setLoadingReply(false)
     setHistoryLoading(false)
     setDirectionIntroDone(false)
+    setTypingAssistantIndex(null)
   }, [selectedDirection])
 
   const sendMessage = useCallback(async () => {
@@ -278,6 +374,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     setMessages(nextMessages)
     setInputText('')
     setLoadingReply(true)
+    setTypingAssistantIndex(nextMessages.length) // index of the assistant message after it gets appended
 
     const result = await apiSelfRealizationChat({
       direction: selectedDirection.title,
@@ -289,6 +386,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     if ('error' in result) {
       setError(result.error)
       setLoadingReply(false)
+      setTypingAssistantIndex(null)
       return
     }
 
@@ -361,9 +459,34 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                       }`}
                     >
                       {showIntroTypewriter ? (
-                        <TypewriterText text={m.content} animate={true} onComplete={() => setDirectionIntroDone(true)} />
+                        <>
+                          <div className="text-[11px] font-semibold text-[var(--color-text-secondary)] mb-2">
+                            Самореализация • шаг
+                          </div>
+                          <TypewriterText
+                            text={m.content}
+                            animate={true}
+                            onComplete={() => setDirectionIntroDone(true)}
+                          />
+                        </>
                       ) : (
-                        m.content
+                        <div className="space-y-2">
+                          {m.role === 'assistant' && (
+                            <div className="text-[11px] font-semibold text-[var(--color-text-secondary)]">
+                              Самореализация • шаг
+                            </div>
+                          )}
+                          {m.role === 'assistant' && typingAssistantIndex === i ? (
+                            <TypewriterFirstPartNoReflow
+                              text={m.content}
+                              animate={true}
+                              maxChars={ASSISTANT_FIRST_PART_CHARS}
+                              onComplete={() => setTypingAssistantIndex(null)}
+                            />
+                          ) : (
+                            <span style={{ whiteSpace: 'pre-wrap' }}>{m.content}</span>
+                          )}
+                        </div>
                       )}
                     </div>
                   </motion.div>
