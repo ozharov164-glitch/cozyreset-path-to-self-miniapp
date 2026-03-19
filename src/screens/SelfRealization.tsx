@@ -262,6 +262,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
   const [welcomeDone, setWelcomeDone] = useState(false)
   const [directionIntroDone, setDirectionIntroDone] = useState(false)
   const [typingAssistantIndex, setTypingAssistantIndex] = useState<number | null>(null)
+  const [typedAssistantIndices, setTypedAssistantIndices] = useState<Record<number, true>>({})
 
   const chatEndRef = useRef<HTMLDivElement | null>(null)
   const directionTitleRef = useRef<string | null>(null)
@@ -290,6 +291,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     setLoadingReply(false)
     setDirectionIntroDone(false)
     setTypingAssistantIndex(null)
+    setTypedAssistantIndices({})
   }, [])
 
   const goBackToList = useCallback(() => {
@@ -302,6 +304,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     setLoadingReply(false)
     setDirectionIntroDone(false)
     setTypingAssistantIndex(null)
+    setTypedAssistantIndices({})
   }, [])
 
   useEffect(() => {
@@ -359,6 +362,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     setHistoryLoading(false)
     setDirectionIntroDone(false)
     setTypingAssistantIndex(null)
+    setTypedAssistantIndices({})
   }, [selectedDirection])
 
   const sendMessage = useCallback(async () => {
@@ -476,12 +480,15 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                               Самореализация • шаг
                             </div>
                           )}
-                          {m.role === 'assistant' && typingAssistantIndex === i ? (
+                          {m.role === 'assistant' && (typingAssistantIndex === i || typedAssistantIndices[i]) ? (
                             <TypewriterFirstPartNoReflow
                               text={m.content}
-                              animate={true}
+                              animate={typingAssistantIndex === i}
                               maxChars={ASSISTANT_FIRST_PART_CHARS}
-                              onComplete={() => setTypingAssistantIndex(null)}
+                              onComplete={() => {
+                                setTypedAssistantIndices((prev) => ({ ...prev, [i]: true }))
+                                setTypingAssistantIndex(null)
+                              }}
                             />
                           ) : (
                             <span style={{ whiteSpace: 'pre-wrap' }}>{m.content}</span>
