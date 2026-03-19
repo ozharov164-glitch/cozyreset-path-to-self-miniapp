@@ -116,7 +116,8 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     let mounted = true
     const stopTone = startTinyIntroTone()
 
-    const bg = new Audio('/cozyreset-path-to-self-miniapp/audio/powerful-maxkomusic.mp3')
+    const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '') + '/'
+    const bg = new Audio(`${base}audio/powerful-maxkomusic.mp3`)
     bg.loop = true
     bg.preload = 'auto'
     bg.volume = 0.01
