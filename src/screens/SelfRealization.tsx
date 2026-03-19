@@ -521,11 +521,16 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                       🏆
                     </div>
                     <div className="min-w-0">
-                      <div className="font-semibold text-[var(--color-text-primary)]">Почему это лучше обычной ИИ‑поддержки</div>
+                      <div className="font-semibold text-[var(--color-text-primary)]">Почему это сильнее обычной ИИ‑поддержки</div>
                       <div className="text-sm text-[var(--color-text-secondary)] leading-relaxed mt-1">
-                        ИИ ведёт по направлению: ты выбираешь фокус, добавляешь сложности и получаешь шаги, которые укрепляют
-                        уверенность, самооценку и способность общаться.
-                        <span className="block mt-1">Плюс — история сохраняется для этого направления.</span>
+                        <b>В боте</b> — тёплое общение и поддержка эмоций.
+                        <br />
+                        <b>В «Самореализации»</b> ИИ работает как коуч навыков: ведёт по шагам, уточняет по твоим трудностям и
+                        даёт <b>конкретные действия</b> (1–2 шага в каждом ответе).
+                        <span className="block mt-1">
+                          И главное: история сохраняется <b>по направлению</b>, чтобы ты видел(а) динамику и быстрее
+                          становился(ась) сильнее в общении и самооценке.
+                        </span>
                       </div>
                     </div>
                   </div>

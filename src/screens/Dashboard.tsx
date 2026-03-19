@@ -162,10 +162,10 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
           <button
             type="button"
             onClick={() => useAppStore.getState().setScreen('selfRealization')}
-            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px]"
+            className="w-full py-3.5 px-4 rounded-xl btn-premium-glow min-h-[48px]"
             style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
-            Открыть раздел
+            🌱 Открыть «Самореализацию»
           </button>
         </motion.div>
 
