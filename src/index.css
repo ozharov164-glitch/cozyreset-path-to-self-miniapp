@@ -151,3 +151,8 @@ body {
   font-size: 0.875rem;
   opacity: 0.88;
 }
+
+/* Самореализация: мягкий фон, чтобы контент не сливался с окружением */
+.self-realization-page {
+  background: linear-gradient(180deg, rgba(232, 224, 244, 0.35) 0%, rgba(245, 230, 211, 0.15) 40%, transparent 100%);
+}

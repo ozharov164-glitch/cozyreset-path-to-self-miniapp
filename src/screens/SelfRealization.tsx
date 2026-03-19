@@ -49,6 +49,10 @@ interface SelfRealizationProps {
 const TYPEWRITER_MS = 42
 const CURSOR_BLINK_MS = 530
 
+function getDirectionWelcome(dir: Direction): string {
+  return `Отличный выбор — ${dir.title.toLowerCase()}. Отметь, что сейчас откликается, и опиши ситуацию — будем разбирать по шагам в диалоге.`
+}
+
 function TypewriterText({ text, onComplete }: { text: string; onComplete?: () => void }) {
   const [visibleLength, setVisibleLength] = useState(0)
   const [cursorVisible, setCursorVisible] = useState(true)
@@ -100,6 +104,9 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
   const [welcomeDone, setWelcomeDone] = useState(false)
 
   const chatEndRef = useRef<HTMLDivElement | null>(null)
+  const directionTitleRef = useRef<string | null>(null)
+
+  directionTitleRef.current = selectedDirection?.title ?? null
 
   useEffect(() => {
     apiSelfRealizationWelcome().then((result) => {
@@ -115,17 +122,34 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
 
   const directionWelcome = useMemo(() => {
     if (!selectedDirection) return ''
-    return `Отличный выбор — ${selectedDirection.title.toLowerCase()}. Отметь, что сейчас откликается, и опиши ситуацию — будем разбирать по шагам в диалоге.`
+    return getDirectionWelcome(selectedDirection)
   }, [selectedDirection])
 
-  useEffect(() => {
-    if (!selectedDirection) return
-    setMessages([{ role: 'assistant', content: directionWelcome }])
+  const openDirection = useCallback((dir: Direction) => {
+    const welcome = getDirectionWelcome(dir)
+    setSelectedDirection(dir)
+    setMessages([{ role: 'assistant', content: welcome }])
     setSelectedDifficulties([])
     setInputText('')
     setError(null)
     setHistoryLoading(true)
-    apiSelfRealizationHistory(selectedDirection.title).then((res) => {
+  }, [])
+
+  const goBackToList = useCallback(() => {
+    setSelectedDirection(null)
+    setMessages([])
+    setSelectedDifficulties([])
+    setInputText('')
+    setError(null)
+    setHistoryLoading(false)
+    setLoadingReply(false)
+  }, [])
+
+  useEffect(() => {
+    if (!selectedDirection) return
+    const directionTitle = selectedDirection.title
+    apiSelfRealizationHistory(directionTitle).then((res) => {
+      if (directionTitleRef.current !== directionTitle) return
       if ('error' in res) {
         setHistoryLoading(false)
         return
@@ -135,11 +159,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
       }
       setHistoryLoading(false)
     })
-  }, [selectedDirection, directionWelcome])
-
-  const openDirection = useCallback((dir: Direction) => {
-    setSelectedDirection(dir)
-  }, [])
+  }, [selectedDirection])
 
   const toggleDifficulty = useCallback((value: string) => {
     setSelectedDifficulties((prev) =>
@@ -192,41 +212,41 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
 
   if (selectedDirection) {
     return (
-      <div className="min-h-screen flex flex-col safe-area">
-        <header className="flex items-center justify-between h-14 px-4 mb-4 gap-2">
+      <div className="min-h-screen flex flex-col safe-area self-realization-page">
+        <header className="flex items-center justify-between h-14 px-4 gap-3 flex-shrink-0">
           <button
             type="button"
-            onClick={() => setSelectedDirection(null)}
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-sm font-semibold text-[var(--color-forest-dark)] bg-white/90 shadow-lg border border-[var(--color-lavender)]/20"
+            onClick={goBackToList}
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-sm font-semibold text-[var(--color-forest-dark)] bg-white/95 shadow-md border border-[var(--color-lavender)]/20"
             style={{ WebkitTapHighlightColor: 'transparent' }}
           >
             ←
           </button>
-          <h1 className="flex-1 text-center text-base font-bold text-[var(--color-text-primary)] truncate px-2">
+          <h1 className="flex-1 text-center text-base font-bold text-[var(--color-text-primary)] truncate px-2 min-w-0">
             {selectedDirection.title}
           </h1>
           <button
             type="button"
             onClick={() => goBackToBot()}
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-sm font-semibold text-[var(--color-glow-teal)] bg-white/90 shadow-lg border border-[var(--color-lavender)]/20"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-sm font-semibold text-[var(--color-glow-teal)] bg-white/95 shadow-md border border-[var(--color-lavender)]/20"
             style={{ WebkitTapHighlightColor: 'transparent' }}
           >
             В бота
           </button>
         </header>
 
-        <div className="flex-1 flex flex-col max-w-[440px] mx-auto w-full px-4 pb-4 overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 max-w-[440px] mx-auto w-full px-4 py-4">
           <AnimatePresence mode="wait">
             {isFirstStep ? (
               <motion.div
                 key="setup"
-                initial={{ opacity: 0, y: 16 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className="space-y-5"
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+                className="space-y-4 flex flex-col"
               >
-                <div className="rounded-2xl p-5 bg-white/95 backdrop-blur-xl border border-[var(--color-lavender)]/25 shadow-xl shadow-[var(--color-lavender)]/10">
+                <div className="card-premium rounded-2xl p-5 shadow-lg">
                   <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed mb-4">
                     Что сейчас откликается сильнее всего? Отметь и добавь свои слова — ИИ будет вести диалог по шагам.
                   </p>
@@ -239,10 +259,10 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                           type="button"
                           onClick={() => toggleDifficulty(item)}
                           whileTap={{ scale: 0.97 }}
-                          className={`px-3.5 py-2.5 rounded-xl text-sm font-medium border transition-all ${
+                          className={`px-3.5 py-2.5 rounded-xl text-sm font-medium border transition-colors ${
                             active
-                              ? 'bg-[var(--color-glow-teal)]/20 border-[var(--color-glow-teal)] text-[var(--color-forest-dark)] shadow-md'
-                              : 'border-[var(--color-lavender)]/40 text-[var(--color-text-secondary)] bg-white/70'
+                              ? 'bg-[var(--color-glow-teal)]/25 border-[var(--color-glow-teal)] text-[var(--color-forest-dark)]'
+                              : 'border-[var(--color-lavender)]/40 text-[var(--color-text-secondary)] bg-white/80'
                           }`}
                           style={{ WebkitTapHighlightColor: 'transparent' }}
                         >
@@ -252,34 +272,34 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                     })}
                   </div>
                 </div>
-                <div className="rounded-2xl p-5 bg-white/95 backdrop-blur-xl border border-[var(--color-lavender)]/25 shadow-xl shadow-[var(--color-lavender)]/10">
+                <div className="card-premium rounded-2xl p-5 shadow-lg">
                   <textarea
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     placeholder="Опиши ситуацию или контекст, с которого хочешь начать..."
-                    className="w-full min-h-[100px] rounded-xl border border-[var(--color-lavender)]/30 bg-white/80 p-3.5 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]/70 outline-none focus:ring-2 focus:ring-[var(--color-glow-teal)]/40 resize-none"
+                    className="w-full min-h-[96px] rounded-xl border border-[var(--color-lavender)]/30 bg-white/90 p-3.5 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]/70 outline-none focus:ring-2 focus:ring-[var(--color-glow-teal)]/40 resize-none"
                   />
                   <button
                     type="button"
                     onClick={sendMessage}
                     disabled={loadingReply || !canStartChat}
-                    className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[52px] font-semibold disabled:opacity-50 mt-4 shadow-lg"
+                    className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[50px] font-semibold disabled:opacity-50 mt-4"
                     style={{ WebkitTapHighlightColor: 'transparent' }}
                   >
                     {loadingReply ? 'ИИ печатает...' : 'Начать диалог с ИИ'}
                   </button>
                   {error && <p className="text-sm text-amber-700 mt-3">{error}</p>}
                 </div>
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="flex justify-center">
+                <div className="flex justify-center pt-1">
                   <button
                     type="button"
                     onClick={clearDirectionHistory}
-                    className="text-sm font-medium text-[var(--color-text-secondary)] underline underline-offset-2 hover:text-[var(--color-forest-dark)]"
+                    className="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-forest-dark)] underline underline-offset-2"
                     style={{ WebkitTapHighlightColor: 'transparent' }}
                   >
                     Удалить чат и начать сначала
                   </button>
-                </motion.div>
+                </div>
               </motion.div>
             ) : (
               <motion.div
@@ -289,23 +309,22 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                 exit={{ opacity: 0 }}
                 className="flex flex-col flex-1 min-h-0"
               >
-                <div className="flex-1 overflow-y-auto space-y-3 pr-1 py-2">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-4 pr-1 py-2 min-h-0">
                   <AnimatePresence initial={false}>
                     {messages.map((m, i) => (
                       <motion.div
-                        key={i}
-                        initial={{ opacity: 0, y: 14 }}
+                        key={`${selectedDirection.id}-${i}`}
+                        initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
-                        layout
+                        transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
                         className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
                       >
                         <div
-                          className={`max-w-[90%] rounded-2xl px-4 py-3.5 text-sm leading-relaxed ${
+                          className={`max-w-[88%] rounded-2xl px-4 py-3.5 text-[15px] leading-relaxed ${
                             m.role === 'assistant'
-                              ? 'bg-white/95 backdrop-blur-xl border border-[var(--color-lavender)]/25 shadow-lg text-[var(--color-text-primary)]'
-                              : 'bg-gradient-to-br from-[var(--color-glow-teal)]/20 to-[var(--color-glow-teal)]/8 border border-[var(--color-glow-teal)]/35 text-[var(--color-forest-dark)] shadow-md'
+                              ? 'card-premium border border-[var(--color-lavender)]/20 text-[var(--color-text-primary)] shadow-md'
+                              : 'bg-gradient-to-br from-[var(--color-glow-teal)]/25 to-[var(--color-glow-teal)]/10 border border-[var(--color-glow-teal)]/30 text-[var(--color-forest-dark)] shadow-md'
                           }`}
                         >
                           {m.content}
@@ -315,14 +334,14 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                   </AnimatePresence>
                   {historyLoading && (
                     <div className="flex justify-start">
-                      <div className="rounded-2xl px-4 py-3 text-sm text-[var(--color-text-secondary)] bg-white/80 border border-[var(--color-lavender)]/20">
+                      <div className="card-premium rounded-2xl px-4 py-3 text-sm text-[var(--color-text-secondary)] border border-[var(--color-lavender)]/20">
                         Загружаем историю...
                       </div>
                     </div>
                   )}
                   {loadingReply && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
-                      <div className="rounded-2xl px-4 py-3 text-sm text-[var(--color-text-secondary)] bg-white/80 border border-[var(--color-lavender)]/20">
+                      <div className="card-premium rounded-2xl px-4 py-3 text-sm text-[var(--color-text-secondary)] border border-[var(--color-lavender)]/20">
                         ИИ думает над ответом...
                       </div>
                     </motion.div>
@@ -334,14 +353,14 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     placeholder="Напиши сообщение..."
-                    className="w-full min-h-[88px] rounded-xl border border-[var(--color-lavender)]/35 bg-white/95 p-3.5 text-sm outline-none focus:ring-2 focus:ring-[var(--color-glow-teal)]/40 resize-none"
+                    className="w-full min-h-[80px] rounded-xl border border-[var(--color-lavender)]/35 bg-white/95 p-3.5 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]/70 outline-none focus:ring-2 focus:ring-[var(--color-glow-teal)]/40 resize-none"
                   />
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={sendMessage}
                       disabled={loadingReply || !inputText.trim()}
-                      className="flex-1 py-3 px-4 rounded-xl btn-primary min-h-[48px] font-semibold disabled:opacity-50 shadow-lg"
+                      className="flex-1 py-3 px-4 rounded-xl btn-primary min-h-[48px] font-semibold disabled:opacity-50"
                       style={{ WebkitTapHighlightColor: 'transparent' }}
                     >
                       {loadingReply ? 'Отправка...' : 'Отправить'}
@@ -349,10 +368,10 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                     <button
                       type="button"
                       onClick={clearDirectionHistory}
-                      className="py-3 px-4 rounded-xl btn-secondary min-h-[48px] text-sm font-semibold"
+                      className="py-3 px-3 rounded-xl btn-secondary min-h-[48px] text-xs font-semibold leading-tight"
                       style={{ WebkitTapHighlightColor: 'transparent' }}
                     >
-                      Удалить чат и начать сначала
+                      Удалить чат
                     </button>
                   </div>
                   {error && <p className="text-sm text-amber-700">{error}</p>}
@@ -366,39 +385,39 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col safe-area">
-      <header className="flex items-center justify-between h-14 px-4 mb-4 gap-2">
+    <div className="min-h-screen flex flex-col safe-area self-realization-page">
+      <header className="flex items-center justify-between h-14 px-4 gap-3 flex-shrink-0">
         <button
           type="button"
           onClick={onBack}
-          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-sm font-semibold text-[var(--color-forest-dark)] bg-white/90 shadow-lg border border-[var(--color-lavender)]/20"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-sm font-semibold text-[var(--color-forest-dark)] bg-white/95 shadow-md border border-[var(--color-lavender)]/20"
           style={{ WebkitTapHighlightColor: 'transparent' }}
         >
           ←
         </button>
-        <h1 className="flex-1 text-center text-base font-bold text-[var(--color-text-primary)] px-2">
+        <h1 className="flex-1 text-center text-base font-bold text-[var(--color-text-primary)] px-2 min-w-0">
           Самореализация
         </h1>
         <button
           type="button"
           onClick={() => goBackToBot()}
-          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-sm font-semibold text-[var(--color-glow-teal)] bg-white/90 shadow-lg border border-[var(--color-lavender)]/20"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-sm font-semibold text-[var(--color-glow-teal)] bg-white/95 shadow-md border border-[var(--color-lavender)]/20"
           style={{ WebkitTapHighlightColor: 'transparent' }}
         >
           В бота
         </button>
       </header>
 
-      <div className="flex-1 flex flex-col max-w-[420px] mx-auto w-full px-4 pb-6">
+      <div className="flex-1 flex flex-col max-w-[420px] mx-auto w-full px-4 pb-6 min-h-0 overflow-y-auto">
         <AnimatePresence mode="wait">
           {!welcomeDone && welcomeText ? (
             <motion.div
               key="typewriter"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.4 }}
-              className="rounded-2xl p-6 mb-6 bg-white/95 backdrop-blur-xl border border-[var(--color-lavender)]/25 shadow-xl shadow-[var(--color-lavender)]/10"
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.35 }}
+              className="card-premium rounded-2xl p-6 mb-6 shadow-lg"
             >
               <p className="text-[var(--color-text-primary)] text-base leading-relaxed font-medium min-h-[3.5em]">
                 <TypewriterText text={welcomeText} onComplete={() => setWelcomeDone(true)} />
@@ -407,7 +426,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
           ) : (
             <motion.p
               key="subtitle"
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               className="text-sm text-[var(--color-text-secondary)] mb-6 leading-relaxed"
             >
@@ -417,28 +436,27 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
         </AnimatePresence>
 
         <motion.ul
-          className="space-y-4"
+          className="space-y-3"
           initial="hidden"
           animate="show"
-          variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.05 } } }}
+          variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.04 } } }}
         >
           {DIRECTIONS.map((dir) => (
             <motion.li
               key={dir.id}
-              variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
-              transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+              variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }}
+              transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
               <motion.button
                 type="button"
                 onClick={() => openDirection(dir)}
-                whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
-                className="w-full text-left rounded-2xl p-5 min-h-[92px] bg-white/95 backdrop-blur-xl border border-[var(--color-lavender)]/25 shadow-lg shadow-[var(--color-lavender)]/10 hover:shadow-xl transition-shadow"
+                className="w-full text-left card-premium rounded-2xl p-5 min-h-[88px] shadow-md hover:shadow-lg transition-shadow border border-[var(--color-lavender)]/20"
                 style={{ WebkitTapHighlightColor: 'transparent' }}
               >
                 <div className="flex items-start gap-3">
                   <span className="text-2xl shrink-0" aria-hidden>{dir.icon}</span>
-                  <div>
+                  <div className="min-w-0">
                     <h3 className="text-base font-bold text-[var(--color-text-primary)] mb-1">{dir.title}</h3>
                     <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">{dir.description}</p>
                   </div>
