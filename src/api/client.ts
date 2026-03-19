@@ -489,3 +489,24 @@ export async function apiSelfRealizationWelcome(): Promise<
     return { error: 'Нет связи с сервером', status: 0 }
   }
 }
+
+export async function apiSelfRealizationChat(payload: {
+  direction: string
+  text: string
+  history: Array<{ role: 'user' | 'assistant'; content: string }>
+}): Promise<{ reply: string } | { error: string; status?: number }> {
+  try {
+    const res = await fetchWithAuth('/mini-app/self-realization-chat', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+    const data = (await res.json().catch(() => ({}))) as { reply?: string; error?: string }
+    if (!res.ok) {
+      return { error: data.error || 'Ошибка ответа ИИ', status: res.status }
+    }
+    if (!data.reply) return { error: 'Пустой ответ ИИ', status: 500 }
+    return { reply: data.reply }
+  } catch {
+    return { error: 'Нет связи с сервером', status: 0 }
+  }
+}
