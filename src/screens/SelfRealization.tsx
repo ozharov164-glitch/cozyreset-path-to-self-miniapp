@@ -7,6 +7,7 @@ import {
   apiSelfRealizationChat,
   apiSelfRealizationHistory,
   apiSelfRealizationClearHistory,
+  type SelfRealizationCoachingBlocks,
 } from '../api/client'
 
 const DIRECTIONS = [
@@ -46,6 +47,8 @@ type ChatRole = 'user' | 'assistant'
 interface ChatMessage {
   role: ChatRole
   content: string
+  /** Только у свежих ответов ИИ; из истории приходит только content */
+  blocks?: SelfRealizationCoachingBlocks
 }
 
 interface SelfRealizationProps {
@@ -248,6 +251,49 @@ function PremiumHoloCard({ children, className }: { children: ReactNode; classNa
   )
 }
 
+const COACHING_SECTIONS: Array<{
+  key: keyof SelfRealizationCoachingBlocks
+  title: string
+  borderClass: string
+}> = [
+  { key: 'checkInPrevious', title: 'Связь с прошлым шагом', borderClass: 'border-l-[#5eb8aa]' },
+  { key: 'empathy', title: 'Понимаю тебя', borderClass: 'border-l-[#b898c4]' },
+  { key: 'pattern', title: 'Что под капотом', borderClass: 'border-l-[#c9a86c]' },
+  { key: 'stepsToday', title: 'Шаги прямо сейчас', borderClass: 'border-l-[#6bc4b5]' },
+  { key: 'microExperiment', title: 'Эксперимент до следующего раза', borderClass: 'border-l-[#e8a0a8]' },
+  { key: 'question', title: 'Вопрос', borderClass: 'border-l-[#8b9dc9]' },
+  { key: 'progressBridge', title: 'Как это двигает вперёд', borderClass: 'border-l-[#7bc4a8]' },
+  { key: 'toneClose', title: 'Опора', borderClass: 'border-l-[#d4a5ab]' },
+]
+
+function hasCoachingBlocks(b: SelfRealizationCoachingBlocks | undefined): boolean {
+  if (!b) return false
+  return Object.values(b).some((v) => typeof v === 'string' && v.trim().length > 0)
+}
+
+function CoachingCards({ blocks }: { blocks: SelfRealizationCoachingBlocks }) {
+  return (
+    <div className="space-y-2.5">
+      {COACHING_SECTIONS.map(({ key, title, borderClass }) => {
+        const raw = blocks[key]
+        const text = typeof raw === 'string' ? raw.trim() : ''
+        if (!text) return null
+        return (
+          <div
+            key={key}
+            className={`rounded-xl border border-[var(--color-lavender)]/20 bg-white/50 pl-3 pr-3 py-2.5 border-l-4 shadow-sm ${borderClass}`}
+          >
+            <div className="text-[10px] font-bold uppercase tracking-wide text-[var(--color-text-secondary)] mb-1">
+              {title}
+            </div>
+            <p className="text-[14px] leading-relaxed whitespace-pre-wrap text-[var(--color-text-primary)]">{text}</p>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export function SelfRealization({ onBack }: SelfRealizationProps) {
   const [selectedDirection, setSelectedDirection] = useState<Direction | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -363,7 +409,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
       direction: selectedDirection.title,
       text,
       difficulties: selectedDifficulties.length > 0 ? selectedDifficulties : undefined,
-      history: nextMessages,
+      history: nextMessages.map((m) => ({ role: m.role, content: m.content })),
     })
 
     if ('error' in result) {
@@ -372,7 +418,14 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
       return
     }
 
-    setMessages((prev) => [...prev, { role: 'assistant', content: result.reply }])
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: 'assistant',
+        content: result.reply,
+        blocks: hasCoachingBlocks(result.blocks) ? result.blocks : undefined,
+      },
+    ])
     setLoadingReply(false)
   }, [selectedDirection, messages, inputText, loadingReply, selectedDifficulties])
 
@@ -441,7 +494,9 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                             Самореализация • шаг
                           </div>
                         )}
-                        {m.role === 'assistant' ? (
+                        {m.role === 'assistant' && m.blocks && hasCoachingBlocks(m.blocks) ? (
+                          <CoachingCards blocks={m.blocks} />
+                        ) : m.role === 'assistant' ? (
                           <TypewriterFirstPartNoReflow
                             text={m.content}
                             animate={false}

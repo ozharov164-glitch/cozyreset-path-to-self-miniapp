@@ -489,23 +489,42 @@ export async function apiSelfRealizationWelcome(): Promise<
   }
 }
 
+/** Блоки коучинга с бэкенда (camelCase) — для карточек в UI */
+export type SelfRealizationCoachingBlocks = {
+  checkInPrevious?: string
+  empathy?: string
+  pattern?: string
+  stepsToday?: string
+  microExperiment?: string
+  question?: string
+  progressBridge?: string
+  toneClose?: string
+}
+
 export async function apiSelfRealizationChat(payload: {
   direction: string
   text: string
   difficulties?: string[]
   history: Array<{ role: 'user' | 'assistant'; content: string }>
-}): Promise<{ reply: string } | { error: string; status?: number }> {
+}): Promise<
+  { reply: string; blocks: SelfRealizationCoachingBlocks } | { error: string; status?: number }
+> {
   try {
     const res = await fetchWithAuth('/mini-app/self-realization-chat', {
       method: 'POST',
       body: JSON.stringify(payload),
     })
-    const data = (await res.json().catch(() => ({}))) as { reply?: string; error?: string }
+    const data = (await res.json().catch(() => ({}))) as {
+      reply?: string
+      blocks?: SelfRealizationCoachingBlocks
+      error?: string
+    }
     if (!res.ok) {
       return { error: data.error || 'Ошибка ответа ИИ', status: res.status }
     }
     if (!data.reply) return { error: 'Пустой ответ ИИ', status: 500 }
-    return { reply: data.reply }
+    const blocks = data.blocks && typeof data.blocks === 'object' ? data.blocks : {}
+    return { reply: data.reply, blocks }
   } catch {
     return { error: 'Нет связи с сервером', status: 0 }
   }
