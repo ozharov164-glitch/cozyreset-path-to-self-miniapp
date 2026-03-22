@@ -407,6 +407,13 @@ export type AiMovie = {
 
 /** Темы для проработки с ИИ в боте. Без аргументов — по последнему результату пользователя. */
 export async function apiAiSuggestions(testTitle?: string, avg?: number): Promise<{ suggestions: string[]; movies: AiMovie[] }> {
+  let token = useAuthStore.getState().appSaveToken
+  if (!token) {
+    token = await ensureAuth()
+  }
+  if (!token) {
+    return { suggestions: [], movies: [] }
+  }
   const body: Record<string, unknown> = {}
   if (testTitle != null && avg != null) {
     body.test_title = testTitle
@@ -531,7 +538,15 @@ export async function apiSelfRealizationChat(payload: {
 }
 
 export async function apiSelfRealizationHistory(direction: string): Promise<
-  { items: Array<{ role: 'user' | 'assistant'; content: string; createdAt: string }> } | { error: string; status?: number }
+  | {
+      items: Array<{
+        role: 'user' | 'assistant'
+        content: string
+        createdAt: string
+        blocks?: SelfRealizationCoachingBlocks
+      }>
+    }
+  | { error: string; status?: number }
 > {
   try {
     const res = await fetchWithAuth('/mini-app/self-realization-history', {
@@ -539,7 +554,12 @@ export async function apiSelfRealizationHistory(direction: string): Promise<
       body: JSON.stringify({ direction }),
     })
     const data = (await res.json().catch(() => ({}))) as {
-      items?: Array<{ role: 'user' | 'assistant'; content: string; createdAt: string }>
+      items?: Array<{
+        role: 'user' | 'assistant'
+        content: string
+        createdAt: string
+        blocks?: SelfRealizationCoachingBlocks
+      }>
       error?: string
     }
     if (!res.ok) return { error: data.error || 'Ошибка загрузки истории', status: res.status }

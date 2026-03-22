@@ -27,6 +27,7 @@ function formatDateWithTime(iso: string): string {
 
 export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
   const authReady = useAuthStore((s) => s.isInitialized)
+  const appSaveToken = useAuthStore((s) => s.appSaveToken)
   const openResultFromHistory = useAppStore((s) => s.openResultFromHistory)
   const tg = typeof window !== 'undefined' ? window.Telegram?.WebApp : undefined
   const userName = tg?.initDataUnsafe?.user?.first_name || 'друг'
@@ -43,9 +44,10 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
   const showHistoryLoading = !authReady || (authReady && historyLoading && items.length === 0)
 
   const { data: suggestionsData } = useQuery({
-    queryKey: ['ai-suggestions-dashboard'],
+    queryKey: ['ai-suggestions-dashboard', appSaveToken ?? ''],
     queryFn: () => apiAiSuggestions(),
-    enabled: authReady && items.length > 0,
+    // Не дергаем API до токена из /mini-app/init — иначе 401 и гонка с initData
+    enabled: authReady && !!appSaveToken && items.length > 0,
   })
   const suggestions = suggestionsData?.suggestions ?? []
 

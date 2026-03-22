@@ -361,7 +361,14 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
       }
 
       if (res.items.length > 0) {
-        setMessages(res.items.map((m) => ({ role: m.role, content: m.content })))
+        setMessages(
+          res.items.map((m) => ({
+            role: m.role,
+            content: m.content,
+            blocks:
+              m.role === 'assistant' && m.blocks && hasCoachingBlocks(m.blocks) ? m.blocks : undefined,
+          }))
+        )
       } else {
         setMessages([{ role: 'assistant', content: getDirectionWelcome(selectedDirection) }])
       }

@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { TESTS } from '../data/tests'
 import { useAppStore } from '../store/appStore'
+import { useAuthStore } from '../store/authStore'
 import { apiSaveTestResult, apiTestResult, apiAiSuggestions, ensureAuth, getInitDataString, loadBackendConfig, refreshInitData } from '../api/client'
 import { goBackToBot, copyQuestionToClipboard } from '../utils/telegram'
 
@@ -25,6 +26,8 @@ interface ResultProps {
 }
 
 export function Result({ onBack }: ResultProps) {
+  const authReady = useAuthStore((s) => s.isInitialized)
+  const appSaveToken = useAuthStore((s) => s.appSaveToken)
   const queryClient = useQueryClient()
   const currentTestId = useAppStore((s) => s.currentTestId)
   const answers = useAppStore((s) => s.answers)
@@ -119,9 +122,9 @@ export function Result({ onBack }: ResultProps) {
   const description = getScoreDescription(avgRounded, displayTest?.title ?? '')
 
   const { data: suggestionsData } = useQuery({
-    queryKey: ['ai-suggestions-result', displayTest?.title ?? '', avgRounded],
+    queryKey: ['ai-suggestions-result', displayTest?.title ?? '', avgRounded, appSaveToken ?? ''],
     queryFn: () => apiAiSuggestions(displayTest?.title ?? '', avgRounded),
-    enabled: !!(displayTest?.title && displayAnswers.length > 0),
+    enabled: !!(displayTest?.title && displayAnswers.length > 0 && authReady && appSaveToken),
   })
   const aiSuggestions = suggestionsData?.suggestions ?? []
   const aiMovies = suggestionsData?.movies ?? []
