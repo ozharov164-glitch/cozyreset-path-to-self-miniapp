@@ -411,6 +411,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     setMessages(nextMessages)
     setInputText('')
     setLoadingReply(true)
+    const loadingStartedAt = Date.now()
 
     const result = await apiSelfRealizationChat({
       direction: selectedDirection.title,
@@ -420,11 +421,19 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     })
 
     if ('error' in result) {
+      const elapsed = Date.now() - loadingStartedAt
+      if (elapsed < 700) {
+        await new Promise((resolve) => setTimeout(resolve, 700 - elapsed))
+      }
       setError(result.error)
       setLoadingReply(false)
       return
     }
 
+    const elapsed = Date.now() - loadingStartedAt
+    if (elapsed < 700) {
+      await new Promise((resolve) => setTimeout(resolve, 700 - elapsed))
+    }
     setMessages((prev) => [
       ...prev,
       {
@@ -522,7 +531,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
             {loadingReply && (
               <div className="flex justify-start">
                 <div className="card-premium rounded-2xl px-4 py-3 text-sm text-[var(--color-text-secondary)] border border-[var(--color-lavender)]/20">
-                  ИИ думает…
+                  ИИ готовит ответ…
                 </div>
               </div>
             )}

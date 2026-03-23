@@ -344,7 +344,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                   ))}
                 </div>
                 <span className="text-xs text-[var(--color-text-secondary)]">
-                  Ответ готовится (до 2 минут)…
+                  Ответ готовится (до 3 минут)…
                 </span>
               </motion.div>
             )}
