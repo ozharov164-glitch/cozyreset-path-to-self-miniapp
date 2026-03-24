@@ -7,7 +7,10 @@ import {
   apiSelfRealizationChat,
   apiSelfRealizationHistory,
   apiSelfRealizationClearHistory,
+  apiSelfRealizationTrackSync,
+  apiSelfRealizationCompleteStep,
   type SelfRealizationCoachingBlocks,
+  type SelfRealizationTrackSync,
 } from '../api/client'
 
 const DIRECTIONS = [
@@ -60,7 +63,7 @@ const CURSOR_BLINK_MS = 540
 const MAX_ANIM_CHARS = 900
 
 function getDirectionWelcome(dir: Direction): string {
-  return `Отличный выбор — ${dir.title.toLowerCase()}. Отметь, что сейчас откликается, и опиши ситуацию — будем разбирать по шагам в диалоге.`
+  return `Отличный выбор — ${dir.title.toLowerCase()}. 8 этапов по одному в день: ИИ подстраивает задания под тебя. Отметь, что откликается, и опиши контекст — начнём с первого этапа.`
 }
 
 function clampForAnim(text: string) {
@@ -302,6 +305,10 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
   const [loadingReply, setLoadingReply] = useState(false)
   const [historyLoading, setHistoryLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [track, setTrack] = useState<SelfRealizationTrackSync | null>(null)
+  const [completeOpen, setCompleteOpen] = useState(false)
+  const [completeReport, setCompleteReport] = useState('')
+  const [completeLoading, setCompleteLoading] = useState(false)
 
   const [welcomeText, setWelcomeText] = useState('')
   const [welcomeDone, setWelcomeDone] = useState(false)
@@ -341,18 +348,30 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     setError(null)
     setHistoryLoading(false)
     setLoadingReply(false)
+    setTrack(null)
+    setCompleteOpen(false)
+    setCompleteReport('')
   }, [])
 
   useEffect(() => {
     if (!selectedDirection) return
 
     const directionTitle = selectedDirection.title
+    const directionKey = selectedDirection.id
     setError(null)
     setHistoryLoading(true)
     setLoadingReply(false)
+    setTrack(null)
 
-    apiSelfRealizationHistory(directionTitle).then((res) => {
+    Promise.all([
+      apiSelfRealizationHistory(directionTitle),
+      apiSelfRealizationTrackSync({ direction: directionTitle, directionKey }),
+    ]).then(([res, sync]) => {
       if (directionTitleRef.current !== directionTitle) return
+
+      if (!('error' in sync)) {
+        setTrack(sync)
+      }
 
       if ('error' in res) {
         setHistoryLoading(false)
@@ -389,7 +408,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
   const clearDirectionHistory = useCallback(async () => {
     if (!selectedDirection) return
     setError(null)
-    const result = await apiSelfRealizationClearHistory(selectedDirection.title)
+    const result = await apiSelfRealizationClearHistory(selectedDirection.title, selectedDirection.id)
     if ('error' in result) {
       setError(result.error)
       return
@@ -399,6 +418,13 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     setInputText('')
     setLoadingReply(false)
     setHistoryLoading(false)
+    setCompleteOpen(false)
+    setCompleteReport('')
+    const sync = await apiSelfRealizationTrackSync({
+      direction: selectedDirection.title,
+      directionKey: selectedDirection.id,
+    })
+    if (!('error' in sync)) setTrack(sync)
   }, [selectedDirection])
 
   const sendMessage = useCallback(async () => {
@@ -415,6 +441,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
 
     const result = await apiSelfRealizationChat({
       direction: selectedDirection.title,
+      directionKey: selectedDirection.id,
       text,
       difficulties: selectedDifficulties.length > 0 ? selectedDifficulties : undefined,
       history: nextMessages.map((m) => ({ role: m.role, content: m.content })),
@@ -429,6 +456,8 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
       setLoadingReply(false)
       return
     }
+
+    setTrack(result.track)
 
     const elapsed = Date.now() - loadingStartedAt
     if (elapsed < 700) {
@@ -445,9 +474,40 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     setLoadingReply(false)
   }, [selectedDirection, messages, inputText, loadingReply, selectedDifficulties])
 
+  const submitCompleteStep = useCallback(async () => {
+    const report = completeReport.trim()
+    if (!selectedDirection || report.length < 3 || completeLoading) return
+    setError(null)
+    setCompleteLoading(true)
+    const result = await apiSelfRealizationCompleteStep({
+      direction: selectedDirection.title,
+      directionKey: selectedDirection.id,
+      report,
+    })
+    setCompleteLoading(false)
+    if ('error' in result) {
+      setError(result.error)
+      return
+    }
+    setTrack(result.track)
+    setCompleteOpen(false)
+    setCompleteReport('')
+    setMessages((prev) => [
+      ...prev,
+      { role: 'user', content: `Отчёт о задании: ${report}` },
+      { role: 'assistant', content: result.reply },
+    ])
+  }, [selectedDirection, completeReport, completeLoading])
+
   const isSetupMode =
     messages.length <= 1 && messages[0]?.role === 'assistant'
   const canStartChat = inputText.trim().length > 0
+  const showCompleteButton =
+    !!track &&
+    !isSetupMode &&
+    track.canCompleteStep &&
+    !track.completedAll &&
+    !track.awaitingNextDay
 
   if (selectedDirection) {
     return (
@@ -465,7 +525,11 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
             <h1 className="text-center text-base font-bold text-[var(--color-text-primary)] truncate">
               {selectedDirection.title}
             </h1>
-            <p className="text-center text-xs text-[var(--color-text-secondary)] mt-0.5">Структурированный диалог по шагам</p>
+            <p className="text-center text-xs text-[var(--color-text-secondary)] mt-0.5">
+              {track
+                ? `Этап ${track.displayStep} из ${track.totalSteps} · один этап в день`
+                : 'Загрузка трека…'}
+            </p>
           </div>
           <button
             type="button"
@@ -484,6 +548,19 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                 <div className="card-premium rounded-2xl px-4 py-3 text-sm text-[var(--color-text-secondary)] border border-[var(--color-lavender)]/20">
                   ИИ готовит старт…
                 </div>
+              </div>
+            )}
+
+            {track?.awaitingNextDay && (
+              <div className="rounded-2xl border border-[var(--color-glow-teal)]/40 bg-[var(--color-glow-teal)]/10 px-4 py-3 text-sm text-[var(--color-forest-dark)]">
+                Сегодняшний этап выполнен. Следующий откроется{' '}
+                {track.nextUnlockDate ? ` ${track.nextUnlockDate}` : ' завтра'}. Отдых — тоже часть трека 💛
+              </div>
+            )}
+
+            {track?.completedAll && (
+              <div className="rounded-2xl border border-[var(--color-lavender)]/30 bg-white/60 px-4 py-3 text-sm text-[var(--color-text-primary)]">
+                Все 8 этапов в этом направлении пройдены. Можно закреплять понравившиеся приёмы в переписке с ИИ.
               </div>
             )}
 
@@ -507,7 +584,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                       <div className="space-y-2">
                         {m.role === 'assistant' && (
                           <div className="text-[11px] font-semibold text-[var(--color-text-secondary)]">
-                            Самореализация • шаг
+                            Самореализация · коучинг
                           </div>
                         )}
                         {m.role === 'assistant' && m.blocks && hasCoachingBlocks(m.blocks) ? (
@@ -540,6 +617,43 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
           </div>
 
           <motion.div layout className="flex-shrink-0 pt-3 space-y-3">
+            {completeOpen && (
+              <div className="card-premium rounded-2xl p-4 shadow-lg border border-[var(--color-lavender)]/25">
+                <div className="text-sm font-semibold text-[var(--color-text-primary)] mb-2">Отчёт о задании</div>
+                <p className="text-xs text-[var(--color-text-secondary)] mb-2">
+                  Коротко: что сделал(а), что мешало, что заметил(а).
+                </p>
+                <textarea
+                  value={completeReport}
+                  onChange={(e) => setCompleteReport(e.target.value)}
+                  placeholder="3–10 предложений…"
+                  className="w-full min-h-[88px] rounded-xl border border-[var(--color-lavender)]/35 bg-white/95 p-3 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-glow-teal)]/40 resize-none"
+                />
+                <div className="flex gap-2 mt-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCompleteOpen(false)
+                      setCompleteReport('')
+                    }}
+                    className="flex-1 py-3 rounded-xl btn-secondary min-h-[48px] text-sm font-semibold"
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
+                  >
+                    Отмена
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void submitCompleteStep()}
+                    disabled={completeLoading || completeReport.trim().length < 3}
+                    className="flex-1 py-3 rounded-xl btn-primary min-h-[48px] text-sm font-semibold disabled:opacity-50"
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
+                  >
+                    {completeLoading ? 'Отправка…' : 'Задание выполнено'}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {isSetupMode ? (
               <>
                 <PremiumHoloCard className="p-4 shadow-lg">
@@ -623,18 +737,29 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
             ) : (
               <>
                 <div className="text-center text-xs text-[var(--color-text-secondary)] -mt-1">Продолжаем. ИИ уточняет и закрепляет шаги.</div>
+                {showCompleteButton && !completeOpen && (
+                  <button
+                    type="button"
+                    onClick={() => setCompleteOpen(true)}
+                    className="w-full py-3.5 rounded-xl font-semibold text-[var(--color-forest-dark)] bg-[var(--color-glow-teal)]/30 border border-[var(--color-glow-teal)]/50 min-h-[52px]"
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
+                  >
+                    Задание выполнено
+                  </button>
+                )}
                 <div className="card-premium rounded-2xl p-4 shadow-lg">
                   <textarea
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     placeholder="Напиши сообщение…"
-                    className="w-full min-h-[88px] rounded-xl border border-[var(--color-lavender)]/35 bg-white/95 p-3.5 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]/70 outline-none focus:ring-2 focus:ring-[var(--color-glow-teal)]/40 resize-none"
+                    disabled={!!track?.awaitingNextDay}
+                    className="w-full min-h-[88px] rounded-xl border border-[var(--color-lavender)]/35 bg-white/95 p-3.5 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]/70 outline-none focus:ring-2 focus:ring-[var(--color-glow-teal)]/40 resize-none disabled:opacity-50"
                   />
                   <div className="flex items-center gap-2 mt-3">
                     <button
                       type="button"
                       onClick={sendMessage}
-                      disabled={loadingReply || !inputText.trim()}
+                      disabled={loadingReply || !inputText.trim() || !!track?.awaitingNextDay}
                       className="flex-1 py-3 px-4 rounded-xl btn-primary min-h-[48px] font-semibold disabled:opacity-50"
                       style={{ WebkitTapHighlightColor: 'transparent' }}
                     >

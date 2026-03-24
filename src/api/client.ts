@@ -508,13 +508,75 @@ export type SelfRealizationCoachingBlocks = {
   toneClose?: string
 }
 
+/** Состояние курируемого трека (8 этапов, один «выполнено» в день). */
+export type SelfRealizationTrackSync = {
+  directionKey: string
+  displayStep: number
+  totalSteps: number
+  awaitingNextDay: boolean
+  nextUnlockDate: string
+  canCompleteStep: boolean
+  completedAll: boolean
+}
+
+export async function apiSelfRealizationTrackSync(payload: {
+  direction: string
+  directionKey: string
+}): Promise<SelfRealizationTrackSync | { error: string; status?: number }> {
+  try {
+    const res = await fetchWithAuth('/mini-app/self-realization-track-sync', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+    const data = (await res.json().catch(() => ({}))) as SelfRealizationTrackSync & { error?: string }
+    if (!res.ok) {
+      return { error: data.error || 'Ошибка синхронизации трека', status: res.status }
+    }
+    if (typeof data.displayStep !== 'number' || typeof data.totalSteps !== 'number') {
+      return { error: 'Некорректный ответ трека', status: 500 }
+    }
+    return data as SelfRealizationTrackSync
+  } catch {
+    return { error: 'Нет связи с сервером', status: 0 }
+  }
+}
+
+export async function apiSelfRealizationCompleteStep(payload: {
+  direction: string
+  directionKey: string
+  report: string
+}): Promise<
+  { ok: true; reply: string; track: SelfRealizationTrackSync } | { error: string; status?: number }
+> {
+  try {
+    const res = await fetchWithAuth('/mini-app/self-realization-complete-step', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+    const data = (await res.json().catch(() => ({}))) as {
+      ok?: boolean
+      reply?: string
+      track?: SelfRealizationTrackSync
+      error?: string
+    }
+    if (!res.ok || !data.ok || !data.reply || !data.track) {
+      return { error: data.error || 'Не удалось зафиксировать этап', status: res.status }
+    }
+    return { ok: true, reply: data.reply, track: data.track }
+  } catch {
+    return { error: 'Нет связи с сервером', status: 0 }
+  }
+}
+
 export async function apiSelfRealizationChat(payload: {
   direction: string
+  directionKey: string
   text: string
   difficulties?: string[]
   history: Array<{ role: 'user' | 'assistant'; content: string }>
 }): Promise<
-  { reply: string; blocks: SelfRealizationCoachingBlocks } | { error: string; status?: number }
+  | { reply: string; blocks: SelfRealizationCoachingBlocks; track: SelfRealizationTrackSync }
+  | { error: string; status?: number }
 > {
   try {
     const res = await fetchWithAuth('/mini-app/self-realization-chat', {
@@ -524,6 +586,7 @@ export async function apiSelfRealizationChat(payload: {
     const data = (await res.json().catch(() => ({}))) as {
       reply?: string
       blocks?: SelfRealizationCoachingBlocks
+      track?: SelfRealizationTrackSync
       error?: string
     }
     if (!res.ok) {
@@ -531,7 +594,10 @@ export async function apiSelfRealizationChat(payload: {
     }
     if (!data.reply) return { error: 'Пустой ответ ИИ', status: 500 }
     const blocks = data.blocks && typeof data.blocks === 'object' ? data.blocks : {}
-    return { reply: data.reply, blocks }
+    if (!data.track || typeof data.track.displayStep !== 'number') {
+      return { error: 'Некорректный ответ трека', status: 500 }
+    }
+    return { reply: data.reply, blocks, track: data.track }
   } catch {
     return { error: 'Нет связи с сервером', status: 0 }
   }
@@ -569,11 +635,14 @@ export async function apiSelfRealizationHistory(direction: string): Promise<
   }
 }
 
-export async function apiSelfRealizationClearHistory(direction: string): Promise<{ ok: true } | { error: string; status?: number }> {
+export async function apiSelfRealizationClearHistory(
+  direction: string,
+  directionKey: string
+): Promise<{ ok: true } | { error: string; status?: number }> {
   try {
     const res = await fetchWithAuth('/mini-app/self-realization-clear-history', {
       method: 'POST',
-      body: JSON.stringify({ direction }),
+      body: JSON.stringify({ direction, directionKey }),
     })
     const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string }
     if (!res.ok || !data.ok) return { error: data.error || 'Ошибка очистки истории', status: res.status }
