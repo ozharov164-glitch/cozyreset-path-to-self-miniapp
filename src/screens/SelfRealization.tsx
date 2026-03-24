@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { goBackToBot } from '../utils/telegram'
@@ -220,97 +220,6 @@ function TypewriterText({
           |
         </motion.span>
       )}
-    </span>
-  )
-}
-
-function TypewriterFirstPartNoReflow({
-  text,
-  animate,
-  maxChars,
-  onComplete,
-}: {
-  text: string
-  animate: boolean
-  maxChars: number
-  onComplete?: () => void
-}) {
-  const [visibleLength, setVisibleLength] = useState(animate ? 0 : text.length)
-  const [cursorVisible, setCursorVisible] = useState(true)
-  const [fixedHeight, setFixedHeight] = useState<number | null>(null)
-  const onCompleteRef = useRef(onComplete)
-  onCompleteRef.current = onComplete
-
-  const measureRef = useRef<HTMLSpanElement | null>(null)
-  const targetLength = Math.min((text || '').length, Math.max(0, maxChars))
-
-  useLayoutEffect(() => {
-    const el = measureRef.current
-    if (!el) return
-    const h = el.getBoundingClientRect().height
-    setFixedHeight(h)
-  }, [text])
-
-  useEffect(() => {
-    if (!animate) {
-      setVisibleLength(text.length)
-      return
-    }
-    setVisibleLength(0)
-  }, [animate, text])
-
-  useEffect(() => {
-    if (!animate) return
-    if (!text) return
-
-    const t = window.setInterval(() => {
-      setVisibleLength((prev) => {
-        if (prev >= targetLength) {
-          window.clearInterval(t)
-          window.setTimeout(() => {
-            setVisibleLength(text.length)
-            onCompleteRef.current?.()
-          }, 30)
-          return prev
-        }
-        return prev + 1
-      })
-    }, TYPEWRITER_MS)
-
-    return () => window.clearInterval(t)
-  }, [animate, text, targetLength])
-
-  useEffect(() => {
-    if (!animate) return
-    const blink = window.setInterval(() => setCursorVisible((v) => !v), CURSOR_BLINK_MS)
-    return () => window.clearInterval(blink)
-  }, [animate])
-
-  const done = visibleLength >= text.length
-  const shown = text.slice(0, visibleLength)
-
-  return (
-    <span
-      className="relative block overflow-hidden"
-      style={fixedHeight != null ? { height: fixedHeight } : undefined}
-    >
-      {/* Hidden full text: used only for measuring, doesn't affect layout */}
-      <span
-        ref={measureRef}
-        className="absolute left-0 top-0 w-full"
-        style={{ visibility: 'hidden', whiteSpace: 'pre-wrap', pointerEvents: 'none' }}
-      >
-        {text}
-      </span>
-
-      <span style={{ whiteSpace: 'pre-wrap' }}>
-        {shown}
-        {!done && (
-          <motion.span animate={{ opacity: cursorVisible ? 1 : 0 }} transition={{ duration: 0.15 }}>
-            |
-          </motion.span>
-        )}
-      </span>
     </span>
   )
 }
@@ -686,7 +595,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
         </header>
 
         <div className="flex-1 flex flex-col min-h-0 max-w-[440px] mx-auto w-full px-4 py-4">
-          <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-3 pr-1 py-2 min-h-0">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-3 pr-1 pt-2 pb-8 min-h-0 scroll-smooth">
             {historyLoading && <ChatLoadingBubble label="ИИ готовит старт…" />}
 
             {track?.awaitingNextDay && (
@@ -716,10 +625,17 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
             <AnimatePresence initial={false} mode="popLayout">
               {messages.map((m, i) => {
                 const fromRight = m.role === 'user'
+                const assistantPlain = m.role === 'assistant' && !m.blocks
                 const delay = reduceMotion ? 0 : Math.min(i * 0.022, 0.2)
                 const bubbleTransition = reduceMotion
                   ? { duration: 0.18, delay }
                   : { type: 'spring' as const, stiffness: 420, damping: 32, mass: 0.82, delay }
+                const bubbleClass =
+                  assistantPlain
+                    ? 'sr-feedback-ack max-w-[min(100%,92%)] min-w-0 rounded-2xl px-4 pt-3.5 pb-4'
+                    : m.role === 'assistant'
+                      ? 'card-premium max-w-[min(100%,92%)] min-w-0 rounded-2xl px-4 py-3.5 border border-[var(--color-lavender)]/20 text-[var(--color-text-primary)] shadow-md text-[15px] leading-relaxed'
+                      : 'max-w-[min(100%,92%)] min-w-0 rounded-2xl px-4 py-3.5 text-[15px] leading-relaxed bg-gradient-to-br from-[var(--color-glow-teal)]/25 to-[var(--color-glow-teal)]/10 border border-[var(--color-glow-teal)]/30 text-[var(--color-forest-dark)] shadow-md'
                 return (
                   <motion.div
                     key={`${selectedDirection.id}-${i}`}
@@ -728,33 +644,46 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                     animate={{ opacity: 1, y: 0, scale: 1, x: 0 }}
                     exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.15 } }}
                     transition={bubbleTransition}
-                    className={`flex ${fromRight ? 'justify-end' : 'justify-start'}`}
+                    className={`flex w-full min-w-0 ${fromRight ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div
-                      className={`max-w-[88%] rounded-2xl px-4 py-3.5 text-[15px] leading-relaxed ${
-                        m.role === 'assistant'
-                          ? 'card-premium border border-[var(--color-lavender)]/20 text-[var(--color-text-primary)] shadow-md'
-                          : 'bg-gradient-to-br from-[var(--color-glow-teal)]/25 to-[var(--color-glow-teal)]/10 border border-[var(--color-glow-teal)]/30 text-[var(--color-forest-dark)] shadow-md'
-                      }`}
-                    >
-                      <div className="space-y-2">
+                    <div className={bubbleClass}>
+                      <div className={`space-y-2 min-w-0 ${assistantPlain ? 'space-y-3' : ''}`}>
                         {m.role === 'assistant' && (
-                          <div className="text-[11px] font-semibold text-[var(--color-text-secondary)]">
-                            {m.blocks && isCuratedDayBlock(m.blocks) ? 'Методичка · программа' : 'Самореализация'}
+                          <div
+                            className={
+                              assistantPlain
+                                ? 'flex items-center gap-2 min-w-0'
+                                : 'text-[11px] font-semibold text-[var(--color-text-secondary)]'
+                            }
+                          >
+                            {assistantPlain ? (
+                              <>
+                                <span
+                                  className="inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[var(--color-glow-teal)]/18 text-[15px] shadow-sm border border-white/50"
+                                  aria-hidden
+                                >
+                                  ✨
+                                </span>
+                                <span className="text-[12px] font-bold uppercase tracking-[0.04em] text-[var(--color-forest-dark)]/85">
+                                  Обратная связь
+                                </span>
+                              </>
+                            ) : m.blocks && isCuratedDayBlock(m.blocks) ? (
+                              'Методичка · программа'
+                            ) : (
+                              'Самореализация'
+                            )}
                           </div>
                         )}
+                        {assistantPlain ? <div className="sr-feedback-ack-accent shrink-0" aria-hidden /> : null}
                         {m.role === 'assistant' && m.blocks && isCuratedDayBlock(m.blocks) ? (
                           <CuratedDayCards day={m.blocks} />
                         ) : m.role === 'assistant' && m.blocks && hasCoachingBlocks(m.blocks) ? (
                           <CoachingCards blocks={m.blocks as SelfRealizationCoachingBlocks} />
                         ) : m.role === 'assistant' ? (
-                          <TypewriterFirstPartNoReflow
-                            text={m.content}
-                            animate={false}
-                            maxChars={MAX_ANIM_CHARS}
-                          />
+                          <p className="sr-feedback-ack-body whitespace-pre-wrap">{m.content}</p>
                         ) : (
-                          <span style={{ whiteSpace: 'pre-wrap' }}>{m.content}</span>
+                          <span className="block whitespace-pre-wrap break-words">{m.content}</span>
                         )}
                       </div>
                     </div>

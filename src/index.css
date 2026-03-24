@@ -204,3 +204,42 @@ body {
 .self-realization-page {
   background: linear-gradient(180deg, rgba(232, 224, 244, 0.35) 0%, rgba(245, 230, 211, 0.15) 40%, transparent 100%);
 }
+
+/* Ответ ИИ на отчёт («задание выполнено»): стекло, глубина, без обрезки текста */
+.sr-feedback-ack {
+  position: relative;
+  background: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(248, 252, 255, 0.9) 45%,
+    rgba(252, 249, 255, 0.93) 100%
+  );
+  backdrop-filter: blur(22px) saturate(1.12);
+  -webkit-backdrop-filter: blur(22px) saturate(1.12);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow:
+    0 2px 6px rgba(30, 43, 31, 0.04),
+    0 14px 40px -10px rgba(107, 196, 181, 0.14),
+    0 10px 36px -14px rgba(184, 164, 224, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.sr-feedback-ack-accent {
+  height: 3px;
+  width: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #6bc4b5 0%, #9b8dd4 48%, #e8b4b8 100%);
+  opacity: 0.88;
+  box-shadow: 0 1px 8px rgba(107, 196, 181, 0.25);
+}
+
+.sr-feedback-ack-body {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.68;
+  letter-spacing: -0.012em;
+  color: var(--color-text-primary);
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+}
