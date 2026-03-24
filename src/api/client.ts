@@ -514,6 +514,7 @@ export type SelfRealizationCuratedDay = {
   displayStep?: number
   stepTitle?: string
   personalizedOpening?: string
+  theory?: string
   chosenKey?: string
   assignment?: string
   planB?: string
