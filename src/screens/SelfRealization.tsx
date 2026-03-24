@@ -4,12 +4,13 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { goBackToBot } from '../utils/telegram'
 import {
   apiSelfRealizationWelcome,
-  apiSelfRealizationChat,
+  apiSelfRealizationCompileDay,
   apiSelfRealizationHistory,
   apiSelfRealizationClearHistory,
   apiSelfRealizationTrackSync,
   apiSelfRealizationCompleteStep,
   type SelfRealizationCoachingBlocks,
+  type SelfRealizationCuratedDay,
   type SelfRealizationTrackSync,
 } from '../api/client'
 
@@ -50,8 +51,7 @@ type ChatRole = 'user' | 'assistant'
 interface ChatMessage {
   role: ChatRole
   content: string
-  /** Только у свежих ответов ИИ; из истории приходит только content */
-  blocks?: SelfRealizationCoachingBlocks
+  blocks?: SelfRealizationCoachingBlocks | SelfRealizationCuratedDay
 }
 
 interface SelfRealizationProps {
@@ -63,7 +63,53 @@ const CURSOR_BLINK_MS = 540
 const MAX_ANIM_CHARS = 900
 
 function getDirectionWelcome(dir: Direction): string {
-  return `Отличный выбор — ${dir.title.toLowerCase()}. 8 этапов по одному в день: ИИ подстраивает задания под тебя. Отметь, что откликается, и опиши контекст — начнём с первого этапа.`
+  return `Отличный выбор — ${dir.title.toLowerCase()}. Это курируемая программа: задания уже заложены в продукте, а ИИ лишь свяжет их с твоим контекстом и выберет вариант A/B/C. Отметь трудности и кратко опиши ситуацию — затем нажми «Собрать задание дня».`
+}
+
+function isCuratedDayBlock(b: unknown): b is SelfRealizationCuratedDay {
+  return typeof b === 'object' && b !== null && (b as { kind?: string }).kind === 'sr_curated_day'
+}
+
+const CURATED_SECTIONS: Array<{
+  key: keyof SelfRealizationCuratedDay
+  title: string
+  borderClass: string
+}> = [
+  { key: 'personalizedOpening', title: 'К твоему контексту', borderClass: 'border-l-[#b898c4]' },
+  { key: 'assignment', title: 'Задание из программы', borderClass: 'border-l-[#6bc4b5]' },
+  { key: 'planB', title: 'План Б', borderClass: 'border-l-[#c9a86c]' },
+  { key: 'doneCriterion', title: 'Критерий «сделано»', borderClass: 'border-l-[#5eb8aa]' },
+  { key: 'reflection', title: 'После выполнения', borderClass: 'border-l-[#8b9dc9]' },
+  { key: 'safety', title: 'Безопасность', borderClass: 'border-l-[#d4a5ab]' },
+]
+
+function CuratedDayCards({ day }: { day: SelfRealizationCuratedDay }) {
+  const variant =
+    day.chosenKey === 'b' ? 'Вариант B (облегчённый)' : day.chosenKey === 'c' ? 'Вариант C (минимум)' : 'Вариант A (полный)'
+  return (
+    <div className="space-y-2.5">
+      {day.stepTitle ? (
+        <div className="text-[12px] font-bold text-[var(--color-forest-dark)]">Этап: {day.stepTitle}</div>
+      ) : null}
+      <div className="text-[10px] uppercase font-bold tracking-wide text-[var(--color-text-secondary)]">{variant}</div>
+      {CURATED_SECTIONS.map(({ key, title, borderClass }) => {
+        const raw = day[key]
+        const text = typeof raw === 'string' ? raw.trim() : ''
+        if (!text) return null
+        return (
+          <div
+            key={String(key)}
+            className={`rounded-xl border border-[var(--color-lavender)]/20 bg-white/50 pl-3 pr-3 py-2.5 border-l-4 shadow-sm ${borderClass}`}
+          >
+            <div className="text-[10px] font-bold uppercase tracking-wide text-[var(--color-text-secondary)] mb-1">
+              {title}
+            </div>
+            <p className="text-[14px] leading-relaxed whitespace-pre-wrap text-[var(--color-text-primary)]">{text}</p>
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
 function clampForAnim(text: string) {
@@ -269,9 +315,10 @@ const COACHING_SECTIONS: Array<{
   { key: 'toneClose', title: 'Опора', borderClass: 'border-l-[#d4a5ab]' },
 ]
 
-function hasCoachingBlocks(b: SelfRealizationCoachingBlocks | undefined): boolean {
+function hasCoachingBlocks(b: SelfRealizationCoachingBlocks | SelfRealizationCuratedDay | undefined): boolean {
   if (!b) return false
-  return Object.values(b).some((v) => typeof v === 'string' && v.trim().length > 0)
+  if (isCuratedDayBlock(b)) return false
+  return Object.values(b as SelfRealizationCoachingBlocks).some((v) => typeof v === 'string' && v.trim().length > 0)
 }
 
 function CoachingCards({ blocks }: { blocks: SelfRealizationCoachingBlocks }) {
@@ -427,24 +474,19 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     if (!('error' in sync)) setTrack(sync)
   }, [selectedDirection])
 
-  const sendMessage = useCallback(async () => {
-    const text = inputText.trim()
-    if (!selectedDirection || !text || loadingReply) return
+  const compileDay = useCallback(async () => {
+    const context = inputText.trim()
+    if (!selectedDirection || context.length < 12 || loadingReply) return
 
     setError(null)
-
-    const nextMessages: ChatMessage[] = [...messages, { role: 'user', content: text }]
-    setMessages(nextMessages)
-    setInputText('')
     setLoadingReply(true)
     const loadingStartedAt = Date.now()
 
-    const result = await apiSelfRealizationChat({
+    const result = await apiSelfRealizationCompileDay({
       direction: selectedDirection.title,
       directionKey: selectedDirection.id,
-      text,
+      context,
       difficulties: selectedDifficulties.length > 0 ? selectedDifficulties : undefined,
-      history: nextMessages.map((m) => ({ role: m.role, content: m.content })),
     })
 
     if ('error' in result) {
@@ -458,21 +500,22 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     }
 
     setTrack(result.track)
+    setInputText('')
 
     const elapsed = Date.now() - loadingStartedAt
     if (elapsed < 700) {
       await new Promise((resolve) => setTimeout(resolve, 700 - elapsed))
     }
+
+    const userLine = `Контекст дня: ${context}`
+    const dayBlocks = result.day && isCuratedDayBlock(result.day) ? result.day : undefined
     setMessages((prev) => [
       ...prev,
-      {
-        role: 'assistant',
-        content: result.reply,
-        blocks: hasCoachingBlocks(result.blocks) ? result.blocks : undefined,
-      },
+      { role: 'user', content: userLine },
+      { role: 'assistant', content: result.reply, blocks: dayBlocks },
     ])
     setLoadingReply(false)
-  }, [selectedDirection, messages, inputText, loadingReply, selectedDifficulties])
+  }, [selectedDirection, inputText, loadingReply, selectedDifficulties])
 
   const submitCompleteStep = useCallback(async () => {
     const report = completeReport.trim()
@@ -499,15 +542,16 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     ])
   }, [selectedDirection, completeReport, completeLoading])
 
-  const isSetupMode =
-    messages.length <= 1 && messages[0]?.role === 'assistant'
-  const canStartChat = inputText.trim().length > 0
-  const showCompleteButton =
+  const hasDayContent =
+    !!track?.hasDayPackage ||
+    messages.some((m) => m.role === 'assistant' && m.blocks && isCuratedDayBlock(m.blocks))
+  const showCompileForm =
     !!track &&
-    !isSetupMode &&
-    track.canCompleteStep &&
-    !track.completedAll &&
-    !track.awaitingNextDay
+    !track.awaitingNextDay &&
+    ((!hasDayContent && !track.completedAll) || (track.completedAll && !track.hasDayPackage))
+  const canCompile = inputText.trim().length >= 12
+  const showCompleteButton =
+    !!track && hasDayContent && track.canCompleteStep && !track.completedAll && !track.awaitingNextDay
 
   if (selectedDirection) {
     return (
@@ -560,7 +604,8 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
 
             {track?.completedAll && (
               <div className="rounded-2xl border border-[var(--color-lavender)]/30 bg-white/60 px-4 py-3 text-sm text-[var(--color-text-primary)]">
-                Все 8 этапов в этом направлении пройдены. Можно закреплять понравившиеся приёмы в переписке с ИИ.
+                Все 8 этапов в этом направлении пройдены. Можно собрать закрепляющий день из финального блока программы или
+                вернуться к боту за живой поддержкой.
               </div>
             )}
 
@@ -584,11 +629,13 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                       <div className="space-y-2">
                         {m.role === 'assistant' && (
                           <div className="text-[11px] font-semibold text-[var(--color-text-secondary)]">
-                            Самореализация · коучинг
+                            {m.blocks && isCuratedDayBlock(m.blocks) ? 'Методичка · программа' : 'Самореализация'}
                           </div>
                         )}
-                        {m.role === 'assistant' && m.blocks && hasCoachingBlocks(m.blocks) ? (
-                          <CoachingCards blocks={m.blocks} />
+                        {m.role === 'assistant' && m.blocks && isCuratedDayBlock(m.blocks) ? (
+                          <CuratedDayCards day={m.blocks} />
+                        ) : m.role === 'assistant' && m.blocks && hasCoachingBlocks(m.blocks) ? (
+                          <CoachingCards blocks={m.blocks as SelfRealizationCoachingBlocks} />
                         ) : m.role === 'assistant' ? (
                           <TypewriterFirstPartNoReflow
                             text={m.content}
@@ -608,7 +655,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
             {loadingReply && (
               <div className="flex justify-start">
                 <div className="card-premium rounded-2xl px-4 py-3 text-sm text-[var(--color-text-secondary)] border border-[var(--color-lavender)]/20">
-                  ИИ готовит ответ…
+                  Собираю задание дня…
                 </div>
               </div>
             )}
@@ -654,24 +701,19 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
               </div>
             )}
 
-            {isSetupMode ? (
+            {showCompileForm ? (
               <>
                 <PremiumHoloCard className="p-4 shadow-lg">
                   <div className="flex items-start gap-3">
                     <div className="text-2xl" aria-hidden>
-                      🏆
+                      📘
                     </div>
                     <div className="min-w-0">
-                      <div className="font-semibold text-[var(--color-text-primary)]">Почему это сильнее обычной ИИ‑поддержки</div>
+                      <div className="font-semibold text-[var(--color-text-primary)]">Не чат, а методичка</div>
                       <div className="text-sm text-[var(--color-text-secondary)] leading-relaxed mt-1">
-                        <b>В боте</b> — тёплое общение и поддержка эмоций.
-                        <br />
-                        <b>В «Самореализации»</b> ИИ работает как коуч навыков: ведёт по шагам, уточняет по твоим трудностям и
-                        даёт <b>конкретные действия</b> (1–2 шага в каждом ответе).
-                        <span className="block mt-1">
-                          И главное: история сохраняется <b>по направлению</b>, чтобы ты видел(а) динамику и быстрее
-                          становился(ась) сильнее в общении и самооценке.
-                        </span>
+                        Задания и теория этапа заранее собраны в продукте (как в хорошем курсе). ИИ делает одно: читает твой
+                        контекст и <b>выбирает вариант A/B/C</b> из уже заготовленных, плюс коротко связывает это с твоими
+                        словами. <b>Свободного переписывания</b> с ботом здесь нет — один осмысленный заход в день.
                       </div>
                     </div>
                   </div>
@@ -679,7 +721,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
 
                 <div className="card-premium rounded-2xl p-5 shadow-lg">
                   <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed mb-4">
-                    Что сейчас откликается сильнее всего? Отметь и добавь свои слова — ИИ будет вести диалог по шагам.
+                    Что откликается? Отметь трудности — так точнее подберётся вариант задания.
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {selectedDirection.difficulties.map((item) => {
@@ -708,17 +750,17 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                   <textarea
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
-                    placeholder="Опиши ситуацию или контекст, с которого хочешь начать..."
+                    placeholder="Контекст на сегодня (минимум ~12 символов): что происходит, что хочешь сдвинуть…"
                     className="w-full min-h-[100px] rounded-xl border border-[var(--color-lavender)]/30 bg-white/90 p-3.5 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]/70 outline-none focus:ring-2 focus:ring-[var(--color-glow-teal)]/40 resize-none"
                   />
                   <button
                     type="button"
-                    onClick={sendMessage}
-                    disabled={loadingReply || !canStartChat}
+                    onClick={() => void compileDay()}
+                    disabled={loadingReply || !canCompile}
                     className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[52px] font-semibold disabled:opacity-50 mt-4"
                     style={{ WebkitTapHighlightColor: 'transparent' }}
                   >
-                    {loadingReply ? 'ИИ печатает...' : 'Отправить и начать диалог'}
+                    {loadingReply ? 'Сборка…' : 'Собрать задание дня'}
                   </button>
                   {error && <p className="text-sm text-amber-700 mt-3">{error}</p>}
                 </div>
@@ -730,13 +772,17 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                     className="text-sm font-semibold text-[var(--color-text-secondary)] underline underline-offset-2 hover:text-[var(--color-forest-dark)]"
                     style={{ WebkitTapHighlightColor: 'transparent' }}
                   >
-                    Удалить чат и начать сначала
+                    Сбросить трек и историю
                   </button>
                 </div>
               </>
             ) : (
               <>
-                <div className="text-center text-xs text-[var(--color-text-secondary)] -mt-1">Продолжаем. ИИ уточняет и закрепляет шаги.</div>
+                {hasDayContent && !track?.awaitingNextDay && !track?.completedAll && (
+                  <p className="text-center text-xs text-[var(--color-text-secondary)] -mt-1">
+                    Один этап — одно задание из программы. Завершил(а) — отметь ниже; новый этап откроется завтра.
+                  </p>
+                )}
                 {showCompleteButton && !completeOpen && (
                   <button
                     type="button"
@@ -747,35 +793,17 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                     Задание выполнено
                   </button>
                 )}
-                <div className="card-premium rounded-2xl p-4 shadow-lg">
-                  <textarea
-                    value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
-                    placeholder="Напиши сообщение…"
-                    disabled={!!track?.awaitingNextDay}
-                    className="w-full min-h-[88px] rounded-xl border border-[var(--color-lavender)]/35 bg-white/95 p-3.5 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]/70 outline-none focus:ring-2 focus:ring-[var(--color-glow-teal)]/40 resize-none disabled:opacity-50"
-                  />
-                  <div className="flex items-center gap-2 mt-3">
-                    <button
-                      type="button"
-                      onClick={sendMessage}
-                      disabled={loadingReply || !inputText.trim() || !!track?.awaitingNextDay}
-                      className="flex-1 py-3 px-4 rounded-xl btn-primary min-h-[48px] font-semibold disabled:opacity-50"
-                      style={{ WebkitTapHighlightColor: 'transparent' }}
-                    >
-                      {loadingReply ? 'Отправка...' : 'Отправить'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={clearDirectionHistory}
-                      className="py-3 px-3 rounded-xl btn-secondary min-h-[48px] text-xs font-semibold leading-tight"
-                      style={{ WebkitTapHighlightColor: 'transparent' }}
-                    >
-                      Удалить чат и начать сначала
-                    </button>
-                  </div>
-                  {error && <p className="text-sm text-amber-700 mt-2">{error}</p>}
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    onClick={clearDirectionHistory}
+                    className="text-sm font-semibold text-[var(--color-text-secondary)] underline underline-offset-2 hover:text-[var(--color-forest-dark)] py-2"
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
+                  >
+                    Сбросить трек и историю
+                  </button>
                 </div>
+                {error && <p className="text-sm text-amber-700 text-center">{error}</p>}
               </>
             )}
           </motion.div>
@@ -817,7 +845,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-[var(--color-text-secondary)] text-sm mb-2 leading-relaxed">
-                Выбери направление — откроется страница для глубокой работы в диалоге с ИИ.
+                Выбери направление — курируемая программа по этапам, без бесконечного чата.
               </div>
               <p className="text-[var(--color-text-primary)] text-base leading-relaxed font-medium min-h-[3.6em]">
                 {welcomeText ? (

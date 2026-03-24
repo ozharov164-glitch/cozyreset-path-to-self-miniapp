@@ -508,6 +508,20 @@ export type SelfRealizationCoachingBlocks = {
   toneClose?: string
 }
 
+/** Курируемый день: методичка + персонализация (без свободного чата). */
+export type SelfRealizationCuratedDay = {
+  kind: 'sr_curated_day'
+  displayStep?: number
+  stepTitle?: string
+  personalizedOpening?: string
+  chosenKey?: string
+  assignment?: string
+  planB?: string
+  doneCriterion?: string
+  reflection?: string
+  safety?: string
+}
+
 /** Состояние курируемого трека (8 этапов, один «выполнено» в день). */
 export type SelfRealizationTrackSync = {
   directionKey: string
@@ -517,6 +531,8 @@ export type SelfRealizationTrackSync = {
   nextUnlockDate: string
   canCompleteStep: boolean
   completedAll: boolean
+  hasDayPackage: boolean
+  dayPackage: SelfRealizationCuratedDay | null
 }
 
 export async function apiSelfRealizationTrackSync(payload: {
@@ -535,7 +551,11 @@ export async function apiSelfRealizationTrackSync(payload: {
     if (typeof data.displayStep !== 'number' || typeof data.totalSteps !== 'number') {
       return { error: 'Некорректный ответ трека', status: 500 }
     }
-    return data as SelfRealizationTrackSync
+    const sync = data as SelfRealizationTrackSync
+    if (typeof sync.hasDayPackage !== 'boolean') {
+      sync.hasDayPackage = !!sync.dayPackage
+    }
+    return sync
   } catch {
     return { error: 'Нет связи с сервером', status: 0 }
   }
@@ -568,36 +588,50 @@ export async function apiSelfRealizationCompleteStep(payload: {
   }
 }
 
-export async function apiSelfRealizationChat(payload: {
+/** Собрать задание дня: курируемая программа + короткая персонализация (один раз за день на этап). */
+export async function apiSelfRealizationCompileDay(payload: {
   direction: string
   directionKey: string
-  text: string
+  context: string
   difficulties?: string[]
-  history: Array<{ role: 'user' | 'assistant'; content: string }>
 }): Promise<
-  | { reply: string; blocks: SelfRealizationCoachingBlocks; track: SelfRealizationTrackSync }
+  | {
+      reply: string
+      day: SelfRealizationCuratedDay | null
+      track: SelfRealizationTrackSync
+      cached: boolean
+    }
   | { error: string; status?: number }
 > {
   try {
-    const res = await fetchWithAuth('/mini-app/self-realization-chat', {
+    const res = await fetchWithAuth('/mini-app/self-realization-compile-day', {
       method: 'POST',
       body: JSON.stringify(payload),
     })
     const data = (await res.json().catch(() => ({}))) as {
       reply?: string
-      blocks?: SelfRealizationCoachingBlocks
+      day?: SelfRealizationCuratedDay | null
       track?: SelfRealizationTrackSync
+      cached?: boolean
       error?: string
     }
     if (!res.ok) {
-      return { error: data.error || 'Ошибка ответа ИИ', status: res.status }
+      return { error: data.error || 'Ошибка сборки дня', status: res.status }
     }
-    if (!data.reply) return { error: 'Пустой ответ ИИ', status: 500 }
-    const blocks = data.blocks && typeof data.blocks === 'object' ? data.blocks : {}
+    if (!data.reply) return { error: 'Пустой ответ', status: 500 }
     if (!data.track || typeof data.track.displayStep !== 'number') {
       return { error: 'Некорректный ответ трека', status: 500 }
     }
-    return { reply: data.reply, blocks, track: data.track }
+    const tr = data.track as SelfRealizationTrackSync
+    if (typeof tr.hasDayPackage !== 'boolean') {
+      tr.hasDayPackage = !!tr.dayPackage
+    }
+    return {
+      reply: data.reply,
+      day: data.day ?? null,
+      track: tr,
+      cached: !!data.cached,
+    }
   } catch {
     return { error: 'Нет связи с сервером', status: 0 }
   }
@@ -609,7 +643,7 @@ export async function apiSelfRealizationHistory(direction: string): Promise<
         role: 'user' | 'assistant'
         content: string
         createdAt: string
-        blocks?: SelfRealizationCoachingBlocks
+        blocks?: SelfRealizationCoachingBlocks | SelfRealizationCuratedDay
       }>
     }
   | { error: string; status?: number }
@@ -624,7 +658,7 @@ export async function apiSelfRealizationHistory(direction: string): Promise<
         role: 'user' | 'assistant'
         content: string
         createdAt: string
-        blocks?: SelfRealizationCoachingBlocks
+        blocks?: SelfRealizationCoachingBlocks | SelfRealizationCuratedDay
       }>
       error?: string
     }
