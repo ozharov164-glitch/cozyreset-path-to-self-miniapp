@@ -97,37 +97,58 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
         setError('Нет связи с сервером: обнови приложение и попробуй снова.')
         return
       }
-      const src = `${backend}/mini-app/voice-background/${key}`
-      const audio = new Audio(src)
-      bgPreviewRef.current = audio
 
-      const onLoaded = () => {
-        const dur = audio.duration
-        const mid = Number.isFinite(dur) ? dur / 2 : 0
-        const start = Math.max(0, mid - PREVIEW_SEEK_FROM_MIDDLE_SECONDS)
-        if (Number.isFinite(start) && start > 0) audio.currentTime = start
-        audio
-          .play()
-          .catch(() => {
-            setBgPreviewPlaying(false)
-          })
-        bgPreviewTimerRef.current = window.setTimeout(() => {
-          try {
-            audio.pause()
-            audio.currentTime = 0
-          } finally {
-            setBgPreviewPlaying(false)
+      // Чтобы не зависеть от Range/кэша браузера, грузим MP3 как blob и играем из object URL.
+      const previewUrl = `${backend}/mini-app/voice-background/${key}`
+      void (async () => {
+        try {
+          const res = await fetch(previewUrl, { method: 'GET' })
+          if (!res.ok) throw new Error(`HTTP ${res.status}`)
+          const blob = await res.blob()
+          const blobUrl = URL.createObjectURL(blob)
+
+          const audio = new Audio(blobUrl)
+          bgPreviewRef.current = audio
+
+          const onLoaded = () => {
+            const dur = audio.duration
+            const mid = Number.isFinite(dur) ? dur / 2 : 0
+            const start = Math.max(0, mid - PREVIEW_SEEK_FROM_MIDDLE_SECONDS)
+            if (Number.isFinite(start) && start > 0) audio.currentTime = start
+            audio
+              .play()
+              .catch(() => {
+                setBgPreviewPlaying(false)
+              })
+
+            bgPreviewTimerRef.current = window.setTimeout(() => {
+              try {
+                audio.pause()
+                audio.currentTime = 0
+              } finally {
+                setBgPreviewPlaying(false)
+                URL.revokeObjectURL(blobUrl)
+              }
+            }, PREVIEW_SECONDS * 1000)
           }
-        }, PREVIEW_SECONDS * 1000)
-      }
 
-      const onErr = () => {
-        setBgPreviewPlaying(false)
-        setError('Не удалось загрузить фон. Попробуй другой.')
-      }
+          const onErr = () => {
+            setBgPreviewPlaying(false)
+            setError('Не удалось загрузить фон. Попробуй другой.')
+            try {
+              URL.revokeObjectURL(blobUrl)
+            } catch {
+              /* ignore */
+            }
+          }
 
-      audio.addEventListener('loadedmetadata', onLoaded, { once: true })
-      audio.addEventListener('error', onErr, { once: true })
+          audio.addEventListener('loadedmetadata', onLoaded, { once: true })
+          audio.addEventListener('error', onErr, { once: true })
+        } catch {
+          setBgPreviewPlaying(false)
+          setError('Не удалось загрузить фон. Попробуй другой.')
+        }
+      })()
     } catch {
       setBgPreviewPlaying(false)
     }
