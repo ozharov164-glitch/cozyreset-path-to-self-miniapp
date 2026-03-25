@@ -243,3 +243,32 @@ body {
   word-wrap: break-word;
   word-break: break-word;
 }
+
+/* Лёгкий «живой» акцент на стеклянных шапках (GPU, почти бесплатно) */
+@keyframes glassSheen {
+  0%, 100% { opacity: 0.35; transform: translateX(-8%) skewX(-12deg); }
+  50% { opacity: 0.55; transform: translateX(8%) skewX(-12deg); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .animate-glass-sheen::after {
+    content: "";
+    position: absolute;
+    inset: -40% -60%;
+    background: linear-gradient(
+      105deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.45) 45%,
+      transparent 70%
+    );
+    animation: glassSheen 7s ease-in-out infinite;
+    pointer-events: none;
+    mix-blend-mode: soft-light;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-glass-sheen::after {
+    display: none;
+  }
+}

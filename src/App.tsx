@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
+import Lenis from 'lenis'
+import { AnimatePresence, motion } from 'framer-motion'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ensureAuth, loadBackendConfig, getConnectionDiag, refreshInitData } from './api/client'
+import { SceneBackground } from './components/SceneBackground'
+import { usePrefersReducedMotion } from './hooks/usePrefersReducedMotion'
 import { Dashboard } from './screens/Dashboard'
 import { Catalog } from './screens/Catalog'
 import { TestFlow } from './screens/TestFlow'
@@ -17,7 +21,27 @@ const SHOW_CONNECTION_DIAG = false
 function AppContent() {
   const screen = useAppStore((s) => s.screen)
   const setScreen = useAppStore((s) => s.setScreen)
+  const reducedMotion = usePrefersReducedMotion()
   const [connectionDiag, setConnectionDiag] = useState<{ search: string; backend: string; initDataLength: number } | null>(null)
+
+  useEffect(() => {
+    if (reducedMotion) return
+    const lenis = new Lenis({
+      smoothWheel: true,
+      touchMultiplier: 1.12,
+      syncTouch: true,
+    })
+    let rafId = 0
+    const raf = (time: number) => {
+      lenis.raf(time)
+      rafId = requestAnimationFrame(raf)
+    }
+    rafId = requestAnimationFrame(raf)
+    return () => {
+      cancelAnimationFrame(rafId)
+      lenis.destroy()
+    }
+  }, [reducedMotion])
 
   useEffect(() => {
     const tg = window.Telegram?.WebApp
@@ -63,15 +87,13 @@ function AppContent() {
 
   const dimOverlay = screen === 'catalog' || screen === 'history'
 
+  const screenMotion = reducedMotion
+    ? { duration: 0.12, ease: 'easeOut' as const }
+    : { duration: 0.44, ease: [0.22, 1, 0.36, 1] as const }
+
   return (
     <div className="relative min-h-screen">
-      <div
-        className="fixed inset-0 z-0 pointer-events-none"
-        style={{
-          background: 'linear-gradient(165deg, #e8e0f4 0%, #d4c8f0 28%, #c4b4e8 55%, #b8a4e0 82%, #a894d8 100%)',
-        }}
-        aria-hidden
-      />
+      <SceneBackground screen={screen} />
       {dimOverlay && (
         <div className="fixed inset-0 z-[5] pointer-events-none bg-black/30" aria-hidden />
       )}
@@ -87,15 +109,26 @@ function AppContent() {
         </div>
       )}
       <div className="relative z-10 pointer-events-auto min-h-screen flex flex-col">
-        {screen === 'catalog' && <Catalog onBack={() => setScreen('dashboard')} />}
-        {screen === 'test' && <TestFlow onBack={() => setScreen('catalog')} />}
-        {screen === 'result' && <Result onBack={() => setScreen('dashboard')} />}
-        {screen === 'history' && <History onBack={() => setScreen('dashboard')} />}
-        {screen === 'voiceSupport' && <VoiceSupport onBack={() => setScreen('dashboard')} />}
-        {screen === 'selfRealization' && <SelfRealization onBack={() => setScreen('dashboard')} />}
-        {screen === 'dashboard' && (
-          <Dashboard onOpenCatalog={() => setScreen('catalog')} onOpenHistory={() => setScreen('history')} />
-        )}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={screen}
+            className="flex-1 flex flex-col min-h-screen min-h-0"
+            initial={{ opacity: 0, y: 28 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -18 }}
+            transition={screenMotion}
+          >
+            {screen === 'catalog' && <Catalog onBack={() => setScreen('dashboard')} />}
+            {screen === 'test' && <TestFlow onBack={() => setScreen('catalog')} />}
+            {screen === 'result' && <Result onBack={() => setScreen('dashboard')} />}
+            {screen === 'history' && <History onBack={() => setScreen('dashboard')} />}
+            {screen === 'voiceSupport' && <VoiceSupport onBack={() => setScreen('dashboard')} />}
+            {screen === 'selfRealization' && <SelfRealization onBack={() => setScreen('dashboard')} />}
+            {screen === 'dashboard' && (
+              <Dashboard onOpenCatalog={() => setScreen('catalog')} onOpenHistory={() => setScreen('history')} />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   )
