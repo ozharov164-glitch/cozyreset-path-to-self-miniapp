@@ -598,7 +598,7 @@ export async function apiSelfRealizationCompleteStep(payload: {
 export async function apiSelfRealizationAdvanceToNextStage(payload: {
   direction: string
   directionKey: string
-  feedback: string
+  feedback?: string
   difficulties?: string[]
 }): Promise<
   | {
