@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { apiVoiceReply } from '../api/client'
+import { apiVoiceReply, getBackendUrl } from '../api/client'
 
 const container = {
   hidden: { opacity: 0 },
@@ -16,6 +16,16 @@ const item = {
 }
 
 const SPEEDS = [0.75, 1, 1.25, 1.5] as const
+const PREVIEW_SECONDS = 10
+const PREVIEW_SEEK_FROM_MIDDLE_SECONDS = 5
+
+const BG_MUSIC_OPTIONS = [
+  { key: 'calm1', label: 'Фон 1' },
+  { key: 'calm2', label: 'Фон 2' },
+  { key: 'calm3', label: 'Фон 3' },
+] as const
+
+type BgMusicKey = (typeof BG_MUSIC_OPTIONS)[number]['key']
 
 function formatTime(sec: number): string {
   if (!Number.isFinite(sec) || sec < 0) return '0:00'
@@ -32,11 +42,15 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [selectedMusicKey, setSelectedMusicKey] = useState<BgMusicKey>('calm1')
+  const [bgPreviewPlaying, setBgPreviewPlaying] = useState(false)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
   const [copyDone, setCopyDone] = useState(false)
   const audioBlobRef = useRef<Blob | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const bgPreviewRef = useRef<HTMLAudioElement | null>(null)
+  const bgPreviewTimerRef = useRef<number | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -46,8 +60,72 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   useEffect(() => {
     return () => {
       if (audioUrl) URL.revokeObjectURL(audioUrl)
+      if (bgPreviewRef.current) {
+        try {
+          bgPreviewRef.current.pause()
+        } catch {
+          /* ignore */
+        }
+        bgPreviewRef.current.src = ''
+      }
+      if (bgPreviewTimerRef.current) {
+        window.clearTimeout(bgPreviewTimerRef.current)
+      }
     }
   }, [audioUrl])
+
+  const playBgPreview = useCallback((key: BgMusicKey) => {
+    try {
+      setError(null)
+      setSelectedMusicKey(key)
+      setBgPreviewPlaying(true)
+
+      if (bgPreviewTimerRef.current) {
+        window.clearTimeout(bgPreviewTimerRef.current)
+      }
+      if (bgPreviewRef.current) {
+        try {
+          bgPreviewRef.current.pause()
+        } catch {
+          /* ignore */
+        }
+      }
+
+      const src = `${getBackendUrl()}/mini-app/voice-background/${key}`
+      const audio = new Audio(src)
+      bgPreviewRef.current = audio
+
+      const onLoaded = () => {
+        const dur = audio.duration
+        const mid = Number.isFinite(dur) ? dur / 2 : 0
+        const start = Math.max(0, mid - PREVIEW_SEEK_FROM_MIDDLE_SECONDS)
+        if (Number.isFinite(start) && start > 0) audio.currentTime = start
+        audio
+          .play()
+          .catch(() => {
+            setBgPreviewPlaying(false)
+          })
+        bgPreviewTimerRef.current = window.setTimeout(() => {
+          try {
+            audio.pause()
+            audio.currentTime = 0
+          } finally {
+            setBgPreviewPlaying(false)
+          }
+        }, PREVIEW_SECONDS * 1000)
+      }
+
+      const onErr = () => {
+        setBgPreviewPlaying(false)
+        setError('Не удалось загрузить фон. Попробуй другой.')
+      }
+
+      audio.addEventListener('loadedmetadata', onLoaded, { once: true })
+      audio.addEventListener('error', onErr, { once: true })
+    } catch {
+      setBgPreviewPlaying(false)
+    }
+  }, [setError])
 
   useEffect(() => {
     if (!audioUrl) {
@@ -171,7 +249,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     setCopyDone(false)
     setLoading(true)
     try {
-      const result = await apiVoiceReply(trimmed)
+      const result = await apiVoiceReply(trimmed, selectedMusicKey)
       if ('error' in result) {
         setError(result.error || 'Ошибка запроса')
         return
@@ -270,6 +348,38 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
             >
               Голосовой ответ не сохраняется после выхода из раздела или приложения. Чтобы слушать повторно — сохрани его в Файлы внизу.
             </motion.p>
+
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">Фоновая музыка</p>
+                <span className="text-xs text-[var(--color-text-secondary)]">
+                  Нажми кнопку — послушай 10с
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {BG_MUSIC_OPTIONS.map((opt) => {
+                  const active = selectedMusicKey === opt.key
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => playBgPreview(opt.key)}
+                      disabled={loading}
+                      className={[
+                        'px-3 py-2 rounded-xl text-sm font-semibold border min-h-[46px] transition-all',
+                        active
+                          ? 'bg-[var(--color-glow-teal)]/25 border-[var(--color-glow-teal)] text-[var(--color-forest-dark)] shadow-md'
+                          : 'bg-white/80 border-[var(--color-lavender)]/40 text-[var(--color-text-secondary)] hover:bg-white/95',
+                      ].join(' ')}
+                      style={{ WebkitTapHighlightColor: 'transparent', outline: 'none' }}
+                    >
+                      {bgPreviewPlaying && active ? 'Идёт…' : opt.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
             <motion.div
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}

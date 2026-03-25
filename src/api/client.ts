@@ -435,13 +435,16 @@ export async function apiAiSuggestions(testTitle?: string, avg?: number): Promis
 const VOICE_REPLY_TIMEOUT_MS = 120000
 
 /** Голосовой ответ ИИ: пользователь отправляет текст, получает MP3. downloadUrl — временная ссылка для скачивания во внешнем браузере. */
-export async function apiVoiceReply(text: string): Promise<{ blob: Blob; downloadUrl?: string | null } | { error: string; status?: number }> {
+export async function apiVoiceReply(
+  text: string,
+  musicKey?: string,
+): Promise<{ blob: Blob; downloadUrl?: string | null } | { error: string; status?: number }> {
   const controller = new AbortController()
   const timeoutId = window.setTimeout(() => controller.abort(), VOICE_REPLY_TIMEOUT_MS)
   try {
     const res = await fetchWithAuth('/mini-app/voice-reply', {
       method: 'POST',
-      body: JSON.stringify({ text: text.trim() }),
+      body: JSON.stringify({ text: text.trim(), musicKey: musicKey || undefined }),
       signal: controller.signal,
     })
     if (!res.ok) {
