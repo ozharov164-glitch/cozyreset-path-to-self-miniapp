@@ -9,6 +9,7 @@ import {
   apiSelfRealizationClearHistory,
   apiSelfRealizationTrackSync,
   apiSelfRealizationCompleteStep,
+  apiSelfRealizationAdvanceToNextStage,
   type SelfRealizationCoachingBlocks,
   type SelfRealizationCuratedDay,
   type SelfRealizationTrackSync,
@@ -363,6 +364,9 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
   const [completeOpen, setCompleteOpen] = useState(false)
   const [completeReport, setCompleteReport] = useState('')
   const [completeLoading, setCompleteLoading] = useState(false)
+  const [advanceOpen, setAdvanceOpen] = useState(false)
+  const [advanceFeedback, setAdvanceFeedback] = useState('')
+  const [advanceLoading, setAdvanceLoading] = useState(false)
 
   const [welcomeText, setWelcomeText] = useState('')
   const [welcomeDone, setWelcomeDone] = useState(false)
@@ -390,6 +394,9 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     setSelectedDifficulties([])
     setInputText('')
     setError(null)
+    setAdvanceOpen(false)
+    setAdvanceFeedback('')
+    setAdvanceLoading(false)
     setHistoryLoading(true)
     setLoadingReply(false)
   }, [])
@@ -405,6 +412,9 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     setTrack(null)
     setCompleteOpen(false)
     setCompleteReport('')
+    setAdvanceOpen(false)
+    setAdvanceFeedback('')
+    setAdvanceLoading(false)
   }, [])
 
   useEffect(() => {
@@ -476,6 +486,9 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     setHistoryLoading(false)
     setCompleteOpen(false)
     setCompleteReport('')
+    setAdvanceOpen(false)
+    setAdvanceFeedback('')
+    setAdvanceLoading(false)
     const sync = await apiSelfRealizationTrackSync({
       direction: selectedDirection.title,
       directionKey: selectedDirection.id,
@@ -551,16 +564,65 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
     ])
   }, [selectedDirection, completeReport, completeLoading])
 
-  const hasDayContent =
-    !!track?.hasDayPackage ||
-    messages.some((m) => m.role === 'assistant' && m.blocks && isCuratedDayBlock(m.blocks))
+  const submitAdvance = useCallback(async () => {
+    const feedback = advanceFeedback.trim()
+    if (!selectedDirection || feedback.length < 3 || advanceLoading) return
+
+    setError(null)
+    setAdvanceLoading(true)
+    try {
+      const result = await apiSelfRealizationAdvanceToNextStage({
+        direction: selectedDirection.title,
+        directionKey: selectedDirection.id,
+        feedback,
+        difficulties: selectedDifficulties.length > 0 ? selectedDifficulties : undefined,
+      })
+      setAdvanceLoading(false)
+
+      if ('error' in result) {
+        setError(result.error)
+        return
+      }
+
+      const dayBlocks = result.day && isCuratedDayBlock(result.day) ? result.day : undefined
+
+      setTrack(result.track)
+      setAdvanceOpen(false)
+      setAdvanceFeedback('')
+
+      setMessages((prev) => [
+        ...prev,
+        { role: 'user', content: `Обратная связь перед этапом ${result.track.displayStep}: ${feedback}` },
+        { role: 'assistant', content: result.analysisReply },
+        { role: 'assistant', content: result.reply, blocks: dayBlocks },
+      ])
+    } catch (e: unknown) {
+      setAdvanceLoading(false)
+      setError((e as any)?.message || 'Ошибка перехода к следующему этапу')
+    }
+  }, [advanceFeedback, advanceLoading, selectedDirection, selectedDifficulties])
+
+  // На следующий день старые сообщения из истории НЕ должны считаться "контентом" текущего этапа:
+  // опираемся на серверный dayPackage (cache дня для текущего displayStep).
+  const hasDayContent = !!track?.hasDayPackage
+
   const showCompileForm =
     !!track &&
     !track.awaitingNextDay &&
-    ((!hasDayContent && !track.completedAll) || (track.completedAll && !track.hasDayPackage))
+    !track.completedAll &&
+    track.displayStep === 1 &&
+    !hasDayContent
   const canCompile = inputText.trim().length >= 12
   const showCompleteButton =
     !!track && hasDayContent && track.canCompleteStep && !track.completedAll && !track.awaitingNextDay
+
+  const showAdvanceForm =
+    !!track &&
+    !track.awaitingNextDay &&
+    !track.completedAll &&
+    track.displayStep > 1 &&
+    !hasDayContent &&
+    track.canCompleteStep
 
   if (selectedDirection) {
     return (
@@ -744,6 +806,51 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
               )}
             </AnimatePresence>
 
+            {advanceOpen && (
+              <motion.div
+                key="advance-feedback"
+                initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.98 }}
+                transition={reduceMotion ? { duration: 0.2 } : { type: 'spring', stiffness: 400, damping: 34 }}
+                className="card-premium rounded-2xl p-4 shadow-lg border border-[var(--color-lavender)]/25 overflow-hidden"
+              >
+                <div className="text-sm font-semibold text-[var(--color-text-primary)] mb-2">Переход к следующему этапу</div>
+                <p className="text-xs text-[var(--color-text-secondary)] mb-2">
+                  Коротко напиши обратную связь по выполнению прошлого этапа: что получилось, что сопротивлялось, что
+                  хочешь забрать с собой.
+                </p>
+                <textarea
+                  value={advanceFeedback}
+                  onChange={(e) => setAdvanceFeedback(e.target.value)}
+                  placeholder="3–10 предложений…"
+                  className="w-full min-h-[88px] rounded-xl border border-[var(--color-lavender)]/35 bg-white/95 p-3 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-glow-teal)]/40 resize-none"
+                />
+                <div className="flex gap-2 mt-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAdvanceOpen(false)
+                      setAdvanceFeedback('')
+                    }}
+                    className="flex-1 py-3 rounded-xl btn-secondary min-h-[48px] text-sm font-semibold"
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
+                  >
+                    Отмена
+                  </button>
+                  <button
+                    type="button"
+                    disabled={advanceLoading || advanceFeedback.trim().length < 3}
+                    onClick={() => void submitAdvance()}
+                    className="flex-1 py-3 rounded-xl btn-primary min-h-[48px] text-sm font-semibold disabled:opacity-50"
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
+                  >
+                    {advanceLoading ? 'Открываю…' : `К этапу ${track?.displayStep ?? ''}`}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
             {showCompileForm ? (
               <>
                 <PremiumHoloCard className="p-4 shadow-lg">
@@ -821,6 +928,16 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
               </>
             ) : (
               <>
+                {showAdvanceForm && !advanceOpen && (
+                  <button
+                    type="button"
+                    onClick={() => setAdvanceOpen(true)}
+                    className="w-full py-3.5 rounded-xl font-semibold text-[var(--color-forest-dark)] bg-[var(--color-glow-teal)]/30 border border-[var(--color-glow-teal)]/50 min-h-[52px]"
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
+                  >
+                    Перейти к этапу {track?.displayStep ?? 0}
+                  </button>
+                )}
                 {hasDayContent && !track?.awaitingNextDay && !track?.completedAll && (
                   <p className="text-center text-xs text-[var(--color-text-secondary)] -mt-1">
                     Один этап — одно задание из программы. Завершил(а) — отметь ниже; новый этап откроется завтра.

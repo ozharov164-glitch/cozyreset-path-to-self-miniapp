@@ -589,6 +589,55 @@ export async function apiSelfRealizationCompleteStep(payload: {
   }
 }
 
+/**
+ * Переход к следующему этапу:
+ * - пользователь даёт обратную связь по прошлому этапу
+ * - ИИ анализирует результативность прошлого этапа
+ * - ИИ выдаёт новое задание дня (curated day blocks) для текущего displayStep
+ */
+export async function apiSelfRealizationAdvanceToNextStage(payload: {
+  direction: string
+  directionKey: string
+  feedback: string
+  difficulties?: string[]
+}): Promise<
+  | {
+      ok: true
+      analysisReply: string
+      reply: string
+      day: SelfRealizationCuratedDay | null
+      track: SelfRealizationTrackSync
+    }
+  | { error: string; status?: number }
+> {
+  try {
+    const res = await fetchWithAuth('/mini-app/self-realization-advance-stage', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+    const data = (await res.json().catch(() => ({}))) as {
+      ok?: boolean
+      analysisReply?: string
+      reply?: string
+      day?: SelfRealizationCuratedDay | null
+      track?: SelfRealizationTrackSync
+      error?: string
+    }
+    if (!res.ok || !data.ok || !data.analysisReply || !data.reply || !data.track) {
+      return { error: data.error || 'Ошибка перехода к следующему этапу', status: res.status }
+    }
+    return {
+      ok: true,
+      analysisReply: data.analysisReply,
+      reply: data.reply,
+      day: data.day ?? null,
+      track: data.track,
+    }
+  } catch {
+    return { error: 'Нет связи с сервером', status: 0 }
+  }
+}
+
 /** Собрать задание дня: курируемая программа + короткая персонализация (один раз за день на этап). */
 export async function apiSelfRealizationCompileDay(payload: {
   direction: string
