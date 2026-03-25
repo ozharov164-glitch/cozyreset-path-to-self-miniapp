@@ -84,57 +84,40 @@ body {
   position: absolute;
   border-radius: 50%;
   pointer-events: none;
-  filter: blur(72px);
-  opacity: 0.42;
+  opacity: 0.24;
   transform: translateZ(0);
 }
 
 .pts-ambient__orb--rose {
+  will-change: transform;
   width: min(92vw, 320px);
   height: min(92vw, 320px);
   top: -12%;
   right: -18%;
   background: radial-gradient(circle, rgba(232, 180, 184, 0.55) 0%, rgba(232, 180, 184, 0) 68%);
-  animation: ptsOrbDriftA 24s ease-in-out infinite;
 }
 
 .pts-ambient__orb--teal {
+  will-change: transform;
   width: min(85vw, 280px);
   height: min(85vw, 280px);
   bottom: 8%;
   left: -22%;
   background: radial-gradient(circle, rgba(107, 196, 181, 0.38) 0%, rgba(107, 196, 181, 0) 70%);
-  animation: ptsOrbDriftB 28s ease-in-out infinite;
 }
 
 .pts-ambient__orb--cream {
+  will-change: transform;
   width: min(70vw, 240px);
   height: min(70vw, 240px);
   top: 42%;
   left: 50%;
   background: radial-gradient(circle, rgba(245, 230, 211, 0.45) 0%, rgba(245, 230, 211, 0) 65%);
-  animation: ptsOrbDriftC 20s ease-in-out infinite;
-}
-
-@keyframes ptsOrbDriftA {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(-6%, 4%) scale(1.06); }
-}
-
-@keyframes ptsOrbDriftB {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(8%, -5%) scale(1.05); }
-}
-
-@keyframes ptsOrbDriftC {
-  0%, 100% { transform: translateX(-50%) translateY(0) scale(1); }
-  50% { transform: translateX(-50%) translateY(-12px) scale(1.04); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .pts-ambient__orb {
-    animation: none !important;
-    opacity: 0.32;
+    opacity: 0.2;
   }
 }
 

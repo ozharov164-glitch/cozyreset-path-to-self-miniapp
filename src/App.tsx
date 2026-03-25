@@ -62,14 +62,10 @@ function AppContent() {
     }
   }, [])
 
-  const dimOverlay = screen === 'catalog' || screen === 'history'
 
   return (
     <div className="relative min-h-screen min-h-[100dvh]">
       <AmbientBackground />
-      {dimOverlay && (
-        <div className="fixed inset-0 z-[5] pointer-events-none bg-black/30" aria-hidden />
-      )}
       {SHOW_CONNECTION_DIAG && connectionDiag && (
         <div
           className="fixed bottom-0 left-0 right-0 z-20 bg-black/80 text-white text-xs p-2 font-mono max-h-24 overflow-auto pointer-events-auto"
