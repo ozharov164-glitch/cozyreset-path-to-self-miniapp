@@ -51,6 +51,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const bgPreviewRef = useRef<HTMLAudioElement | null>(null)
   const bgPreviewTimerRef = useRef<number | null>(null)
+  const bgPreviewReqIdRef = useRef(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -79,6 +80,8 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
       setError(null)
       setSelectedMusicKey(key)
       setBgPreviewPlaying(true)
+      const reqId = bgPreviewReqIdRef.current + 1
+      bgPreviewReqIdRef.current = reqId
 
       if (bgPreviewTimerRef.current) {
         window.clearTimeout(bgPreviewTimerRef.current)
@@ -107,6 +110,11 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
           const blob = await res.blob()
           const blobUrl = URL.createObjectURL(blob)
 
+          if (bgPreviewReqIdRef.current !== reqId) {
+            URL.revokeObjectURL(blobUrl)
+            return
+          }
+
           const audio = new Audio(blobUrl)
           bgPreviewRef.current = audio
 
@@ -133,6 +141,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
           }
 
           const onErr = () => {
+            if (bgPreviewReqIdRef.current !== reqId) return
             setBgPreviewPlaying(false)
             setError('Не удалось загрузить фон. Попробуй другой.')
             try {
@@ -145,6 +154,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
           audio.addEventListener('loadedmetadata', onLoaded, { once: true })
           audio.addEventListener('error', onErr, { once: true })
         } catch {
+          if (bgPreviewReqIdRef.current !== reqId) return
           setBgPreviewPlaying(false)
           setError('Не удалось загрузить фон. Попробуй другой.')
         }
@@ -267,6 +277,8 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
       return
     }
     setError(null)
+    // Инвалидация предпросмотра фона: чтобы async ошибки preview не всплывали после генерации.
+    bgPreviewReqIdRef.current += 1
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl)
       setAudioUrl(null)
