@@ -91,7 +91,13 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
         }
       }
 
-      const src = `${getBackendUrl()}/mini-app/voice-background/${key}`
+      const backend = getBackendUrl()
+      if (!backend) {
+        setBgPreviewPlaying(false)
+        setError('Нет связи с сервером: обнови приложение и попробуй снова.')
+        return
+      }
+      const src = `${backend}/mini-app/voice-background/${key}`
       const audio = new Audio(src)
       bgPreviewRef.current = audio
 
