@@ -45,7 +45,7 @@ export function TestFlow({ onBack }: TestFlowProps) {
 
   return (
     <div className="min-h-screen flex flex-col safe-area pb-6" style={{ overflow: 'visible' }}>
-      <header className="card-premium relative overflow-hidden animate-glass-sheen h-14 flex items-center px-4 mb-5 rounded-2xl">
+      <header className="card-premium h-14 flex items-center px-4 mb-5 rounded-2xl">
         <button type="button" onClick={onBack} className="text-[var(--color-glow-teal)] font-semibold min-h-[44px] min-w-[52px] flex items-center -ml-1" style={{ WebkitTapHighlightColor: 'transparent' }}>
           ← Назад
         </button>

@@ -182,7 +182,7 @@ export function Result({ onBack }: ResultProps) {
   if (isOpeningFromHistory && isLoadingResult) {
     return (
       <div className="min-h-screen flex flex-col safe-area pb-8">
-        <header className="card-premium relative overflow-hidden animate-glass-sheen h-14 flex items-center px-4 mb-5 rounded-2xl">
+        <header className="card-premium h-14 flex items-center px-4 mb-5 rounded-2xl">
           <button type="button" onClick={() => { setOpenResultId(null); onBack() }} className="text-[var(--color-glow-teal)] font-semibold min-h-[44px] min-w-[52px] flex items-center -ml-1">
             ← Назад
           </button>
@@ -198,7 +198,7 @@ export function Result({ onBack }: ResultProps) {
 
   return (
     <div className="min-h-screen flex flex-col safe-area pb-8" style={{ overflow: 'auto' }}>
-      <header className="card-premium relative overflow-hidden animate-glass-sheen h-14 flex items-center px-4 mb-5 rounded-2xl flex-shrink-0">
+      <header className="card-premium h-14 flex items-center px-4 mb-5 rounded-2xl flex-shrink-0">
         <button type="button" onClick={handleBack} className="text-[var(--color-glow-teal)] font-semibold min-h-[44px] min-w-[52px] flex items-center -ml-1">
           ← Назад
         </button>

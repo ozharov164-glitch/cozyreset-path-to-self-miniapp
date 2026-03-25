@@ -57,7 +57,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
 
   return (
     <div className="min-h-screen flex flex-col safe-area">
-      <header className="card-premium relative overflow-hidden animate-glass-sheen h-14 flex items-center justify-between px-4 mb-5 rounded-2xl">
+      <header className="card-premium h-14 flex items-center justify-between px-4 mb-5 rounded-2xl">
         <button
           type="button"
           onClick={() => goBackToBot()}
