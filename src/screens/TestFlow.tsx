@@ -49,7 +49,7 @@ export function TestFlow({ onBack }: TestFlowProps) {
         <button type="button" onClick={onBack} className="text-[var(--color-glow-teal)] font-semibold min-h-[44px] min-w-[52px] flex items-center -ml-1" style={{ WebkitTapHighlightColor: 'transparent' }}>
           ← Назад
         </button>
-        <h1 className="flex-1 text-center text-base font-bold text-[var(--color-text-primary)] truncate">
+        <h1 className="font-display flex-1 text-center text-base font-bold text-[var(--color-text-primary)] truncate">
           {test.title}
         </h1>
         <span className="w-14" />

@@ -624,7 +624,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
             ←
           </button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-center text-base font-bold text-[var(--color-text-primary)] truncate">
+            <h1 className="font-display text-center text-base font-bold text-[var(--color-text-primary)] truncate">
               {selectedDirection.title}
             </h1>
             <p className="text-center text-xs text-[var(--color-text-secondary)] mt-0.5">
@@ -927,7 +927,9 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
           ←
         </button>
         <div className="flex-1 text-center">
-          <h1 className="text-base font-bold text-[var(--color-text-primary)] tracking-tight">Самореализация</h1>
+          <h1 className="font-display text-base font-bold text-[var(--color-text-primary)] tracking-tight">
+            Самореализация
+          </h1>
           <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">Уверенность, самооценка и социализация</p>
         </div>
         <button

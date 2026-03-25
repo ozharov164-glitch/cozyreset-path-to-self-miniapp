@@ -81,7 +81,7 @@ export function History({ onBack }: HistoryProps) {
         >
           ← Назад
         </button>
-        <h1 className="flex-1 text-center text-base font-bold text-[var(--color-text-primary)] tracking-tight">
+        <h1 className="font-display flex-1 text-center text-base font-bold text-[var(--color-text-primary)] tracking-tight">
           История
         </h1>
         <span className="w-14" />

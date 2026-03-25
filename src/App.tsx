@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ensureAuth, loadBackendConfig, getConnectionDiag, refreshInitData } from './api/client'
+import { AmbientBackground } from './components/AmbientBackground'
 import { Dashboard } from './screens/Dashboard'
 import { Catalog } from './screens/Catalog'
 import { TestFlow } from './screens/TestFlow'
@@ -64,14 +65,8 @@ function AppContent() {
   const dimOverlay = screen === 'catalog' || screen === 'history'
 
   return (
-    <div className="relative min-h-screen">
-      <div
-        className="fixed inset-0 z-0 pointer-events-none"
-        style={{
-          background: 'linear-gradient(165deg, #e8e0f4 0%, #d4c8f0 28%, #c4b4e8 55%, #b8a4e0 82%, #a894d8 100%)',
-        }}
-        aria-hidden
-      />
+    <div className="relative min-h-screen min-h-[100dvh]">
+      <AmbientBackground />
       {dimOverlay && (
         <div className="fixed inset-0 z-[5] pointer-events-none bg-black/30" aria-hidden />
       )}

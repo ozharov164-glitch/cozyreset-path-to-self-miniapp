@@ -186,7 +186,9 @@ export function Result({ onBack }: ResultProps) {
           <button type="button" onClick={() => { setOpenResultId(null); onBack() }} className="text-[var(--color-glow-teal)] font-semibold min-h-[44px] min-w-[52px] flex items-center -ml-1">
             ← Назад
           </button>
-          <h1 className="flex-1 text-center text-base font-semibold" style={{ color: '#2d2a26' }}>Результат</h1>
+          <h1 className="font-display flex-1 text-center text-base font-semibold" style={{ color: '#2d2a26' }}>
+            Результат
+          </h1>
           <span className="w-14" />
         </header>
         <div className="flex-1 flex items-center justify-center p-4">
@@ -202,7 +204,7 @@ export function Result({ onBack }: ResultProps) {
         <button type="button" onClick={handleBack} className="text-[var(--color-glow-teal)] font-semibold min-h-[44px] min-w-[52px] flex items-center -ml-1">
           ← Назад
         </button>
-        <h1 className="flex-1 text-center text-base font-semibold" style={{ color: '#2d2a26' }}>
+        <h1 className="font-display flex-1 text-center text-base font-semibold" style={{ color: '#2d2a26' }}>
           Результат
         </h1>
         <span className="w-14" />

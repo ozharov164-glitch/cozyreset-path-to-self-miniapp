@@ -1,6 +1,5 @@
 import { Suspense } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import * as THREE from 'three'
 import { SkyGradient } from './SkyGradient'
 import { Lake } from './Lake'
@@ -81,9 +80,6 @@ export function GardenScene({ variant, historyItems }: GardenSceneProps) {
       <Suspense fallback={null}>
         <SceneContent variant={variant} historyItems={historyItems} />
       </Suspense>
-      <EffectComposer>
-        <Bloom luminanceThreshold={0.6} luminanceSmoothing={0.4} intensity={0.4} />
-      </EffectComposer>
     </>
   )
 }

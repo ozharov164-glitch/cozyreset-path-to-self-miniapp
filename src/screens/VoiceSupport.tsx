@@ -319,7 +319,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
         >
           ← Назад
         </button>
-        <h1 className="flex-1 text-center text-base font-bold text-[var(--color-text-primary)] tracking-tight">
+        <h1 className="font-display flex-1 text-center text-base font-bold text-[var(--color-text-primary)] tracking-tight">
           Голосовая поддержка
         </h1>
         <span className="w-14" />

@@ -66,7 +66,9 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
         >
           ← В бота
         </button>
-        <h1 className="text-base font-bold text-[var(--color-text-primary)] tracking-tight">Путь к Себе</h1>
+        <h1 className="font-display text-base font-bold text-[var(--color-text-primary)] tracking-tight">
+          Путь к Себе
+        </h1>
         <button
           type="button"
           onClick={() => onOpenHistory()}
@@ -84,7 +86,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
-          <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-1 tracking-tight">
+          <h2 className="font-display text-xl font-bold text-[var(--color-text-primary)] mb-1 tracking-tight">
             Привет, {userName}!
           </h2>
           <p className="text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">

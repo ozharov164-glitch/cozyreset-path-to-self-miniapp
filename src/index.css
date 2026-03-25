@@ -17,17 +17,27 @@
   --font-display: "Outfit", "Plus Jakarta Sans", system-ui, sans-serif;
 }
 
+.font-display {
+  font-family: var(--font-display);
+}
+
 * {
   box-sizing: border-box;
 }
 
-html, body, #root {
-  height: 100%;
+html, body {
   margin: 0;
   padding: 0;
+  min-height: 100%;
+  min-height: 100dvh;
 }
 
 #root {
+  min-height: 100%;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -40,6 +50,92 @@ body {
   -moz-osx-font-smoothing: grayscale;
   user-select: none;
   -webkit-user-select: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Фон приложения: лаванда + мягкие «облака» (GPU blur, без Three.js) */
+.pts-ambient {
+  overflow: hidden;
+}
+
+.pts-ambient__base {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    168deg,
+    #ede6f8 0%,
+    #e2d8f4 22%,
+    #d4c8f0 48%,
+    #c8b8ea 72%,
+    #bcace4 100%
+  );
+}
+
+.pts-ambient__veil {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 120% 80% at 50% 0%, rgba(255, 255, 255, 0.22) 0%, transparent 55%);
+  pointer-events: none;
+}
+
+.pts-ambient__orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(72px);
+  opacity: 0.42;
+  transform: translateZ(0);
+}
+
+.pts-ambient__orb--rose {
+  width: min(92vw, 320px);
+  height: min(92vw, 320px);
+  top: -12%;
+  right: -18%;
+  background: radial-gradient(circle, rgba(232, 180, 184, 0.55) 0%, rgba(232, 180, 184, 0) 68%);
+  animation: ptsOrbDriftA 24s ease-in-out infinite;
+}
+
+.pts-ambient__orb--teal {
+  width: min(85vw, 280px);
+  height: min(85vw, 280px);
+  bottom: 8%;
+  left: -22%;
+  background: radial-gradient(circle, rgba(107, 196, 181, 0.38) 0%, rgba(107, 196, 181, 0) 70%);
+  animation: ptsOrbDriftB 28s ease-in-out infinite;
+}
+
+.pts-ambient__orb--cream {
+  width: min(70vw, 240px);
+  height: min(70vw, 240px);
+  top: 42%;
+  left: 50%;
+  background: radial-gradient(circle, rgba(245, 230, 211, 0.45) 0%, rgba(245, 230, 211, 0) 65%);
+  animation: ptsOrbDriftC 20s ease-in-out infinite;
+}
+
+@keyframes ptsOrbDriftA {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-6%, 4%) scale(1.06); }
+}
+
+@keyframes ptsOrbDriftB {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(8%, -5%) scale(1.05); }
+}
+
+@keyframes ptsOrbDriftC {
+  0%, 100% { transform: translateX(-50%) translateY(0) scale(1); }
+  50% { transform: translateX(-50%) translateY(-12px) scale(1.04); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pts-ambient__orb {
+    animation: none !important;
+    opacity: 0.32;
+  }
 }
 
 .copyable-question {
@@ -58,7 +154,7 @@ body {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 20px;
+  border-radius: 22px;
   box-shadow:
     0 4px 6px -1px rgba(45, 42, 38, 0.06),
     0 10px 28px -4px rgba(45, 42, 38, 0.1),
@@ -66,15 +162,21 @@ body {
 }
 
 .card-premium {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(252, 250, 255, 0.92) 100%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(184, 164, 224, 0.25);
-  border-radius: 20px;
+  background: linear-gradient(
+    152deg,
+    rgba(255, 255, 255, 0.97) 0%,
+    rgba(255, 253, 255, 0.94) 45%,
+    rgba(252, 249, 255, 0.96) 100%
+  );
+  backdrop-filter: blur(22px) saturate(1.08);
+  -webkit-backdrop-filter: blur(22px) saturate(1.08);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 22px;
   box-shadow:
-    0 4px 6px -1px rgba(30, 43, 31, 0.05),
-    0 14px 32px -6px rgba(30, 43, 31, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    0 2px 4px rgba(45, 42, 62, 0.04),
+    0 12px 36px -8px rgba(100, 80, 140, 0.12),
+    0 0 0 1px rgba(184, 164, 224, 0.12) inset,
+    0 1px 0 rgba(255, 255, 255, 0.95) inset;
 }
 
 /* Единая главная кнопка — градиент, неотразимая */
