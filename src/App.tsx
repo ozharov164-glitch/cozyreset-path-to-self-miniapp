@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import Lenis from 'lenis'
 import { AnimatePresence, motion } from 'framer-motion'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ensureAuth, loadBackendConfig, getConnectionDiag, refreshInitData } from './api/client'
@@ -23,25 +22,6 @@ function AppContent() {
   const setScreen = useAppStore((s) => s.setScreen)
   const reducedMotion = usePrefersReducedMotion()
   const [connectionDiag, setConnectionDiag] = useState<{ search: string; backend: string; initDataLength: number } | null>(null)
-
-  useEffect(() => {
-    if (reducedMotion) return
-    const lenis = new Lenis({
-      smoothWheel: true,
-      touchMultiplier: 1.12,
-      syncTouch: true,
-    })
-    let rafId = 0
-    const raf = (time: number) => {
-      lenis.raf(time)
-      rafId = requestAnimationFrame(raf)
-    }
-    rafId = requestAnimationFrame(raf)
-    return () => {
-      cancelAnimationFrame(rafId)
-      lenis.destroy()
-    }
-  }, [reducedMotion])
 
   useEffect(() => {
     const tg = window.Telegram?.WebApp
@@ -92,7 +72,7 @@ function AppContent() {
     : { duration: 0.44, ease: [0.22, 1, 0.36, 1] as const }
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative flex w-full min-h-[100dvh] flex-col">
       <SceneBackground screen={screen} />
       {dimOverlay && (
         <div className="fixed inset-0 z-[5] pointer-events-none bg-black/30" aria-hidden />
@@ -108,11 +88,11 @@ function AppContent() {
           <div>initData length: {connectionDiag.initDataLength}</div>
         </div>
       )}
-      <div className="relative z-10 pointer-events-auto min-h-screen flex flex-col">
+      <div className="relative z-10 flex w-full flex-col pointer-events-auto">
         <AnimatePresence mode="wait">
           <motion.div
             key={screen}
-            className="flex-1 flex flex-col min-h-screen min-h-0"
+            className="flex w-full flex-col"
             initial={{ opacity: 0, y: 28 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -18 }}

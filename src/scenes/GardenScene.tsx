@@ -1,6 +1,5 @@
 import { Suspense } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import * as THREE from 'three'
 import { SkyGradient } from './SkyGradient'
 import { Lake } from './Lake'
@@ -20,7 +19,7 @@ interface GardenSceneProps {
 
 function Ground() {
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
       <planeGeometry args={[30, 30]} />
       <meshStandardMaterial color="#3d4a3e" roughness={0.95} metalness={0} />
     </mesh>
@@ -36,14 +35,7 @@ function SceneContent({ variant, historyItems }: GardenSceneProps) {
       <color attach="background" args={['#c9b8e8']} />
       <fog attach="fog" args={['#c9b8e8', 8, 25]} />
       <ambientLight intensity={0.4} color="#fff8f0" />
-      <directionalLight
-        position={[10, 15, 10]}
-        intensity={0.8}
-        color="#fff4e0"
-        castShadow
-        shadow-mapSize-width={512}
-        shadow-mapSize-height={512}
-      />
+      <directionalLight position={[10, 15, 10]} intensity={0.85} color="#fff4e0" />
       <pointLight position={[0, 3, 2]} intensity={0.6} color="#7dd3c0" distance={12} />
 
       <SkyGradient />
@@ -81,9 +73,6 @@ export function GardenScene({ variant, historyItems }: GardenSceneProps) {
       <Suspense fallback={null}>
         <SceneContent variant={variant} historyItems={historyItems} />
       </Suspense>
-      <EffectComposer>
-        <Bloom luminanceThreshold={0.6} luminanceSmoothing={0.4} intensity={0.4} />
-      </EffectComposer>
     </>
   )
 }

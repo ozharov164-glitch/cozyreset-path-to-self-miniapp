@@ -21,13 +21,20 @@
   box-sizing: border-box;
 }
 
-html, body, #root {
-  height: 100%;
+html, body {
   margin: 0;
   padding: 0;
+  /* min-height вместо height: 100% — иначе длинные экраны обрезаются и не скроллятся до конца (Telegram WebView). */
+  min-height: 100%;
+  min-height: 100dvh;
 }
 
 #root {
+  min-height: 100%;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -40,6 +47,9 @@ body {
   -moz-osx-font-smoothing: grayscale;
   user-select: none;
   -webkit-user-select: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .copyable-question {

@@ -2,11 +2,12 @@ import { useRef, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
-const COUNT = 45
+const COUNT = 22
 const COLORS = [0xc9b8e8, 0xe8b4b8]
 
 export function Particles() {
   const pointsRef = useRef<THREE.Points>(null)
+  const frameRef = useRef(0)
   const { positions, colors } = useMemo(() => {
     const positions = new Float32Array(COUNT * 3)
     const colors = new Float32Array(COUNT * 3)
@@ -26,7 +27,8 @@ export function Particles() {
   }, [])
 
   useFrame((state) => {
-    if (!pointsRef.current) return
+    frameRef.current += 1
+    if (frameRef.current % 2 !== 0 || !pointsRef.current) return
     const t = state.clock.elapsedTime
     const pos = pointsRef.current.geometry.attributes.position.array as Float32Array
     for (let i = 0; i < COUNT; i++) {
