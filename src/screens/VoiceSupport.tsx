@@ -77,7 +77,6 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
 
   const playBgPreview = useCallback((key: BgMusicKey) => {
     try {
-      setError(null)
       setSelectedMusicKey(key)
       setBgPreviewPlaying(true)
       const reqId = bgPreviewReqIdRef.current + 1
@@ -97,7 +96,6 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
       const backend = getBackendUrl()
       if (!backend) {
         setBgPreviewPlaying(false)
-        setError('Нет связи с сервером: обнови приложение и попробуй снова.')
         return
       }
 
@@ -143,7 +141,6 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
           const onErr = () => {
             if (bgPreviewReqIdRef.current !== reqId) return
             setBgPreviewPlaying(false)
-            setError('Не удалось загрузить фон. Попробуй другой.')
             try {
               URL.revokeObjectURL(blobUrl)
             } catch {
@@ -156,7 +153,6 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
         } catch {
           if (bgPreviewReqIdRef.current !== reqId) return
           setBgPreviewPlaying(false)
-          setError('Не удалось загрузить фон. Попробуй другой.')
         }
       })()
     } catch {
