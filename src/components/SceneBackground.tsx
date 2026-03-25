@@ -30,7 +30,7 @@ const SOFT_GRADIENT = {
 } as const
 
 /**
- * Живой фон: 3D-сцена (R3F, без тяжёлого postprocessing) или градиент при reduced-motion / падении WebGL.
+ * Живой фон: полноценная 3D-сцена (R3F + postprocessing) или мягкий градиент при reduced-motion / падении WebGL.
  */
 export function SceneBackground({ screen }: { screen: Screen }) {
   const reducedMotion = usePrefersReducedMotion()
@@ -75,8 +75,8 @@ export function SceneBackground({ screen }: { screen: Screen }) {
       >
         <Canvas
           camera={{ position: [0, 2, 8], fov: 45, near: 0.1, far: 64 }}
-          dpr={[1, 1]}
-          gl={{ alpha: false, antialias: false, powerPreference: 'low-power', stencil: false, depth: true }}
+          dpr={[1, 1.5]}
+          gl={{ alpha: false, antialias: true, powerPreference: 'default' }}
           style={{ width: '100%', height: '100%', display: 'block' }}
         >
           <GardenScene variant={variant} historyItems={historyItems} />
