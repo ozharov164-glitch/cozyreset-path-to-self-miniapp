@@ -738,3 +738,16 @@ export async function apiSelfRealizationClearHistory(
     return { error: 'Нет связи с сервером', status: 0 }
   }
 }
+
+/** Предпрослушивание фоновой музыки (MP3) — используется для кнопок "Фон 1/2". */
+export async function apiVoiceBackgroundPreview(musicKey: string): Promise<Blob | null> {
+  const backend = getBackendUrl()
+  if (!backend) return null
+  try {
+    const res = await fetch(`${backend}/mini-app/voice-background/${encodeURIComponent(musicKey)}`)
+    if (!res.ok) return null
+    return await res.blob()
+  } catch {
+    return null
+  }
+}
