@@ -131,10 +131,10 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
         return false
       }
 
-      // Иногда WebView возвращает resolve, но реальное проигрывание не стартует.
-      // Дадим короткий тайм-аут и проверим сдвиг currentTime.
-      await new Promise((r) => window.setTimeout(r, 450))
-      if (audio.paused || audio.currentTime < 0.05) {
+      // Иногда WebView resolve'ит, но декодирование/буферизация длится дольше,
+      // особенно для calm2/calm3. Проверим через небольшой тайм-аут.
+      await new Promise((r) => window.setTimeout(r, 1200))
+      if (audio.currentTime < 0.08) {
         try {
           audio.pause()
           audio.currentTime = 0
@@ -162,7 +162,11 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     }
 
     if (!url) return
-    const ok = await startWithUrl(key, url)
+    let ok = await startWithUrl(key, url)
+    // Повторная попытка: иногда WebView “запускает” только со второго вызова.
+    if (!ok && key !== 'calm1') {
+      ok = await startWithUrl(key, url)
+    }
     if (!ok && key !== 'calm1') {
       // Если конкретный трек "не заводится" (часто WebView), откатываемся на гарантированно рабочий calm1.
       setBgPlayError('Этот фон не удалось воспроизвести. Включён Фон 1.')
