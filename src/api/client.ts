@@ -744,7 +744,8 @@ export async function apiVoiceBackgroundPreview(musicKey: string): Promise<Blob 
   const backend = getBackendUrl()
   if (!backend) return null
   try {
-    const res = await fetch(`${backend}/mini-app/voice-background/${encodeURIComponent(musicKey)}`)
+    // m4a(AAC) обычно стабильнее для Telegram WebView, чем mp3
+    const res = await fetch(`${backend}/mini-app/voice-background/${encodeURIComponent(musicKey)}?format=m4a`)
     if (!res.ok) return null
     return await res.blob()
   } catch {
