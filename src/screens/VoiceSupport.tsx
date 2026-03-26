@@ -119,7 +119,8 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
       try {
         if (audio.src !== startUrl) audio.src = startUrl
         audio.currentTime = 0
-        audio.volume = 0
+        // Не начинаем с 0, чтобы даже при "тормозах" WebView звук был заметен.
+        audio.volume = 0.15
         audio.pause()
       } catch {
         /* ignore */
@@ -130,11 +131,24 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
         return false
       }
 
+      // Иногда WebView возвращает resolve, но реальное проигрывание не стартует.
+      // Дадим короткий тайм-аут и проверим сдвиг currentTime.
+      await new Promise((r) => window.setTimeout(r, 450))
+      if (audio.paused || audio.currentTime < 0.05) {
+        try {
+          audio.pause()
+          audio.currentTime = 0
+        } catch {
+          /* ignore */
+        }
+        return false
+      }
+
       bgFadeGenRef.current += 1
       const gen = bgFadeGenRef.current
       const fadeMs = 350
       const start = performance.now()
-      const from = 0
+      const from = 0.15
       const step = (t: number) => {
         if (gen !== bgFadeGenRef.current) return
         const p = Math.min(1, (t - start) / Math.max(1, fadeMs))
