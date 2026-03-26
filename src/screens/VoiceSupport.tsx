@@ -17,6 +17,8 @@ const item = {
 
 const SPEEDS = [0.75, 1, 1.25, 1.5] as const
 
+type BgMusicKey = 'calm1' | 'calm2' | 'calm3'
+
 function formatTime(sec: number): string {
   if (!Number.isFinite(sec) || sec < 0) return '0:00'
   const m = Math.floor(sec / 60)
@@ -33,7 +35,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   // Выбранный фон для микширования голосового ответа.
-  const [musicKey, setMusicKey] = useState<'calm1' | 'calm2'>('calm1')
+  const [musicKey, setMusicKey] = useState<BgMusicKey>('calm1')
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
   const [copyDone, setCopyDone] = useState(false)
@@ -47,8 +49,8 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   const [playbackRate, setPlaybackRate] = useState<number>(1)
   const [audioReady, setAudioReady] = useState(false)
 
-  // Фоновое предпрослушивание (кнопки "Фон 1/2").
-  const [bgPreviewUrls, setBgPreviewUrls] = useState<Record<string, string>>({})
+  // Фоновое предпрослушивание (кнопки "Фон 1/2/3").
+  const [, setBgPreviewUrls] = useState<Record<string, string>>({})
   const [bgLoadingKey, setBgLoadingKey] = useState<string | null>(null)
   const [bgPlayingKey, setBgPlayingKey] = useState<string | null>(null)
   const bgAudioRef = useRef<HTMLAudioElement | null>(null)
@@ -100,10 +102,21 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     source.connect(gain).connect(ctx.destination)
   }, [])
 
-  const playBg = useCallback(async (key: 'calm1' | 'calm2') => {
-    const url = bgPreviewUrls[key]
+  const playBg = useCallback(async (key: BgMusicKey) => {
+    let url = bgPreviewUrlsRef.current[key]
     const audio = bgAudioRef.current
-    if (!url || !audio) return
+    if (!audio) return
+
+    // Если предпросмотр не успел подгрузиться — дозагружаем прямо в момент клика.
+    if (!url) {
+      setBgLoadingKey(key)
+      const blob = await apiVoiceBackgroundPreview(key)
+      setBgLoadingKey(null)
+      if (!blob) return
+      url = URL.createObjectURL(blob)
+      bgPreviewUrlsRef.current[key] = url
+      setBgPreviewUrls((prev) => (prev[key] ? prev : { ...prev, [key]: url }))
+    }
 
     ensureBgGraph()
     const ctx = bgAudioCtxRef.current
@@ -131,7 +144,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     gain.gain.setValueAtTime(0.0, now)
     gain.gain.linearRampToValueAtTime(1.0, now + 0.35)
     setBgPlayingKey(key)
-  }, [bgPreviewUrls, ensureBgGraph])
+  }, [ensureBgGraph])
 
   useEffect(() => {
     return () => {
@@ -150,10 +163,10 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     }
   }, [audioUrl])
 
-  // Предзагружаем фон 1/2, чтобы по кнопке звук начинался без ожидания.
+  // Предзагружаем фоны 1/2/3, чтобы по кнопке звук начинался без ожидания.
   useEffect(() => {
     let cancelled = false
-    const keys: Array<'calm1' | 'calm2'> = ['calm1', 'calm2']
+    const keys: Array<BgMusicKey> = ['calm1', 'calm2', 'calm3']
     async function load() {
       const next: Record<string, string> = {}
       for (const k of keys) {
@@ -469,7 +482,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
 
             {/* Выбор фона для микширования голосового ответа + предпрослушивание */}
             <div className="flex gap-3 mb-4">
-              {(['calm1', 'calm2'] as const).map((k) => {
+              {(['calm1', 'calm2', 'calm3'] as const).map((k) => {
                 const isSelected = musicKey === k
                 const isPlaying = bgPlayingKey === k
                 return (
@@ -522,7 +535,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                       />
                     )}
                     <span className="relative z-10 flex items-center justify-center gap-2">
-                      <span aria-hidden>🎧</span> Фон {k === 'calm1' ? '1' : '2'}
+                      <span aria-hidden>🎧</span> Фон {k === 'calm1' ? '1' : k === 'calm2' ? '2' : '3'}
                     </span>
                   </motion.button>
                 )
