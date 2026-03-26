@@ -161,6 +161,24 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     }
   }, [audioUrl])
 
+  useEffect(() => {
+    const audio = bgAudioRef.current
+    if (!audio) return
+    const onEnded = () => {
+      setBgPlayingKey(null)
+      try {
+        audio.volume = 0
+        audio.currentTime = 0
+      } catch {
+        /* ignore */
+      }
+    }
+    audio.addEventListener('ended', onEnded)
+    return () => {
+      audio.removeEventListener('ended', onEnded)
+    }
+  }, [])
+
   // Предзагружаем фоны 1/2/3, чтобы по кнопке звук начинался без ожидания.
   useEffect(() => {
     let cancelled = false
