@@ -133,8 +133,10 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
 
       // Иногда WebView resolve'ит, но декодирование/буферизация длится дольше,
       // особенно для calm2/calm3. Проверим через небольшой тайм-аут.
-      await new Promise((r) => window.setTimeout(r, 1200))
-      if (audio.currentTime < 0.08) {
+      // WebView может начать декодирование заметно позже (особенно на calm2).
+      // Поэтому проверяем довольно долго, прежде чем падать в fallback.
+      await new Promise((r) => window.setTimeout(r, 4200))
+      if (audio.currentTime < 0.15) {
         try {
           audio.pause()
           audio.currentTime = 0
