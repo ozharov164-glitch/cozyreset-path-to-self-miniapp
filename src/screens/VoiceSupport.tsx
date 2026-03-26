@@ -67,6 +67,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   const bgStartCheckTimerRef = useRef<number | null>(null)
   const bgPlaySessionRef = useRef(0)
   const bgFadeOutStartedRef = useRef(false)
+  const bgEndWatchTimerRef = useRef<number | null>(null)
 
   const stopBg = useCallback(async (fadeMs = BG_FADE_OUT_MS): Promise<void> => {
     const audio = bgAudioRef.current
@@ -79,6 +80,10 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     if (bgStartCheckTimerRef.current != null) {
       window.clearTimeout(bgStartCheckTimerRef.current)
       bgStartCheckTimerRef.current = null
+    }
+    if (bgEndWatchTimerRef.current != null) {
+      window.clearInterval(bgEndWatchTimerRef.current)
+      bgEndWatchTimerRef.current = null
     }
 
     bgFadeGenRef.current += 1
@@ -201,6 +206,26 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
         return
       }
 
+      // Чтобы не было резкого обрыва по ended (тайминги timeupdate на iOS плавают),
+      // следим за оставшимся временем часто и запускаем stopBg заранее.
+      if (bgEndWatchTimerRef.current != null) {
+        window.clearInterval(bgEndWatchTimerRef.current)
+        bgEndWatchTimerRef.current = null
+      }
+      bgEndWatchTimerRef.current = window.setInterval(() => {
+        try {
+          if (bgFadeOutStartedRef.current) return
+          const d = audio.duration
+          if (!Number.isFinite(d) || d <= 0) return
+          const remaining = d - audio.currentTime
+          if (remaining <= BG_FADE_OUT_MS / 1000 + 0.12) {
+            void stopBg(BG_FADE_OUT_MS)
+          }
+        } catch {
+          /* ignore */
+        }
+      }, 120)
+
       // Стоп и fade-out в конце предпросмотра (сервер только нарезает, без fade).
       // Не полагаемся на "20s" — на iOS duration может отличаться.
       // Таймер оставляем как запасной, но основной fade-out запускаем по timeupdate.
@@ -251,6 +276,10 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
       } catch {
         /* ignore */
       }
+      if (bgEndWatchTimerRef.current != null) {
+        window.clearInterval(bgEndWatchTimerRef.current)
+        bgEndWatchTimerRef.current = null
+      }
     }
     const onTimeUpdate = () => {
       if (!bgPlayingKey) return
@@ -267,6 +296,10 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     return () => {
       audio.removeEventListener('ended', onEnded)
       audio.removeEventListener('timeupdate', onTimeUpdate)
+      if (bgEndWatchTimerRef.current != null) {
+        window.clearInterval(bgEndWatchTimerRef.current)
+        bgEndWatchTimerRef.current = null
+      }
     }
   }, [bgPlayingKey, stopBg])
 
