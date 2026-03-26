@@ -19,6 +19,11 @@ const SPEEDS = [0.75, 1, 1.25, 1.5] as const
 
 type BgMusicKey = 'calm1' | 'calm2' | 'calm3'
 
+const BG_PREVIEW_SECONDS = 20
+const BG_FADE_IN_MS = 350
+const BG_FADE_OUT_MS = 1600
+const BG_START_FALLBACK_MS = 8000
+
 function formatTime(sec: number): string {
   if (!Number.isFinite(sec) || sec < 0) return '0:00'
   const m = Math.floor(sec / 60)
@@ -58,10 +63,22 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   const bgPreviewUrlsRef = useRef<Record<string, string>>({})
   const bgFadeRafRef = useRef<number | null>(null)
   const bgFadeGenRef = useRef(0)
+  const bgStopTimerRef = useRef<number | null>(null)
+  const bgStartCheckTimerRef = useRef<number | null>(null)
+  const bgPlaySessionRef = useRef(0)
 
-  const stopBg = useCallback(async (fadeMs = 250) => {
+  const stopBg = useCallback(async (fadeMs = BG_FADE_OUT_MS) => {
     const audio = bgAudioRef.current
     if (!audio) return
+
+    if (bgStopTimerRef.current != null) {
+      window.clearTimeout(bgStopTimerRef.current)
+      bgStopTimerRef.current = null
+    }
+    if (bgStartCheckTimerRef.current != null) {
+      window.clearTimeout(bgStartCheckTimerRef.current)
+      bgStartCheckTimerRef.current = null
+    }
 
     bgFadeGenRef.current += 1
     const gen = bgFadeGenRef.current
@@ -96,101 +113,109 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     }, fadeMs + 30)
   }, [])
 
-  const playBg = useCallback(async (key: BgMusicKey) => {
-    setBgPlayError(null)
-    let url = bgPreviewUrlsRef.current[key]
-    const audio = bgAudioRef.current
-    if (!audio) return
+  const playBg = useCallback(
+    async (key: BgMusicKey) => {
+      setBgPlayError(null)
+      const audio = bgAudioRef.current
+      if (!audio) return
 
-    // Если предпросмотр не успел подгрузиться — дозагружаем прямо в момент клика.
-    if (!url) {
-      setBgLoadingKey(key)
-      const blob = await apiVoiceBackgroundPreview(key)
-      setBgLoadingKey(null)
-      if (!blob) return
-      url = URL.createObjectURL(blob)
-      bgPreviewUrlsRef.current[key] = url
-      setBgPreviewUrls((prev) => (prev[key] ? prev : { ...prev, [key]: url }))
-    }
+      bgPlaySessionRef.current += 1
+      const session = bgPlaySessionRef.current
 
-    // Чтобы старт был сразу по клику: сразу выставляем src (url — object URL),
-    // запускаем и плавно поднимаем volume.
-    const startWithUrl = async (startKey: BgMusicKey, startUrl: string): Promise<boolean> => {
-      try {
-        if (audio.src !== startUrl) audio.src = startUrl
-        audio.currentTime = 0
-        // Не начинаем с 0, чтобы даже при "тормозах" WebView звук был заметен.
-        audio.volume = 0.15
-        audio.pause()
-      } catch {
-        /* ignore */
+      // Очистим таймеры предыдущего проигрывания.
+      if (bgStopTimerRef.current != null) {
+        window.clearTimeout(bgStopTimerRef.current)
+        bgStopTimerRef.current = null
       }
-      try {
-        await audio.play()
-      } catch {
-        return false
+      if (bgStartCheckTimerRef.current != null) {
+        window.clearTimeout(bgStartCheckTimerRef.current)
+        bgStartCheckTimerRef.current = null
       }
 
-      // Иногда WebView resolve'ит, но декодирование/буферизация длится дольше,
-      // особенно для calm2/calm3. Проверим через небольшой тайм-аут.
-      // WebView может начать декодирование заметно позже (особенно на calm2).
-      // Поэтому проверяем довольно долго, прежде чем падать в fallback.
-      await new Promise((r) => window.setTimeout(r, 4200))
-      if (audio.currentTime < 0.15) {
+      const ensureUrl = async (k: BgMusicKey): Promise<string | null> => {
+        let u = bgPreviewUrlsRef.current[k]
+        if (u) return u
+        setBgLoadingKey(k)
+        const blob = await apiVoiceBackgroundPreview(k)
+        setBgLoadingKey(null)
+        if (!blob) return null
+        u = URL.createObjectURL(blob)
+        bgPreviewUrlsRef.current[k] = u
+        setBgPreviewUrls((prev) => (prev[k] ? prev : { ...prev, [k]: u }))
+        return u
+      }
+
+      const startWithUrl = async (startKey: BgMusicKey, startUrl: string): Promise<boolean> => {
         try {
-          audio.pause()
+          if (audio.src !== startUrl) audio.src = startUrl
           audio.currentTime = 0
+          audio.volume = 0.15
+          audio.pause()
         } catch {
           /* ignore */
         }
-        return false
-      }
 
-      bgFadeGenRef.current += 1
-      const gen = bgFadeGenRef.current
-      const fadeMs = 350
-      const start = performance.now()
-      const from = 0.15
-      const step = (t: number) => {
-        if (gen !== bgFadeGenRef.current) return
-        const p = Math.min(1, (t - start) / Math.max(1, fadeMs))
-        audio.volume = from + (1 - from) * p
-        if (p < 1) bgFadeRafRef.current = window.requestAnimationFrame(step)
-      }
-      if (bgFadeRafRef.current != null) window.cancelAnimationFrame(bgFadeRafRef.current)
-      bgFadeRafRef.current = window.requestAnimationFrame(step)
-      setBgPlayingKey(startKey)
-      return true
-    }
-
-    if (!url) return
-    let ok = await startWithUrl(key, url)
-    // Повторная попытка: иногда WebView “запускает” только со второго вызова.
-    if (!ok && key !== 'calm1') {
-      ok = await startWithUrl(key, url)
-    }
-    if (!ok && key !== 'calm1') {
-      // Если конкретный трек "не заводится" (часто WebView), откатываемся на гарантированно рабочий calm1.
-      setBgPlayError('Этот фон не удалось воспроизвести. Включён Фон 1.')
-      const fallbackKey: BgMusicKey = 'calm1'
-      let fallbackUrl = bgPreviewUrlsRef.current[fallbackKey]
-      if (!fallbackUrl) {
-        setBgLoadingKey(fallbackKey)
-        const blob = await apiVoiceBackgroundPreview(fallbackKey)
-        setBgLoadingKey(null)
-        if (blob) {
-          fallbackUrl = URL.createObjectURL(blob)
-          bgPreviewUrlsRef.current[fallbackKey] = fallbackUrl
+        try {
+          await audio.play()
+        } catch {
+          return false
         }
+
+        bgFadeGenRef.current += 1
+        const gen = bgFadeGenRef.current
+        const fadeMs = BG_FADE_IN_MS
+        const start = performance.now()
+        const from = 0.15
+        const step = (t: number) => {
+          if (gen !== bgFadeGenRef.current) return
+          const p = Math.min(1, (t - start) / Math.max(1, fadeMs))
+          audio.volume = from + (1 - from) * p
+          if (p < 1) bgFadeRafRef.current = window.requestAnimationFrame(step)
+        }
+        if (bgFadeRafRef.current != null) window.cancelAnimationFrame(bgFadeRafRef.current)
+        bgFadeRafRef.current = window.requestAnimationFrame(step)
+        setBgPlayingKey(startKey)
+        return true
       }
-      if (fallbackUrl) await startWithUrl(fallbackKey, fallbackUrl)
-      return
-    }
-    if (!ok) {
-      setBgPlayError('Этот фон не удалось воспроизвести. Попробуй Фон 1.')
-      return
-    }
-  }, [])
+
+      const url = await ensureUrl(key)
+      if (!url) return
+
+      let ok = await startWithUrl(key, url)
+      if (!ok && key !== 'calm1') ok = await startWithUrl(key, url)
+
+      if (!ok) {
+        if (key !== 'calm1') {
+          setBgPlayError('Фон не стартовал — включён Фон 1.')
+          const fallbackKey: BgMusicKey = 'calm1'
+          const fallbackUrl = await ensureUrl(fallbackKey)
+          if (fallbackUrl) await startWithUrl(fallbackKey, fallbackUrl)
+        } else {
+          setBgPlayError('Не удалось воспроизвести фон. Попробуй ещё раз.')
+        }
+        return
+      }
+
+      // Стоп и fade-out в конце предпросмотра (сервер только нарезает, без fade).
+      const stopDelayMs = Math.max(0, BG_PREVIEW_SECONDS * 1000 - BG_FADE_OUT_MS)
+      bgStopTimerRef.current = window.setTimeout(() => {
+        if (bgPlaySessionRef.current !== session) return
+        void stopBg(BG_FADE_OUT_MS)
+      }, stopDelayMs)
+
+      // Мягкая проверка: если спустя время аудио всё ещё на паузе — откат.
+      bgStartCheckTimerRef.current = window.setTimeout(() => {
+        if (bgPlaySessionRef.current !== session) return
+        if (audio.paused && key !== 'calm1') {
+          setBgPlayError('Фон 2 не стартовал — включён Фон 1.')
+          const fallbackKey: BgMusicKey = 'calm1'
+          const fallbackUrl = bgPreviewUrlsRef.current[fallbackKey]
+          if (fallbackUrl) void startWithUrl(fallbackKey, fallbackUrl)
+        }
+      }, BG_START_FALLBACK_MS)
+    },
+    [stopBg],
+  )
 
   useEffect(() => {
     return () => {
