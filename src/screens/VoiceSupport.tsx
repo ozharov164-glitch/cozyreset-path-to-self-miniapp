@@ -68,7 +68,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   const bgPlaySessionRef = useRef(0)
   const bgFadeOutStartedRef = useRef(false)
 
-  const stopBg = useCallback(async (fadeMs = BG_FADE_OUT_MS) => {
+  const stopBg = useCallback(async (fadeMs = BG_FADE_OUT_MS): Promise<void> => {
     const audio = bgAudioRef.current
     if (!audio) return
 
@@ -113,6 +113,8 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
         /* ignore */
       }
     }, fadeMs + 30)
+
+    await new Promise((r) => window.setTimeout(r, fadeMs + 50))
   }, [])
 
   const playBg = useCallback(
@@ -594,11 +596,20 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                   <motion.button
                     key={k}
                     type="button"
-                    onClick={() => {
+                    onClick={async () => {
+                      // 1) Повторный клик по активному фону → плавно затухаем и стоп.
+                      if (isSelected && isPlaying) {
+                        await stopBg(BG_FADE_OUT_MS)
+                        return
+                      }
+
+                      // 2) Переключение фона во время проигрывания → сначала плавно гасим текущий, потом стартуем новый.
+                      if (bgPlayingKey && bgPlayingKey !== k) {
+                        await stopBg(BG_FADE_OUT_MS)
+                      }
+
                       setMusicKey(k)
-                      const shouldStop = isSelected && isPlaying
-                      if (shouldStop) void stopBg(250)
-                      else void playBg(k)
+                      await playBg(k)
                     }}
                     whileTap={{ scale: 0.98 }}
                     whileHover={{ scale: 1.02 }}
