@@ -32,6 +32,7 @@ export function Result({ onBack }: ResultProps) {
   const currentTestId = useAppStore((s) => s.currentTestId)
   const answers = useAppStore((s) => s.answers)
   const setLastSavedResultId = useAppStore((s) => s.setLastSavedResultId)
+  const lastSavedResultId = useAppStore((s) => s.lastSavedResultId)
   const resetTest = useAppStore((s) => s.resetTest)
   const openResultId = useAppStore((s) => s.openResultId)
   const setOpenResultId = useAppStore((s) => s.setOpenResultId)
@@ -121,10 +122,13 @@ export function Result({ onBack }: ResultProps) {
   const scorePercent = Math.min(100, Math.max(0, (avg / 10) * 100))
   const description = getScoreDescription(avgRounded, displayTest?.title ?? '')
 
+  // Точный resultId нужен, чтобы темы ИИ не генерировались повторно при повторном заходе.
+  const suggestionsResultId = openResultId ?? lastSavedResultId
+
   const { data: suggestionsData } = useQuery({
-    queryKey: ['ai-suggestions-result', displayTest?.title ?? '', avgRounded, appSaveToken ?? ''],
-    queryFn: () => apiAiSuggestions(displayTest?.title ?? '', avgRounded),
-    enabled: !!(displayTest?.title && displayAnswers.length > 0 && authReady && appSaveToken),
+    queryKey: ['ai-suggestions-result', displayTest?.title ?? '', avgRounded, suggestionsResultId ?? ''],
+    queryFn: () => apiAiSuggestions(displayTest?.title ?? '', avgRounded, suggestionsResultId),
+    enabled: !!(displayTest?.title && displayAnswers.length > 0 && authReady && appSaveToken && suggestionsResultId),
   })
   const aiSuggestions = suggestionsData?.suggestions ?? []
   const aiMovies = suggestionsData?.movies ?? []

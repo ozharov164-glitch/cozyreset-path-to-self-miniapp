@@ -406,15 +406,15 @@ export type AiMovie = {
 }
 
 /** Темы для проработки с ИИ в боте. Без аргументов — по последнему результату пользователя. */
-export async function apiAiSuggestions(testTitle?: string, avg?: number): Promise<{ suggestions: string[]; movies: AiMovie[] }> {
-  let token = useAuthStore.getState().appSaveToken
-  if (!token) {
-    token = await ensureAuth()
-  }
-  if (!token) {
-    return { suggestions: [], movies: [] }
-  }
+export async function apiAiSuggestions(
+  testTitle?: string,
+  avg?: number,
+  resultId?: string | null,
+): Promise<{ suggestions: string[]; movies: AiMovie[] }> {
   const body: Record<string, unknown> = {}
+  if (resultId) {
+    body.result_id = resultId
+  }
   if (testTitle != null && avg != null) {
     body.test_title = testTitle
     body.avg = avg
