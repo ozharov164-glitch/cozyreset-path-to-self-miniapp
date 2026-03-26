@@ -66,6 +66,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   const bgStopTimerRef = useRef<number | null>(null)
   const bgStartCheckTimerRef = useRef<number | null>(null)
   const bgPlaySessionRef = useRef(0)
+  const bgFadeOutStartedRef = useRef(false)
 
   const stopBg = useCallback(async (fadeMs = BG_FADE_OUT_MS) => {
     const audio = bgAudioRef.current
@@ -82,6 +83,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
 
     bgFadeGenRef.current += 1
     const gen = bgFadeGenRef.current
+    bgFadeOutStartedRef.current = true
 
     const from = audio.volume
     const start = performance.now()
@@ -146,6 +148,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
       }
 
       const startWithUrl = async (startKey: BgMusicKey, startUrl: string): Promise<boolean> => {
+        bgFadeOutStartedRef.current = false
         try {
           if (audio.src !== startUrl) audio.src = startUrl
           audio.currentTime = 0
@@ -197,11 +200,12 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
       }
 
       // Стоп и fade-out в конце предпросмотра (сервер только нарезает, без fade).
-      const stopDelayMs = Math.max(0, BG_PREVIEW_SECONDS * 1000 - BG_FADE_OUT_MS)
+      // Не полагаемся на "20s" — на iOS duration может отличаться.
+      // Таймер оставляем как запасной, но основной fade-out запускаем по timeupdate.
       bgStopTimerRef.current = window.setTimeout(() => {
         if (bgPlaySessionRef.current !== session) return
         void stopBg(BG_FADE_OUT_MS)
-      }, stopDelayMs)
+      }, BG_PREVIEW_SECONDS * 1000)
 
       // Мягкая проверка: если спустя время аудио всё ещё на паузе — откат.
       bgStartCheckTimerRef.current = window.setTimeout(() => {
@@ -246,11 +250,23 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
         /* ignore */
       }
     }
+    const onTimeUpdate = () => {
+      if (!bgPlayingKey) return
+      if (bgFadeOutStartedRef.current) return
+      const dur = audio.duration
+      if (!Number.isFinite(dur) || dur <= 0) return
+      const remaining = dur - audio.currentTime
+      if (remaining <= BG_FADE_OUT_MS / 1000 + 0.05) {
+        void stopBg(BG_FADE_OUT_MS)
+      }
+    }
     audio.addEventListener('ended', onEnded)
+    audio.addEventListener('timeupdate', onTimeUpdate)
     return () => {
       audio.removeEventListener('ended', onEnded)
+      audio.removeEventListener('timeupdate', onTimeUpdate)
     }
-  }, [])
+  }, [bgPlayingKey, stopBg])
 
   // Предзагружаем фоны 1/2/3, чтобы по кнопке звук начинался без ожидания.
   useEffect(() => {
