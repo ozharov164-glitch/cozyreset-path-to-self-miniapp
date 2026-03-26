@@ -21,10 +21,11 @@ type BgMusicKey = 'calm1' | 'calm2' | 'calm3'
 
 const BG_PREVIEW_SECONDS = 20
 const BG_FADE_IN_MS = 350
-const BG_FADE_OUT_MS = 1600
+/** Длинное затухание в конце превью — иначе в наушниках почти не слышно. */
+const BG_FADE_OUT_MS = 4500
 const BG_START_FALLBACK_MS = 8000
 /** Запас до ended, с которого начинаем fade-out (сек). */
-const BG_FADE_LEAD_SEC = BG_FADE_OUT_MS / 1000 + 0.35
+const BG_FADE_LEAD_SEC = BG_FADE_OUT_MS / 1000 + 0.45
 
 function effectiveBgDurationSec(audio: HTMLAudioElement): number {
   let d = audio.duration
