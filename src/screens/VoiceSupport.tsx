@@ -23,6 +23,24 @@ const BG_PREVIEW_SECONDS = 20
 const BG_FADE_IN_MS = 350
 const BG_FADE_OUT_MS = 1600
 const BG_START_FALLBACK_MS = 8000
+/** Запас до ended, с которого начинаем fade-out (сек). */
+const BG_FADE_LEAD_SEC = BG_FADE_OUT_MS / 1000 + 0.35
+
+function effectiveBgDurationSec(audio: HTMLAudioElement): number {
+  let d = audio.duration
+  if (!Number.isFinite(d) || d <= 0) d = BG_PREVIEW_SECONDS
+  // M4A в WebView иногда даёт сильно завышенное значение.
+  if (d > BG_PREVIEW_SECONDS + 3) d = BG_PREVIEW_SECONDS
+  try {
+    if (audio.seekable && audio.seekable.length > 0) {
+      const end = audio.seekable.end(audio.seekable.length - 1)
+      if (Number.isFinite(end) && end > 0.2) d = Math.min(d, end)
+    }
+  } catch {
+    /* ignore */
+  }
+  return Math.max(d, BG_FADE_IN_MS / 1000 + 0.5)
+}
 
 function formatTime(sec: number): string {
   if (!Number.isFinite(sec) || sec < 0) return '0:00'
@@ -67,13 +85,17 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   const bgStartCheckTimerRef = useRef<number | null>(null)
   const bgPlaySessionRef = useRef(0)
   const bgFadeOutStartedRef = useRef(false)
-  const bgEndWatchTimerRef = useRef<number | null>(null)
   const bgPlannedFadeTimerRef = useRef<number | null>(null)
+  const bgEndRafRef = useRef<number | null>(null)
 
   const stopBg = useCallback(async (fadeMs = BG_FADE_OUT_MS): Promise<void> => {
     const audio = bgAudioRef.current
     if (!audio) return
 
+    if (bgEndRafRef.current != null) {
+      window.cancelAnimationFrame(bgEndRafRef.current)
+      bgEndRafRef.current = null
+    }
     if (bgStopTimerRef.current != null) {
       window.clearTimeout(bgStopTimerRef.current)
       bgStopTimerRef.current = null
@@ -81,10 +103,6 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     if (bgStartCheckTimerRef.current != null) {
       window.clearTimeout(bgStartCheckTimerRef.current)
       bgStartCheckTimerRef.current = null
-    }
-    if (bgEndWatchTimerRef.current != null) {
-      window.clearInterval(bgEndWatchTimerRef.current)
-      bgEndWatchTimerRef.current = null
     }
     if (bgPlannedFadeTimerRef.current != null) {
       window.clearTimeout(bgPlannedFadeTimerRef.current)
@@ -137,6 +155,10 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
       const session = bgPlaySessionRef.current
 
       // Очистим таймеры предыдущего проигрывания.
+      if (bgEndRafRef.current != null) {
+        window.cancelAnimationFrame(bgEndRafRef.current)
+        bgEndRafRef.current = null
+      }
       if (bgStopTimerRef.current != null) {
         window.clearTimeout(bgStopTimerRef.current)
         bgStopTimerRef.current = null
@@ -144,6 +166,10 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
       if (bgStartCheckTimerRef.current != null) {
         window.clearTimeout(bgStartCheckTimerRef.current)
         bgStartCheckTimerRef.current = null
+      }
+      if (bgPlannedFadeTimerRef.current != null) {
+        window.clearTimeout(bgPlannedFadeTimerRef.current)
+        bgPlannedFadeTimerRef.current = null
       }
 
       const ensureUrl = async (k: BgMusicKey): Promise<string | null> => {
@@ -202,64 +228,46 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
       if (!ok) {
         if (key !== 'calm1') {
           setBgPlayError('Фон не стартовал — включён Фон 1.')
-          const fallbackKey: BgMusicKey = 'calm1'
-          const fallbackUrl = await ensureUrl(fallbackKey)
-          if (fallbackUrl) await startWithUrl(fallbackKey, fallbackUrl)
+          const fallbackUrl = await ensureUrl('calm1')
+          if (fallbackUrl) ok = await startWithUrl('calm1', fallbackUrl)
         } else {
           setBgPlayError('Не удалось воспроизвести фон. Попробуй ещё раз.')
         }
-        return
       }
 
-      // Чтобы не было резкого обрыва по ended (тайминги timeupdate на iOS плавают),
-      // следим за оставшимся временем часто и запускаем stopBg заранее.
-      if (bgEndWatchTimerRef.current != null) {
-        window.clearInterval(bgEndWatchTimerRef.current)
-        bgEndWatchTimerRef.current = null
-      }
-      bgEndWatchTimerRef.current = window.setInterval(() => {
+      if (!ok) return
+
+      // Конец превью: на iOS duration/currentTime и timeupdate часто врут — каждый кадр
+      // сравниваем прогресс со стеной времени и с effectiveBgDurationSec (seekable + запас 20 с).
+      const playWallStartedAt = performance.now()
+      const tickEndFade = () => {
+        if (bgPlaySessionRef.current !== session || bgFadeOutStartedRef.current) return
         try {
-          if (bgFadeOutStartedRef.current) return
-          const d = audio.duration
-          if (!Number.isFinite(d) || d <= 0) return
-          const remaining = d - audio.currentTime
-          if (remaining <= BG_FADE_OUT_MS / 1000 + 0.12) {
+          const d = effectiveBgDurationSec(audio)
+          const wallSec = (performance.now() - playWallStartedAt) / 1000
+          const pos = Math.max(audio.currentTime, Math.min(wallSec, d + 0.25))
+          if (d - pos <= BG_FADE_LEAD_SEC) {
             void stopBg(BG_FADE_OUT_MS)
+            return
           }
         } catch {
           /* ignore */
         }
-      }, 120)
+        bgEndRafRef.current = window.requestAnimationFrame(tickEndFade)
+      }
+      bgEndRafRef.current = window.requestAnimationFrame(tickEndFade)
 
-      // Более надёжно (чем timeupdate): как только duration известен — планируем fade-out по таймеру.
-      if (bgPlannedFadeTimerRef.current != null) {
-        window.clearTimeout(bgPlannedFadeTimerRef.current)
-        bgPlannedFadeTimerRef.current = null
-      }
-      const scheduleFade = () => {
-        const d = audio.duration
-        if (!Number.isFinite(d) || d <= 0) return false
-        const fadeAtSec = Math.max(0.0, d - BG_FADE_OUT_MS / 1000 - 0.2)
-        const ms = Math.max(0, Math.floor(fadeAtSec * 1000))
-        bgPlannedFadeTimerRef.current = window.setTimeout(() => {
-          void stopBg(BG_FADE_OUT_MS)
-        }, ms)
-        return true
-      }
-      if (!scheduleFade()) {
-        // duration ещё не готов — попробуем чуть позже.
-        bgPlannedFadeTimerRef.current = window.setTimeout(() => {
-          scheduleFade()
-        }, 300)
-      }
+      // Жёсткий запас: даже если rAF «заморозится», к концу отрезка всё равно плавно гасим.
+      const backupMs = Math.max(0, Math.floor((BG_PREVIEW_SECONDS - BG_FADE_LEAD_SEC) * 1000))
+      bgPlannedFadeTimerRef.current = window.setTimeout(() => {
+        if (bgPlaySessionRef.current !== session || bgFadeOutStartedRef.current) return
+        void stopBg(BG_FADE_OUT_MS)
+      }, Math.min(backupMs, 2147483647))
 
-      // Стоп и fade-out в конце предпросмотра (сервер только нарезает, без fade).
-      // Не полагаемся на "20s" — на iOS duration может отличаться.
-      // Таймер оставляем как запасной, но основной fade-out запускаем по timeupdate.
       bgStopTimerRef.current = window.setTimeout(() => {
         if (bgPlaySessionRef.current !== session) return
         void stopBg(BG_FADE_OUT_MS)
-      }, BG_PREVIEW_SECONDS * 1000)
+      }, BG_PREVIEW_SECONDS * 1000 + 400)
 
       // Мягкая проверка: если спустя время аудио всё ещё на паузе — откат.
       bgStartCheckTimerRef.current = window.setTimeout(() => {
@@ -296,6 +304,14 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     const audio = bgAudioRef.current
     if (!audio) return
     const onEnded = () => {
+      if (bgEndRafRef.current != null) {
+        window.cancelAnimationFrame(bgEndRafRef.current)
+        bgEndRafRef.current = null
+      }
+      if (bgPlannedFadeTimerRef.current != null) {
+        window.clearTimeout(bgPlannedFadeTimerRef.current)
+        bgPlannedFadeTimerRef.current = null
+      }
       setBgPlayingKey(null)
       try {
         audio.volume = 0
@@ -303,19 +319,15 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
       } catch {
         /* ignore */
       }
-      if (bgEndWatchTimerRef.current != null) {
-        window.clearInterval(bgEndWatchTimerRef.current)
-        bgEndWatchTimerRef.current = null
-      }
     }
     const onTimeUpdate = () => {
       if (!bgPlayingKey) return
       if (bgFadeOutStartedRef.current) return
-      const dur = audio.duration
-      if (!Number.isFinite(dur) || dur <= 0) return
-      const remaining = dur - audio.currentTime
-      if (remaining <= BG_FADE_OUT_MS / 1000 + 0.05) {
-        void stopBg(BG_FADE_OUT_MS)
+      try {
+        const dur = effectiveBgDurationSec(audio)
+        if (dur - audio.currentTime <= BG_FADE_LEAD_SEC) void stopBg(BG_FADE_OUT_MS)
+      } catch {
+        /* ignore */
       }
     }
     audio.addEventListener('ended', onEnded)
@@ -323,10 +335,6 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     return () => {
       audio.removeEventListener('ended', onEnded)
       audio.removeEventListener('timeupdate', onTimeUpdate)
-      if (bgEndWatchTimerRef.current != null) {
-        window.clearInterval(bgEndWatchTimerRef.current)
-        bgEndWatchTimerRef.current = null
-      }
     }
   }, [bgPlayingKey, stopBg])
 
