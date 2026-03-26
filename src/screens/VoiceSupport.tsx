@@ -34,6 +34,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [bgPlayError, setBgPlayError] = useState<string | null>(null)
   // Выбранный фон для микширования голосового ответа.
   const [musicKey, setMusicKey] = useState<BgMusicKey>('calm1')
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
@@ -96,6 +97,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   }, [])
 
   const playBg = useCallback(async (key: BgMusicKey) => {
+    setBgPlayError(null)
     let url = bgPreviewUrlsRef.current[key]
     const audio = bgAudioRef.current
     if (!audio) return
@@ -113,36 +115,62 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
 
     // Чтобы старт был сразу по клику: сразу выставляем src (url — object URL),
     // запускаем и плавно поднимаем volume.
-    try {
-      if (audio.src !== url) audio.src = url
-      audio.currentTime = 0
-      audio.volume = 0
-      audio.pause()
-    } catch {
-      /* ignore */
-    }
-    try {
-      await audio.play()
-    } catch {
-      // Иногда WebView блокирует play до жеста — в этом случае пользователь должен нажать ещё раз.
-      return
+    const startWithUrl = async (startKey: BgMusicKey, startUrl: string): Promise<boolean> => {
+      try {
+        if (audio.src !== startUrl) audio.src = startUrl
+        audio.currentTime = 0
+        audio.volume = 0
+        audio.pause()
+      } catch {
+        /* ignore */
+      }
+      try {
+        await audio.play()
+      } catch {
+        return false
+      }
+
+      bgFadeGenRef.current += 1
+      const gen = bgFadeGenRef.current
+      const fadeMs = 350
+      const start = performance.now()
+      const from = 0
+      const step = (t: number) => {
+        if (gen !== bgFadeGenRef.current) return
+        const p = Math.min(1, (t - start) / Math.max(1, fadeMs))
+        audio.volume = from + (1 - from) * p
+        if (p < 1) bgFadeRafRef.current = window.requestAnimationFrame(step)
+      }
+      if (bgFadeRafRef.current != null) window.cancelAnimationFrame(bgFadeRafRef.current)
+      bgFadeRafRef.current = window.requestAnimationFrame(step)
+      setBgPlayingKey(startKey)
+      return true
     }
 
-    bgFadeGenRef.current += 1
-    const gen = bgFadeGenRef.current
-    const fadeMs = 350
-    const start = performance.now()
-    const from = 0
-    const step = (t: number) => {
-      if (gen !== bgFadeGenRef.current) return
-      const p = Math.min(1, (t - start) / Math.max(1, fadeMs))
-      audio.volume = from + (1 - from) * p
-      if (p < 1) bgFadeRafRef.current = window.requestAnimationFrame(step)
+    if (!url) return
+    const ok = await startWithUrl(key, url)
+    if (!ok && key !== 'calm1') {
+      // Если конкретный трек "не заводится" (часто WebView), откатываемся на гарантированно рабочий calm1.
+      setBgPlayError('Этот фон не удалось воспроизвести. Включён Фон 1.')
+      const fallbackKey: BgMusicKey = 'calm1'
+      let fallbackUrl = bgPreviewUrlsRef.current[fallbackKey]
+      if (!fallbackUrl) {
+        setBgLoadingKey(fallbackKey)
+        const blob = await apiVoiceBackgroundPreview(fallbackKey)
+        setBgLoadingKey(null)
+        if (blob) {
+          fallbackUrl = URL.createObjectURL(blob)
+          bgPreviewUrlsRef.current[fallbackKey] = fallbackUrl
+        }
+      }
+      if (fallbackUrl) await startWithUrl(fallbackKey, fallbackUrl)
+      return
     }
-    if (bgFadeRafRef.current != null) window.cancelAnimationFrame(bgFadeRafRef.current)
-    bgFadeRafRef.current = window.requestAnimationFrame(step)
-    setBgPlayingKey(key)
-  }, [setBgPreviewUrls])
+    if (!ok) {
+      setBgPlayError('Этот фон не удалось воспроизвести. Попробуй Фон 1.')
+      return
+    }
+  }, [])
 
   useEffect(() => {
     return () => {
@@ -557,6 +585,15 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                 )
               })}
             </div>
+            {bgPlayError && (
+              <motion.p
+                className="text-xs text-rose-600 mt-[-10px] mb-4"
+                initial={{ opacity: 0, y: -3 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                {bgPlayError}
+              </motion.p>
+            )}
 
             <AnimatePresence mode="wait">
               {error && (
