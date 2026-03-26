@@ -68,6 +68,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   const bgPlaySessionRef = useRef(0)
   const bgFadeOutStartedRef = useRef(false)
   const bgEndWatchTimerRef = useRef<number | null>(null)
+  const bgPlannedFadeTimerRef = useRef<number | null>(null)
 
   const stopBg = useCallback(async (fadeMs = BG_FADE_OUT_MS): Promise<void> => {
     const audio = bgAudioRef.current
@@ -84,6 +85,10 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     if (bgEndWatchTimerRef.current != null) {
       window.clearInterval(bgEndWatchTimerRef.current)
       bgEndWatchTimerRef.current = null
+    }
+    if (bgPlannedFadeTimerRef.current != null) {
+      window.clearTimeout(bgPlannedFadeTimerRef.current)
+      bgPlannedFadeTimerRef.current = null
     }
 
     bgFadeGenRef.current += 1
@@ -225,6 +230,28 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
           /* ignore */
         }
       }, 120)
+
+      // Более надёжно (чем timeupdate): как только duration известен — планируем fade-out по таймеру.
+      if (bgPlannedFadeTimerRef.current != null) {
+        window.clearTimeout(bgPlannedFadeTimerRef.current)
+        bgPlannedFadeTimerRef.current = null
+      }
+      const scheduleFade = () => {
+        const d = audio.duration
+        if (!Number.isFinite(d) || d <= 0) return false
+        const fadeAtSec = Math.max(0.0, d - BG_FADE_OUT_MS / 1000 - 0.2)
+        const ms = Math.max(0, Math.floor(fadeAtSec * 1000))
+        bgPlannedFadeTimerRef.current = window.setTimeout(() => {
+          void stopBg(BG_FADE_OUT_MS)
+        }, ms)
+        return true
+      }
+      if (!scheduleFade()) {
+        // duration ещё не готов — попробуем чуть позже.
+        bgPlannedFadeTimerRef.current = window.setTimeout(() => {
+          scheduleFade()
+        }, 300)
+      }
 
       // Стоп и fade-out в конце предпросмотра (сервер только нарезает, без fade).
       // Не полагаемся на "20s" — на iOS duration может отличаться.
