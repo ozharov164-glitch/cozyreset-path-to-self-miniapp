@@ -54,52 +54,45 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   const [bgLoadingKey, setBgLoadingKey] = useState<string | null>(null)
   const [bgPlayingKey, setBgPlayingKey] = useState<string | null>(null)
   const bgAudioRef = useRef<HTMLAudioElement | null>(null)
-  const bgAudioCtxRef = useRef<AudioContext | null>(null)
-  const bgGainRef = useRef<GainNode | null>(null)
-  const bgSourceRef = useRef<MediaElementAudioSourceNode | null>(null)
   const bgPreviewUrlsRef = useRef<Record<string, string>>({})
+  const bgFadeRafRef = useRef<number | null>(null)
+  const bgFadeGenRef = useRef(0)
 
   const stopBg = useCallback(async (fadeMs = 250) => {
     const audio = bgAudioRef.current
-    const ctx = bgAudioCtxRef.current
-    const gain = bgGainRef.current
-    if (!audio || !ctx || !gain) {
-      try {
-        audio?.pause()
-      } catch {
-        /* ignore */
+    if (!audio) return
+
+    bgFadeGenRef.current += 1
+    const gen = bgFadeGenRef.current
+
+    const from = audio.volume
+    const start = performance.now()
+    const step = (t: number) => {
+      if (gen !== bgFadeGenRef.current) return
+      const p = Math.min(1, (t - start) / Math.max(1, fadeMs))
+      audio.volume = from + (0 - from) * p
+      if (p < 1) {
+        bgFadeRafRef.current = window.requestAnimationFrame(step)
       }
-      return
     }
-    const now = ctx.currentTime
-    gain.gain.cancelScheduledValues(now)
-    gain.gain.setValueAtTime(gain.gain.value, now)
-    gain.gain.linearRampToValueAtTime(0.0, now + fadeMs / 1000)
+
+    if (bgFadeRafRef.current != null) {
+      window.cancelAnimationFrame(bgFadeRafRef.current)
+    }
+    bgFadeRafRef.current = window.requestAnimationFrame(step)
+
     window.setTimeout(() => {
       try {
-        audio.pause()
-        audio.currentTime = 0
+        if (gen === bgFadeGenRef.current) {
+          audio.pause()
+          audio.currentTime = 0
+          audio.volume = 0
+          setBgPlayingKey(null)
+        }
       } catch {
         /* ignore */
       }
-      setBgPlayingKey(null)
-    }, fadeMs + 20)
-  }, [])
-
-  const ensureBgGraph = useCallback(() => {
-    const audio = bgAudioRef.current
-    if (!audio) return
-    if (bgAudioCtxRef.current && bgGainRef.current && bgSourceRef.current) return
-    const AudioContextCtor = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
-    if (!AudioContextCtor) return
-    const ctx = new AudioContextCtor()
-    bgAudioCtxRef.current = ctx
-    const source = ctx.createMediaElementSource(audio)
-    bgSourceRef.current = source
-    const gain = ctx.createGain()
-    gain.gain.value = 0.0
-    bgGainRef.current = gain
-    source.connect(gain).connect(ctx.destination)
+    }, fadeMs + 30)
   }, [])
 
   const playBg = useCallback(async (key: BgMusicKey) => {
@@ -118,18 +111,13 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
       setBgPreviewUrls((prev) => (prev[key] ? prev : { ...prev, [key]: url }))
     }
 
-    ensureBgGraph()
-    const ctx = bgAudioCtxRef.current
-    const gain = bgGainRef.current
-    if (!ctx || !gain) return
-
-    // Чтобы старт был сразу по клику: выставляем src заранее (url — уже object URL),
-    // затем запускаем и плавно поднимаем громкость.
-    if (audio.src !== url) {
-      audio.src = url
-    }
+    // Чтобы старт был сразу по клику: сразу выставляем src (url — object URL),
+    // запускаем и плавно поднимаем volume.
     try {
+      if (audio.src !== url) audio.src = url
       audio.currentTime = 0
+      audio.volume = 0
+      audio.pause()
     } catch {
       /* ignore */
     }
@@ -139,12 +127,22 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
       // Иногда WebView блокирует play до жеста — в этом случае пользователь должен нажать ещё раз.
       return
     }
-    const now = ctx.currentTime
-    gain.gain.cancelScheduledValues(now)
-    gain.gain.setValueAtTime(0.0, now)
-    gain.gain.linearRampToValueAtTime(1.0, now + 0.35)
+
+    bgFadeGenRef.current += 1
+    const gen = bgFadeGenRef.current
+    const fadeMs = 350
+    const start = performance.now()
+    const from = 0
+    const step = (t: number) => {
+      if (gen !== bgFadeGenRef.current) return
+      const p = Math.min(1, (t - start) / Math.max(1, fadeMs))
+      audio.volume = from + (1 - from) * p
+      if (p < 1) bgFadeRafRef.current = window.requestAnimationFrame(step)
+    }
+    if (bgFadeRafRef.current != null) window.cancelAnimationFrame(bgFadeRafRef.current)
+    bgFadeRafRef.current = window.requestAnimationFrame(step)
     setBgPlayingKey(key)
-  }, [ensureBgGraph])
+  }, [setBgPreviewUrls])
 
   useEffect(() => {
     return () => {
