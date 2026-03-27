@@ -405,19 +405,26 @@ export type AiMovie = {
   whyWatch: string
 }
 
-/** Темы для проработки с ИИ в боте. Без аргументов — по последнему результату пользователя. */
+/** Темы для проработки с ИИ в боте. Без аргументов — по последнему результату пользователя. resultId — id прохождения теста для кэша на бэкенде. */
 export async function apiAiSuggestions(
   testTitle?: string,
   avg?: number,
-  resultId?: string | null,
+  resultId?: string | number | null,
 ): Promise<{ suggestions: string[]; movies: AiMovie[] }> {
-  const body: Record<string, unknown> = {}
-  if (resultId) {
-    body.result_id = resultId
+  let token = useAuthStore.getState().appSaveToken
+  if (!token) {
+    token = await ensureAuth()
   }
+  if (!token) {
+    return { suggestions: [], movies: [] }
+  }
+  const body: Record<string, unknown> = {}
   if (testTitle != null && avg != null) {
     body.test_title = testTitle
     body.avg = avg
+  }
+  if (resultId != null && String(resultId).trim() !== '') {
+    body.result_id = resultId
   }
   const res = await fetchWithAuth('/mini-app/ai-suggestions', {
     method: 'POST',
@@ -438,13 +445,16 @@ const VOICE_REPLY_TIMEOUT_MS = 120000
 export async function apiVoiceReply(
   text: string,
   musicKey?: string,
+  ttsEngine?: 'yandex' | 'edge',
 ): Promise<{ blob: Blob; downloadUrl?: string | null } | { error: string; status?: number }> {
   const controller = new AbortController()
   const timeoutId = window.setTimeout(() => controller.abort(), VOICE_REPLY_TIMEOUT_MS)
   try {
+    const body: Record<string, unknown> = { text: text.trim(), musicKey: musicKey || undefined }
+    if (ttsEngine === 'yandex' || ttsEngine === 'edge') body.ttsEngine = ttsEngine
     const res = await fetchWithAuth('/mini-app/voice-reply', {
       method: 'POST',
-      body: JSON.stringify({ text: text.trim(), musicKey: musicKey || undefined }),
+      body: JSON.stringify(body),
       signal: controller.signal,
     })
     if (!res.ok) {
@@ -736,19 +746,5 @@ export async function apiSelfRealizationClearHistory(
     return { ok: true }
   } catch {
     return { error: 'Нет связи с сервером', status: 0 }
-  }
-}
-
-/** Предпрослушивание фоновой музыки (MP3) — используется для кнопок "Фон 1/2". */
-export async function apiVoiceBackgroundPreview(musicKey: string): Promise<Blob | null> {
-  const backend = getBackendUrl()
-  if (!backend) return null
-  try {
-    // m4a(AAC) обычно стабильнее для Telegram WebView, чем mp3
-    const res = await fetch(`${backend}/mini-app/voice-background/${encodeURIComponent(musicKey)}?format=m4a`)
-    if (!res.ok) return null
-    return await res.blob()
-  } catch {
-    return null
   }
 }

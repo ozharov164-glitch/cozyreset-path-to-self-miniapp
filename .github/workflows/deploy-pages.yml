@@ -1,8 +1,11 @@
+# Сборка и публикация на GitHub Pages. Если вкладка Actions пустая:
+# Repo → Settings → Actions → General → разрешить «Allow all actions and reusable workflows».
 name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read

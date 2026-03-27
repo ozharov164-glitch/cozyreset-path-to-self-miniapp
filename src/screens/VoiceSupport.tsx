@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { apiVoiceBackgroundPreview, apiVoiceReply } from '../api/client'
+import { apiVoiceReply, getBackendUrl } from '../api/client'
 
 const container = {
   hidden: { opacity: 0 },
@@ -16,13 +16,24 @@ const item = {
 }
 
 const SPEEDS = [0.75, 1, 1.25, 1.5] as const
+const PREVIEW_SECONDS = 10
+const PREVIEW_SEEK_FROM_MIDDLE_SECONDS = 5
 
-type BgMusicKey = 'calm1' | 'calm2' | 'calm3'
+const BG_MUSIC_OPTIONS = [
+  { key: 'calm1', label: 'Фон 1' },
+  { key: 'calm2', label: 'Фон 2' },
+  { key: 'calm3', label: 'Фон 3' },
+] as const
 
-const BG_FADE_IN_MS = 350
-/** Ручной стоп/смена фона — через Web Audio Gain (в WebView `audio.volume` часто бесполезен). */
-const BG_FADE_OUT_MS = 4500
-const BG_START_FALLBACK_MS = 8000
+type BgMusicKey = (typeof BG_MUSIC_OPTIONS)[number]['key']
+
+const TTS_ENGINE_OPTIONS = [
+  { key: 'yandex' as const, label: '✨ Яндекс — тёплый студийный' },
+  { key: 'edge' as const, label: '🌿 Edge — мягкий нейросетевой' },
+]
+type TtsEngineKey = (typeof TTS_ENGINE_OPTIONS)[number]['key']
+
+const TTS_PREVIEW_SECONDS = 12
 
 function formatTime(sec: number): string {
   if (!Number.isFinite(sec) || sec < 0) return '0:00'
@@ -39,9 +50,11 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [bgPlayError, setBgPlayError] = useState<string | null>(null)
-  // Выбранный фон для микширования голосового ответа.
-  const [musicKey, setMusicKey] = useState<BgMusicKey>('calm1')
+  const [selectedMusicKey, setSelectedMusicKey] = useState<BgMusicKey>('calm1')
+  const [selectedTtsEngine, setSelectedTtsEngine] = useState<TtsEngineKey>('yandex')
+  const [bgPreviewPlaying, setBgPreviewPlaying] = useState(false)
+  const [ttsPreviewPlaying, setTtsPreviewPlaying] = useState(false)
+  const [ttsPreviewActiveKey, setTtsPreviewActiveKey] = useState<TtsEngineKey | null>(null)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
   const [copyDone, setCopyDone] = useState(false)
@@ -49,253 +62,15 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const bgPreviewRef = useRef<HTMLAudioElement | null>(null)
   const bgPreviewTimerRef = useRef<number | null>(null)
+  const bgPreviewReqIdRef = useRef(0)
+  const ttsPreviewRef = useRef<HTMLAudioElement | null>(null)
+  const ttsPreviewTimerRef = useRef<number | null>(null)
+  const ttsPreviewReqIdRef = useRef(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [playbackRate, setPlaybackRate] = useState<number>(1)
   const [audioReady, setAudioReady] = useState(false)
-
-  // Фоновое предпрослушивание (кнопки "Фон 1/2/3").
-  const [, setBgPreviewUrls] = useState<Record<string, string>>({})
-  const [bgLoadingKey, setBgLoadingKey] = useState<string | null>(null)
-  const [bgPlayingKey, setBgPlayingKey] = useState<string | null>(null)
-  const bgAudioRef = useRef<HTMLAudioElement | null>(null)
-  const bgPreviewUrlsRef = useRef<Record<string, string>>({})
-  const bgFadeRafRef = useRef<number | null>(null)
-  const bgFadeGenRef = useRef(0)
-  const bgStartCheckTimerRef = useRef<number | null>(null)
-  const bgPlaySessionRef = useRef(0)
-  const bgAudioCtxRef = useRef<AudioContext | null>(null)
-  const bgGainRef = useRef<GainNode | null>(null)
-  const bgMediaSrcRef = useRef<MediaElementAudioSourceNode | null>(null)
-
-  const ensureBgWebAudio = useCallback((): { ctx: AudioContext; gain: GainNode } | null => {
-    const audio = bgAudioRef.current
-    if (!audio) return null
-    const win = window as Window & { webkitAudioContext?: typeof AudioContext }
-    const Ctor = window.AudioContext ?? win.webkitAudioContext
-    if (!Ctor) return null
-
-    let ctx = bgAudioCtxRef.current
-    if (!ctx) {
-      try {
-        ctx = new Ctor({ latencyHint: 'interactive' } as AudioContextOptions)
-      } catch {
-        try {
-          ctx = new Ctor()
-        } catch {
-          return null
-        }
-      }
-      bgAudioCtxRef.current = ctx
-    } else if (ctx.state === 'closed') {
-      return null
-    }
-
-    if (!bgMediaSrcRef.current || !bgGainRef.current) {
-      try {
-        const src = ctx.createMediaElementSource(audio)
-        const gain = ctx.createGain()
-        src.connect(gain)
-        gain.connect(ctx.destination)
-        bgMediaSrcRef.current = src
-        bgGainRef.current = gain
-      } catch {
-        return null
-      }
-    }
-    return { ctx, gain: bgGainRef.current! }
-  }, [])
-
-  const stopBg = useCallback(async (fadeMs = BG_FADE_OUT_MS): Promise<void> => {
-    const audio = bgAudioRef.current
-    if (!audio) return
-
-    if (bgFadeRafRef.current != null) {
-      window.cancelAnimationFrame(bgFadeRafRef.current)
-      bgFadeRafRef.current = null
-    }
-    if (bgStartCheckTimerRef.current != null) {
-      window.clearTimeout(bgStartCheckTimerRef.current)
-      bgStartCheckTimerRef.current = null
-    }
-
-    bgFadeGenRef.current += 1
-    const gen = bgFadeGenRef.current
-
-    const ctx = bgAudioCtxRef.current
-    const gain = bgGainRef.current
-    const useWa = !!(ctx && gain && ctx.state !== 'closed')
-
-    if (useWa) {
-      try {
-        void ctx!.resume()
-        const now = ctx!.currentTime
-        gain!.gain.cancelScheduledValues(now)
-        const cur = Math.max(0, gain!.gain.value)
-        gain!.gain.setValueAtTime(cur, now)
-        gain!.gain.linearRampToValueAtTime(0, now + Math.max(0.08, fadeMs / 1000))
-      } catch {
-        /* ignore */
-      }
-    } else {
-      const from = audio.volume
-      const start = performance.now()
-      const step = (t: number) => {
-        if (gen !== bgFadeGenRef.current) return
-        const p = Math.min(1, (t - start) / Math.max(1, fadeMs))
-        audio.volume = from + (0 - from) * p
-        if (p < 1) {
-          bgFadeRafRef.current = window.requestAnimationFrame(step)
-        }
-      }
-      bgFadeRafRef.current = window.requestAnimationFrame(step)
-    }
-
-    window.setTimeout(() => {
-      try {
-        if (gen === bgFadeGenRef.current) {
-          audio.pause()
-          audio.currentTime = 0
-          audio.volume = 1
-          if (useWa && gain) {
-            try {
-              const t = ctx!.currentTime
-              gain.gain.cancelScheduledValues(t)
-              gain.gain.setValueAtTime(0, t)
-            } catch {
-              /* ignore */
-            }
-          } else {
-            audio.volume = 0
-          }
-          setBgPlayingKey(null)
-        }
-      } catch {
-        /* ignore */
-      }
-    }, fadeMs + 40)
-
-    await new Promise((r) => window.setTimeout(r, fadeMs + 60))
-  }, [])
-
-  const playBg = useCallback(
-    async (key: BgMusicKey) => {
-      setBgPlayError(null)
-      const audio = bgAudioRef.current
-      if (!audio) return
-
-      bgPlaySessionRef.current += 1
-      const session = bgPlaySessionRef.current
-
-      if (bgStartCheckTimerRef.current != null) {
-        window.clearTimeout(bgStartCheckTimerRef.current)
-        bgStartCheckTimerRef.current = null
-      }
-
-      const ensureUrl = async (k: BgMusicKey): Promise<string | null> => {
-        let u = bgPreviewUrlsRef.current[k]
-        if (u) return u
-        setBgLoadingKey(k)
-        const blob = await apiVoiceBackgroundPreview(k)
-        setBgLoadingKey(null)
-        if (!blob) return null
-        u = URL.createObjectURL(blob)
-        bgPreviewUrlsRef.current[k] = u
-        setBgPreviewUrls((prev) => (prev[k] ? prev : { ...prev, [k]: u }))
-        return u
-      }
-
-      const startWithUrl = async (startKey: BgMusicKey, startUrl: string): Promise<boolean> => {
-        try {
-          if (audio.src !== startUrl) audio.src = startUrl
-          audio.currentTime = 0
-          audio.pause()
-        } catch {
-          /* ignore */
-        }
-
-        const wa = ensureBgWebAudio()
-
-        try {
-          if (wa) {
-            audio.volume = 1
-            await wa.ctx.resume()
-            const now = wa.ctx.currentTime
-            wa.gain.gain.cancelScheduledValues(now)
-            wa.gain.gain.setValueAtTime(0, now)
-          } else {
-            audio.volume = 0.15
-          }
-        } catch {
-          /* ignore */
-        }
-
-        try {
-          await audio.play()
-        } catch {
-          return false
-        }
-
-        if (wa) {
-          try {
-            const now = wa.ctx.currentTime
-            wa.gain.gain.linearRampToValueAtTime(1, now + BG_FADE_IN_MS / 1000)
-          } catch {
-            /* ignore */
-          }
-        } else {
-          bgFadeGenRef.current += 1
-          const gen = bgFadeGenRef.current
-          const fadeMs = BG_FADE_IN_MS
-          const start = performance.now()
-          const from = 0.15
-          const step = (t: number) => {
-            if (gen !== bgFadeGenRef.current) return
-            const p = Math.min(1, (t - start) / Math.max(1, fadeMs))
-            audio.volume = from + (1 - from) * p
-            if (p < 1) bgFadeRafRef.current = window.requestAnimationFrame(step)
-          }
-          if (bgFadeRafRef.current != null) window.cancelAnimationFrame(bgFadeRafRef.current)
-          bgFadeRafRef.current = window.requestAnimationFrame(step)
-        }
-
-        setBgPlayingKey(startKey)
-        return true
-      }
-
-      const url = await ensureUrl(key)
-      if (!url) return
-
-      let ok = await startWithUrl(key, url)
-      if (!ok && key !== 'calm1') ok = await startWithUrl(key, url)
-
-      if (!ok) {
-        if (key !== 'calm1') {
-          setBgPlayError('Фон не стартовал — включён Фон 1.')
-          const fallbackUrl = await ensureUrl('calm1')
-          if (fallbackUrl) ok = await startWithUrl('calm1', fallbackUrl)
-        } else {
-          setBgPlayError('Не удалось воспроизвести фон. Попробуй ещё раз.')
-        }
-      }
-
-      if (!ok) return
-
-      // Плавное окончание превью зашито в файл на сервере (ffmpeg afade); здесь только watchdog.
-      // Мягкая проверка: если спустя время аудио всё ещё на паузе — откат.
-      bgStartCheckTimerRef.current = window.setTimeout(() => {
-        if (bgPlaySessionRef.current !== session) return
-        if (audio.paused && key !== 'calm1') {
-          setBgPlayError('Фон 2 не стартовал — включён Фон 1.')
-          const fallbackKey: BgMusicKey = 'calm1'
-          const fallbackUrl = bgPreviewUrlsRef.current[fallbackKey]
-          if (fallbackUrl) void startWithUrl(fallbackKey, fallbackUrl)
-        }
-      }, BG_START_FALLBACK_MS)
-    },
-    [stopBg, ensureBgWebAudio],
-  )
 
   useEffect(() => {
     return () => {
@@ -311,93 +86,200 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
       if (bgPreviewTimerRef.current) {
         window.clearTimeout(bgPreviewTimerRef.current)
       }
-    }
-  }, [audioUrl])
-
-  useEffect(() => {
-    const audio = bgAudioRef.current
-    if (!audio) return
-    const onEnded = () => {
-      setBgPlayingKey(null)
-      try {
-        audio.volume = 1
-        audio.currentTime = 0
-        const g = bgGainRef.current
-        const ctx = bgAudioCtxRef.current
-        if (g && ctx && ctx.state !== 'closed') {
-          const t = ctx.currentTime
-          g.gain.cancelScheduledValues(t)
-          g.gain.setValueAtTime(0, t)
-        }
-      } catch {
-        /* ignore */
-      }
-    }
-    audio.addEventListener('ended', onEnded)
-    return () => {
-      audio.removeEventListener('ended', onEnded)
-    }
-  }, [bgPlayingKey])
-
-  useEffect(() => {
-    return () => {
-      try {
-        bgMediaSrcRef.current?.disconnect()
-        bgGainRef.current?.disconnect()
-        void bgAudioCtxRef.current?.close()
-      } catch {
-        /* ignore */
-      }
-      bgMediaSrcRef.current = null
-      bgGainRef.current = null
-      bgAudioCtxRef.current = null
-    }
-  }, [])
-
-  // Предзагружаем фоны 1/2/3, чтобы по кнопке звук начинался без ожидания.
-  useEffect(() => {
-    let cancelled = false
-    const keys: Array<BgMusicKey> = ['calm1', 'calm2', 'calm3']
-    async function load() {
-      const next: Record<string, string> = {}
-      for (const k of keys) {
-        setBgLoadingKey(k)
-        const blob = await apiVoiceBackgroundPreview(k)
-        if (cancelled) return
-        setBgLoadingKey(null)
-        if (blob) {
-          next[k] = URL.createObjectURL(blob)
-        }
-      }
-      if (cancelled) return
-      setBgPreviewUrls((prev) => {
-        // revoke старых если были
-        Object.values(prev).forEach((u) => {
-          try {
-            URL.revokeObjectURL(u)
-          } catch {
-            /* ignore */
-          }
-        })
-        const merged = { ...prev, ...next }
-        bgPreviewUrlsRef.current = merged
-        return merged
-      })
-    }
-    void load()
-    return () => {
-      cancelled = true
-      const urls = Object.values(bgPreviewUrlsRef.current)
-      urls.forEach((u) => {
+      if (ttsPreviewRef.current) {
         try {
-          URL.revokeObjectURL(u)
+          ttsPreviewRef.current.pause()
         } catch {
           /* ignore */
         }
-      })
-      stopBg(200)
+        ttsPreviewRef.current.src = ''
+      }
+      if (ttsPreviewTimerRef.current) {
+        window.clearTimeout(ttsPreviewTimerRef.current)
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioUrl])
+
+  const playBgPreview = useCallback((key: BgMusicKey) => {
+    try {
+      setSelectedMusicKey(key)
+      setBgPreviewPlaying(true)
+      const reqId = bgPreviewReqIdRef.current + 1
+      bgPreviewReqIdRef.current = reqId
+
+      if (bgPreviewTimerRef.current) {
+        window.clearTimeout(bgPreviewTimerRef.current)
+      }
+      if (bgPreviewRef.current) {
+        try {
+          bgPreviewRef.current.pause()
+        } catch {
+          /* ignore */
+        }
+      }
+
+      const backend = getBackendUrl()
+      if (!backend) {
+        setBgPreviewPlaying(false)
+        return
+      }
+
+      // Чтобы не зависеть от Range/кэша браузера, грузим MP3 как blob и играем из object URL.
+      const previewUrl = `${backend}/mini-app/voice-background/${key}`
+      void (async () => {
+        try {
+          const res = await fetch(previewUrl, { method: 'GET' })
+          if (!res.ok) throw new Error(`HTTP ${res.status}`)
+          const blob = await res.blob()
+          const blobUrl = URL.createObjectURL(blob)
+
+          if (bgPreviewReqIdRef.current !== reqId) {
+            URL.revokeObjectURL(blobUrl)
+            return
+          }
+
+          const audio = new Audio(blobUrl)
+          bgPreviewRef.current = audio
+
+          const onLoaded = () => {
+            const dur = audio.duration
+            const mid = Number.isFinite(dur) ? dur / 2 : 0
+            const start = Math.max(0, mid - PREVIEW_SEEK_FROM_MIDDLE_SECONDS)
+            if (Number.isFinite(start) && start > 0) audio.currentTime = start
+            audio
+              .play()
+              .catch(() => {
+                setBgPreviewPlaying(false)
+              })
+
+            bgPreviewTimerRef.current = window.setTimeout(() => {
+              try {
+                audio.pause()
+                audio.currentTime = 0
+              } finally {
+                setBgPreviewPlaying(false)
+                URL.revokeObjectURL(blobUrl)
+              }
+            }, PREVIEW_SECONDS * 1000)
+          }
+
+          const onErr = () => {
+            if (bgPreviewReqIdRef.current !== reqId) return
+            setBgPreviewPlaying(false)
+            try {
+              URL.revokeObjectURL(blobUrl)
+            } catch {
+              /* ignore */
+            }
+          }
+
+          audio.addEventListener('loadedmetadata', onLoaded, { once: true })
+          audio.addEventListener('error', onErr, { once: true })
+        } catch {
+          if (bgPreviewReqIdRef.current !== reqId) return
+          setBgPreviewPlaying(false)
+        }
+      })()
+    } catch {
+      setBgPreviewPlaying(false)
+    }
+  }, [setError])
+
+  const playTtsPreview = useCallback((engine: TtsEngineKey) => {
+    try {
+      setTtsPreviewPlaying(true)
+      setTtsPreviewActiveKey(engine)
+      const reqId = ttsPreviewReqIdRef.current + 1
+      ttsPreviewReqIdRef.current = reqId
+
+      if (ttsPreviewTimerRef.current) {
+        window.clearTimeout(ttsPreviewTimerRef.current)
+      }
+      if (ttsPreviewRef.current) {
+        try {
+          ttsPreviewRef.current.pause()
+        } catch {
+          /* ignore */
+        }
+      }
+
+      const backend = getBackendUrl()
+      if (!backend) {
+        setTtsPreviewPlaying(false)
+        setTtsPreviewActiveKey(null)
+        return
+      }
+
+      const url = `${backend}/mini-app/voice-tts-preview/${engine}`
+      void (async () => {
+        try {
+          const res = await fetch(url, { method: 'GET' })
+          if (!res.ok) throw new Error(`HTTP ${res.status}`)
+          const blob = await res.blob()
+          const blobUrl = URL.createObjectURL(blob)
+
+          if (ttsPreviewReqIdRef.current !== reqId) {
+            URL.revokeObjectURL(blobUrl)
+            setTtsPreviewPlaying(false)
+            setTtsPreviewActiveKey(null)
+            return
+          }
+
+          const audio = new Audio(blobUrl)
+          ttsPreviewRef.current = audio
+          audio.addEventListener(
+            'ended',
+            () => {
+              if (ttsPreviewTimerRef.current) {
+                window.clearTimeout(ttsPreviewTimerRef.current)
+                ttsPreviewTimerRef.current = null
+              }
+              setTtsPreviewPlaying(false)
+              setTtsPreviewActiveKey(null)
+              URL.revokeObjectURL(blobUrl)
+            },
+            { once: true },
+          )
+          audio.addEventListener(
+            'error',
+            () => {
+              if (ttsPreviewReqIdRef.current !== reqId) return
+              setTtsPreviewPlaying(false)
+              setTtsPreviewActiveKey(null)
+              try {
+                URL.revokeObjectURL(blobUrl)
+              } catch {
+                /* ignore */
+              }
+            },
+            { once: true },
+          )
+          await audio.play().catch(() => {
+            setTtsPreviewPlaying(false)
+            setTtsPreviewActiveKey(null)
+            URL.revokeObjectURL(blobUrl)
+          })
+
+          ttsPreviewTimerRef.current = window.setTimeout(() => {
+            try {
+              audio.pause()
+              audio.currentTime = 0
+            } finally {
+              setTtsPreviewPlaying(false)
+              setTtsPreviewActiveKey(null)
+              URL.revokeObjectURL(blobUrl)
+            }
+          }, TTS_PREVIEW_SECONDS * 1000)
+        } catch {
+          if (ttsPreviewReqIdRef.current !== reqId) return
+          setTtsPreviewPlaying(false)
+          setTtsPreviewActiveKey(null)
+        }
+      })()
+    } catch {
+      setTtsPreviewPlaying(false)
+      setTtsPreviewActiveKey(null)
+    }
   }, [])
 
   useEffect(() => {
@@ -513,7 +395,9 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
       return
     }
     setError(null)
-    await stopBg(200)
+    // Инвалидация предпросмотров: чтобы async ошибки не всплывали после генерации.
+    bgPreviewReqIdRef.current += 1
+    ttsPreviewReqIdRef.current += 1
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl)
       setAudioUrl(null)
@@ -523,7 +407,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     setCopyDone(false)
     setLoading(true)
     try {
-      const result = await apiVoiceReply(trimmed, musicKey)
+      const result = await apiVoiceReply(trimmed, selectedMusicKey, selectedTtsEngine)
       if ('error' in result) {
         setError(result.error || 'Ошибка запроса')
         return
@@ -552,10 +436,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
       >
         <button
           type="button"
-            onClick={() => {
-              void stopBg(250)
-              onBack()
-            }}
+          onClick={onBack}
           className="min-w-[52px] text-left font-semibold text-[var(--color-forest-dark)] active:opacity-80 transition-opacity"
           style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
         >
@@ -573,9 +454,6 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
         initial="hidden"
         animate="show"
       >
-        {/* Тихий аудиоплеер для предпрослушивания фона (кнопки "Фон 1/2") */}
-        <audio ref={bgAudioRef} preload="auto" className="hidden" />
-
         <motion.div
           variants={item}
           className="relative overflow-hidden rounded-2xl p-5 mb-4"
@@ -629,6 +507,91 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
               Голосовой ответ не сохраняется после выхода из раздела или приложения. Чтобы слушать повторно — сохрани его в Файлы внизу.
             </motion.p>
 
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">Голос озвучки</p>
+                <span className="text-xs text-[var(--color-text-secondary)]">
+                  Как в боте — выбери движок
+                </span>
+              </div>
+              <div className="flex flex-col gap-2 mb-3">
+                {TTS_ENGINE_OPTIONS.map((opt) => {
+                  const active = selectedTtsEngine === opt.key
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => setSelectedTtsEngine(opt.key)}
+                      disabled={loading}
+                      className={[
+                        'w-full px-3 py-2.5 rounded-xl text-sm font-semibold border min-h-[48px] text-left transition-all',
+                        active
+                          ? 'bg-[var(--color-glow-teal)]/25 border-[var(--color-glow-teal)] text-[var(--color-forest-dark)] shadow-md'
+                          : 'bg-white/80 border-[var(--color-lavender)]/40 text-[var(--color-text-secondary)] hover:bg-white/95',
+                      ].join(' ')}
+                      style={{ WebkitTapHighlightColor: 'transparent', outline: 'none' }}
+                    >
+                      {opt.label}
+                    </button>
+                  )
+                })}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => playTtsPreview('yandex')}
+                  disabled={loading || ttsPreviewPlaying}
+                  className="px-2 py-2 rounded-xl text-xs font-semibold border bg-white/85 border-[var(--color-lavender)]/45 text-[var(--color-text-secondary)] min-h-[44px] disabled:opacity-55"
+                  style={{ WebkitTapHighlightColor: 'transparent' }}
+                >
+                  {ttsPreviewPlaying && ttsPreviewActiveKey === 'yandex' ? '🔊 …' : '🔊 Образец · Яндекс'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => playTtsPreview('edge')}
+                  disabled={loading || ttsPreviewPlaying}
+                  className="px-2 py-2 rounded-xl text-xs font-semibold border bg-white/85 border-[var(--color-lavender)]/45 text-[var(--color-text-secondary)] min-h-[44px] disabled:opacity-55"
+                  style={{ WebkitTapHighlightColor: 'transparent' }}
+                >
+                  {ttsPreviewPlaying && ttsPreviewActiveKey === 'edge' ? '🔊 …' : '🔊 Образец · Edge'}
+                </button>
+              </div>
+              <p className="text-[11px] text-[var(--color-text-secondary)] mt-2 leading-snug">
+                Короткая запись уже на сервере — без лишних запросов к синтезу. Полный ответ выбранным голосом — после «Получить ответ».
+              </p>
+            </div>
+
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">Фоновая музыка</p>
+                <span className="text-xs text-[var(--color-text-secondary)]">
+                  Нажми кнопку — послушай 10с
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {BG_MUSIC_OPTIONS.map((opt) => {
+                  const active = selectedMusicKey === opt.key
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => playBgPreview(opt.key)}
+                      disabled={loading}
+                      className={[
+                        'px-3 py-2 rounded-xl text-sm font-semibold border min-h-[46px] transition-all',
+                        active
+                          ? 'bg-[var(--color-glow-teal)]/25 border-[var(--color-glow-teal)] text-[var(--color-forest-dark)] shadow-md'
+                          : 'bg-white/80 border-[var(--color-lavender)]/40 text-[var(--color-text-secondary)] hover:bg-white/95',
+                      ].join(' ')}
+                      style={{ WebkitTapHighlightColor: 'transparent', outline: 'none' }}
+                    >
+                      {bgPreviewPlaying && active ? 'Идёт…' : opt.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
             <motion.div
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
@@ -670,87 +633,6 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                 </motion.span>
               </div>
             </motion.div>
-
-            {/* Выбор фона для микширования голосового ответа + предпрослушивание */}
-            <div className="flex gap-3 mb-4">
-              {(['calm1', 'calm2', 'calm3'] as const).map((k) => {
-                const isSelected = musicKey === k
-                const isPlaying = bgPlayingKey === k
-                return (
-                  <motion.button
-                    key={k}
-                    type="button"
-                    onClick={async () => {
-                      // 1) Повторный клик по активному фону → плавно затухаем и стоп.
-                      if (isSelected && isPlaying) {
-                        await stopBg(BG_FADE_OUT_MS)
-                        return
-                      }
-
-                      // 2) Переключение фона во время проигрывания → сначала плавно гасим текущий, потом стартуем новый.
-                      if (bgPlayingKey && bgPlayingKey !== k) {
-                        await stopBg(BG_FADE_OUT_MS)
-                      }
-
-                      setMusicKey(k)
-                      await playBg(k)
-                    }}
-                    whileTap={{ scale: 0.98 }}
-                    whileHover={{ scale: 1.02 }}
-                    className="flex-1 py-3.5 px-3 rounded-xl text-sm font-semibold relative overflow-hidden transition-all duration-300"
-                    style={{
-                      background: isSelected
-                        ? 'linear-gradient(145deg, rgba(125,211,192,0.65) 0%, rgba(90,184,168,0.35) 100%)'
-                        : 'rgba(255,255,255,0.35)',
-                      border: isSelected ? '1px solid rgba(125,211,192,0.8)' : '1px solid rgba(201,184,232,0.45)',
-                      boxShadow: isSelected
-                        ? '0 10px 30px rgba(125,211,192,0.22), inset 0 1px 0 rgba(255,255,255,0.25)'
-                        : 'inset 0 1px 0 rgba(255,255,255,0.12)',
-                      color: 'var(--color-forest-dark)',
-                    }}
-                    animate={
-                      isSelected && bgLoadingKey === null
-                        ? {
-                            boxShadow: [
-                              '0 10px 30px rgba(125,211,192,0.22), inset 0 1px 0 rgba(255,255,255,0.25)',
-                              '0 10px 55px rgba(125,211,192,0.32), inset 0 1px 0 rgba(255,255,255,0.35)',
-                              '0 10px 30px rgba(125,211,192,0.22), inset 0 1px 0 rgba(255,255,255,0.25)',
-                            ],
-                          }
-                        : undefined
-                    }
-                    transition={{ duration: 1.8, repeat: isSelected ? Infinity : 0 }}
-                  >
-                    {/* премиум анимация “сияния” */}
-                    {isSelected && (
-                      <motion.span
-                        aria-hidden
-                        className="absolute inset-0 pointer-events-none"
-                        style={{
-                          background:
-                            'radial-gradient(ellipse 80% 60% at 50% -10%, rgba(255,255,255,0.55), transparent 60%)',
-                        }}
-                        animate={{ opacity: isPlaying ? 1 : 0.55 }}
-                        transition={{ duration: 0.4 }}
-                      />
-                    )}
-                    <span className="relative z-10 flex items-center justify-center gap-2">
-                      <span aria-hidden>🎧</span> Фон {k === 'calm1' ? '1' : k === 'calm2' ? '2' : '3'}
-                    </span>
-                  </motion.button>
-                )
-              })}
-            </div>
-            {bgPlayError && (
-              <motion.p
-                className="text-xs text-rose-600 mt-[-10px] mb-4"
-                initial={{ opacity: 0, y: -3 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                {bgPlayError}
-              </motion.p>
-            )}
-
             <AnimatePresence mode="wait">
               {error && (
                 <motion.p
