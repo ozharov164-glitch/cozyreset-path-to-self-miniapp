@@ -15,10 +15,26 @@
   --color-text-secondary: rgba(26, 25, 23, 0.72);
   --font-sans: "Plus Jakarta Sans", "DM Sans", "Segoe UI", system-ui, sans-serif;
   --font-display: "Outfit", "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-voice-display: "Fraunces", "Outfit", Georgia, serif;
 }
 
 .font-display {
   font-family: var(--font-display);
+}
+
+/* Экран «Голосовая поддержка»: премиальная типографика */
+.voice-support-screen .voice-premium-title {
+  font-family: var(--font-voice-display);
+  font-weight: 600;
+  font-optical-sizing: auto;
+  letter-spacing: -0.03em;
+}
+
+.voice-support-screen .voice-premium-label {
+  font-family: var(--font-voice-display);
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: -0.02em;
 }
 
 * {

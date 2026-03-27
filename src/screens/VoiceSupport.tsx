@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { apiVoiceReply, getBackendUrl } from '../api/client'
+import { apiVoiceReply, getBackendUrl, loadBackendConfig } from '../api/client'
 
 const container = {
   hidden: { opacity: 0 },
@@ -28,12 +28,14 @@ const BG_MUSIC_OPTIONS = [
 type BgMusicKey = (typeof BG_MUSIC_OPTIONS)[number]['key']
 
 const TTS_ENGINE_OPTIONS = [
-  { key: 'yandex' as const, label: '✨ Яндекс — тёплый студийный' },
-  { key: 'edge' as const, label: '🌿 Edge — мягкий нейросетевой' },
-]
+  { key: 'yandex' as const, label: 'Голос 1' },
+  { key: 'edge' as const, label: 'Голос 2' },
+] as const
 type TtsEngineKey = (typeof TTS_ENGINE_OPTIONS)[number]['key']
 
-const TTS_PREVIEW_SECONDS = 12
+const TTS_PREVIEW_MAX_SEC = 12
+const TTS_FADE_IN_SEC = 0.14
+const TTS_FADE_OUT_SEC = 0.38
 
 function formatTime(sec: number): string {
   if (!Number.isFinite(sec) || sec < 0) return '0:00'
@@ -63,9 +65,11 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   const bgPreviewRef = useRef<HTMLAudioElement | null>(null)
   const bgPreviewTimerRef = useRef<number | null>(null)
   const bgPreviewReqIdRef = useRef(0)
-  const ttsPreviewRef = useRef<HTMLAudioElement | null>(null)
-  const ttsPreviewTimerRef = useRef<number | null>(null)
+  const ttsPreviewCtxRef = useRef<AudioContext | null>(null)
+  const ttsBuffersRef = useRef<Map<TtsEngineKey, AudioBuffer>>(new Map())
+  const ttsActiveSourceRef = useRef<AudioBufferSourceNode | null>(null)
   const ttsPreviewReqIdRef = useRef(0)
+  const [voiceBackendReady, setVoiceBackendReady] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -86,19 +90,68 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
       if (bgPreviewTimerRef.current) {
         window.clearTimeout(bgPreviewTimerRef.current)
       }
-      if (ttsPreviewRef.current) {
+    }
+  }, [audioUrl])
+
+  useEffect(() => {
+    return () => {
+      const s = ttsActiveSourceRef.current
+      if (s) {
         try {
-          ttsPreviewRef.current.pause()
+          s.stop()
         } catch {
           /* ignore */
         }
-        ttsPreviewRef.current.src = ''
+        ttsActiveSourceRef.current = null
       }
-      if (ttsPreviewTimerRef.current) {
-        window.clearTimeout(ttsPreviewTimerRef.current)
+      const ctx = ttsPreviewCtxRef.current
+      if (ctx && ctx.state !== 'closed') {
+        void ctx.close()
       }
+      ttsPreviewCtxRef.current = null
+      ttsBuffersRef.current.clear()
     }
-  }, [audioUrl])
+  }, [])
+
+  useEffect(() => {
+    void loadBackendConfig().then(() => setVoiceBackendReady(!!getBackendUrl()))
+  }, [])
+
+  useEffect(() => {
+    if (!voiceBackendReady) return
+    const backend = getBackendUrl()
+    if (!backend) return
+    let cancelled = false
+    try {
+      const AudioContextClass =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+      let ctx = ttsPreviewCtxRef.current
+      if (!ctx || ctx.state === 'closed') {
+        ctx = new AudioContextClass()
+        ttsPreviewCtxRef.current = ctx
+      }
+      void (async () => {
+        for (const engine of TTS_ENGINE_OPTIONS.map((o) => o.key)) {
+          if (cancelled) break
+          try {
+            const res = await fetch(`${backend}/mini-app/voice-tts-preview/${engine}`)
+            if (!res.ok) continue
+            const arr = await res.arrayBuffer()
+            const buf = await ctx.decodeAudioData(arr.slice(0))
+            if (!cancelled) ttsBuffersRef.current.set(engine, buf)
+          } catch {
+            /* ignore */
+          }
+        }
+      })()
+    } catch {
+      /* ignore */
+    }
+    return () => {
+      cancelled = true
+    }
+  }, [voiceBackendReady])
 
   const playBgPreview = useCallback((key: BgMusicKey) => {
     try {
@@ -185,23 +238,23 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     }
   }, [setError])
 
-  const playTtsPreview = useCallback((engine: TtsEngineKey) => {
-    try {
-      setTtsPreviewPlaying(true)
-      setTtsPreviewActiveKey(engine)
-      const reqId = ttsPreviewReqIdRef.current + 1
-      ttsPreviewReqIdRef.current = reqId
+  const stopTtsWebPlayback = useCallback(() => {
+    const s = ttsActiveSourceRef.current
+    if (s) {
+      try {
+        s.stop(0)
+      } catch {
+        /* already stopped */
+      }
+      ttsActiveSourceRef.current = null
+    }
+  }, [])
 
-      if (ttsPreviewTimerRef.current) {
-        window.clearTimeout(ttsPreviewTimerRef.current)
-      }
-      if (ttsPreviewRef.current) {
-        try {
-          ttsPreviewRef.current.pause()
-        } catch {
-          /* ignore */
-        }
-      }
+  const playTtsPreview = useCallback(
+    async (engine: TtsEngineKey) => {
+      stopTtsWebPlayback()
+      ttsPreviewReqIdRef.current += 1
+      const reqId = ttsPreviewReqIdRef.current
 
       const backend = getBackendUrl()
       if (!backend) {
@@ -210,77 +263,78 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
         return
       }
 
-      const url = `${backend}/mini-app/voice-tts-preview/${engine}`
-      void (async () => {
-        try {
-          const res = await fetch(url, { method: 'GET' })
-          if (!res.ok) throw new Error(`HTTP ${res.status}`)
-          const blob = await res.blob()
-          const blobUrl = URL.createObjectURL(blob)
+      setTtsPreviewPlaying(true)
+      setTtsPreviewActiveKey(engine)
 
-          if (ttsPreviewReqIdRef.current !== reqId) {
-            URL.revokeObjectURL(blobUrl)
-            setTtsPreviewPlaying(false)
-            setTtsPreviewActiveKey(null)
-            return
+      try {
+        let ctx = ttsPreviewCtxRef.current
+        if (!ctx || ctx.state === 'closed') {
+          const AudioContextClass =
+            window.AudioContext ||
+            (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+          ctx = new AudioContextClass()
+          ttsPreviewCtxRef.current = ctx
+        }
+        await ctx.resume()
+
+        let buffer = ttsBuffersRef.current.get(engine)
+        if (!buffer) {
+          const res = await fetch(`${backend}/mini-app/voice-tts-preview/${engine}`)
+          if (!res.ok) throw new Error('preview fetch')
+          const arr = await res.arrayBuffer()
+          buffer = await ctx.decodeAudioData(arr.slice(0))
+          ttsBuffersRef.current.set(engine, buffer)
+        }
+
+        if (ttsPreviewReqIdRef.current !== reqId) {
+          setTtsPreviewPlaying(false)
+          setTtsPreviewActiveKey(null)
+          return
+        }
+
+        const durTotal = Math.min(TTS_PREVIEW_MAX_SEC, buffer.duration)
+        const gain = ctx.createGain()
+        const src = ctx.createBufferSource()
+        src.buffer = buffer
+        src.connect(gain)
+        gain.connect(ctx.destination)
+
+        const now = ctx.currentTime
+        const end = now + durTotal
+
+        gain.gain.setValueAtTime(0, now)
+        gain.gain.linearRampToValueAtTime(1, now + TTS_FADE_IN_SEC)
+
+        if (durTotal > TTS_FADE_IN_SEC + TTS_FADE_OUT_SEC) {
+          gain.gain.setValueAtTime(1, end - TTS_FADE_OUT_SEC)
+          gain.gain.linearRampToValueAtTime(0, end)
+        } else {
+          gain.gain.linearRampToValueAtTime(0, end)
+        }
+
+        ttsActiveSourceRef.current = src
+        src.onended = () => {
+          gain.disconnect()
+          if (ttsActiveSourceRef.current === src) {
+            ttsActiveSourceRef.current = null
           }
-
-          const audio = new Audio(blobUrl)
-          ttsPreviewRef.current = audio
-          audio.addEventListener(
-            'ended',
-            () => {
-              if (ttsPreviewTimerRef.current) {
-                window.clearTimeout(ttsPreviewTimerRef.current)
-                ttsPreviewTimerRef.current = null
-              }
-              setTtsPreviewPlaying(false)
-              setTtsPreviewActiveKey(null)
-              URL.revokeObjectURL(blobUrl)
-            },
-            { once: true },
-          )
-          audio.addEventListener(
-            'error',
-            () => {
-              if (ttsPreviewReqIdRef.current !== reqId) return
-              setTtsPreviewPlaying(false)
-              setTtsPreviewActiveKey(null)
-              try {
-                URL.revokeObjectURL(blobUrl)
-              } catch {
-                /* ignore */
-              }
-            },
-            { once: true },
-          )
-          await audio.play().catch(() => {
+          if (ttsPreviewReqIdRef.current === reqId) {
             setTtsPreviewPlaying(false)
             setTtsPreviewActiveKey(null)
-            URL.revokeObjectURL(blobUrl)
-          })
+          }
+        }
 
-          ttsPreviewTimerRef.current = window.setTimeout(() => {
-            try {
-              audio.pause()
-              audio.currentTime = 0
-            } finally {
-              setTtsPreviewPlaying(false)
-              setTtsPreviewActiveKey(null)
-              URL.revokeObjectURL(blobUrl)
-            }
-          }, TTS_PREVIEW_SECONDS * 1000)
-        } catch {
-          if (ttsPreviewReqIdRef.current !== reqId) return
+        src.start(now)
+        src.stop(end + 0.06)
+      } catch {
+        if (ttsPreviewReqIdRef.current === reqId) {
           setTtsPreviewPlaying(false)
           setTtsPreviewActiveKey(null)
         }
-      })()
-    } catch {
-      setTtsPreviewPlaying(false)
-      setTtsPreviewActiveKey(null)
-    }
-  }, [])
+      }
+    },
+    [stopTtsWebPlayback],
+  )
 
   useEffect(() => {
     if (!audioUrl) {
@@ -395,8 +449,8 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
       return
     }
     setError(null)
-    // Инвалидация предпросмотров: чтобы async ошибки не всплывали после генерации.
     bgPreviewReqIdRef.current += 1
+    stopTtsWebPlayback()
     ttsPreviewReqIdRef.current += 1
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl)
@@ -423,7 +477,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
 
   return (
     <motion.div
-      className="min-h-screen flex flex-col safe-area pb-6"
+      className="voice-support-screen min-h-screen flex flex-col safe-area pb-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.35 }}
@@ -474,119 +528,178 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
           />
           <div className="relative">
             <motion.h2
-              className="text-lg font-semibold text-[var(--color-text-primary)] mb-1 flex items-center gap-2"
+              className="voice-premium-title text-[var(--color-text-primary)] mb-1 flex items-center gap-2.5 text-xl"
               initial={{ opacity: 0, x: -6 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
+              transition={{ delay: 0.08, type: 'spring', stiffness: 320, damping: 26 }}
             >
               <motion.span
                 aria-hidden
-                className="text-xl"
-                animate={loading ? { scale: [1, 1.15, 1], opacity: [1, 0.8, 1] } : {}}
-                transition={{ duration: 1.2, repeat: loading ? Infinity : 0 }}
+                className="text-2xl leading-none"
+                animate={loading ? { scale: [1, 1.12, 1], rotate: [0, -4, 4, 0] } : { rotate: 0 }}
+                transition={{ duration: loading ? 1.25 : 0.35, repeat: loading ? Infinity : 0 }}
               >
                 🎙️
               </motion.span>
               Ответ голосом
             </motion.h2>
             <motion.p
-              className="text-sm text-[var(--color-text-secondary)] mb-2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.15 }}
+              className="text-[0.9375rem] leading-relaxed text-[var(--color-text-secondary)] mb-3 max-w-prose"
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.12, type: 'spring', stiffness: 280, damping: 28 }}
             >
               Напиши, что чувствуешь или о чём хочешь поговорить — ИИ-поддержка ответит тёплым голосом.
             </motion.p>
             <motion.p
-              className="text-xs text-[var(--color-text-secondary)] mb-4 opacity-90"
+              className="text-[13px] leading-snug text-[var(--color-text-secondary)] mb-5 pl-3 border-l-[3px] border-[var(--color-glow-teal)]/55"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              style={{ fontStyle: 'italic' }}
+              transition={{ delay: 0.16 }}
+              style={{ fontStyle: 'italic', fontFamily: 'var(--font-sans)' }}
             >
               Голосовой ответ не сохраняется после выхода из раздела или приложения. Чтобы слушать повторно — сохрани его в Файлы внизу.
             </motion.p>
 
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold text-[var(--color-text-primary)]">Голос озвучки</p>
-                <span className="text-xs text-[var(--color-text-secondary)]">
-                  Как в боте — выбери движок
-                </span>
-              </div>
-              <div className="flex flex-col gap-2 mb-3">
-                {TTS_ENGINE_OPTIONS.map((opt) => {
+            <div className="mb-5">
+              <motion.p
+                className="voice-premium-label text-[var(--color-forest-dark)] mb-3"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.18 }}
+              >
+                Голос озвучки
+              </motion.p>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                {TTS_ENGINE_OPTIONS.map((opt, idx) => {
                   const active = selectedTtsEngine === opt.key
                   return (
-                    <button
+                    <motion.button
                       key={opt.key}
                       type="button"
+                      layout
                       onClick={() => setSelectedTtsEngine(opt.key)}
                       disabled={loading}
-                      className={[
-                        'w-full px-3 py-2.5 rounded-xl text-sm font-semibold border min-h-[48px] text-left transition-all',
-                        active
-                          ? 'bg-[var(--color-glow-teal)]/25 border-[var(--color-glow-teal)] text-[var(--color-forest-dark)] shadow-md'
-                          : 'bg-white/80 border-[var(--color-lavender)]/40 text-[var(--color-text-secondary)] hover:bg-white/95',
-                      ].join(' ')}
-                      style={{ WebkitTapHighlightColor: 'transparent', outline: 'none' }}
+                      initial={{ opacity: 0, y: 14 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.06 * idx, type: 'spring', stiffness: 380, damping: 28 }}
+                      whileHover={loading ? {} : { y: -2, scale: 1.02 }}
+                      whileTap={loading ? {} : { scale: 0.97 }}
+                      className="relative min-h-[52px] rounded-2xl px-3 py-3 text-center font-semibold tracking-tight overflow-hidden disabled:opacity-50 disabled:pointer-events-none"
+                      style={{
+                        fontFamily: 'var(--font-voice-display)',
+                        fontSize: '1.05rem',
+                        WebkitTapHighlightColor: 'transparent',
+                        outline: 'none',
+                        color: active ? 'var(--color-forest-dark)' : 'var(--color-text-secondary)',
+                        background: active
+                          ? 'linear-gradient(155deg, rgba(255,255,255,0.95) 0%, rgba(232,248,244,0.92) 45%, rgba(214,236,228,0.88) 100%)'
+                          : 'linear-gradient(165deg, rgba(255,255,255,0.72) 0%, rgba(248,245,255,0.65) 100%)',
+                        border: active
+                          ? '2px solid rgba(107, 196, 181, 0.65)'
+                          : '1.5px solid rgba(184, 164, 224, 0.35)',
+                        boxShadow: active
+                          ? '0 10px 28px rgba(90, 184, 168, 0.28), 0 0 0 1px rgba(255,255,255,0.65) inset, 0 1px 0 rgba(255,255,255,0.9) inset'
+                          : '0 6px 18px rgba(45, 62, 46, 0.08), inset 0 1px 0 rgba(255,255,255,0.75)',
+                      }}
                     >
-                      {opt.label}
-                    </button>
+                      {active && (
+                        <motion.span
+                          layoutId="voiceGlow"
+                          className="absolute inset-0 pointer-events-none rounded-2xl"
+                          style={{
+                            background:
+                              'radial-gradient(ellipse 120% 80% at 50% 0%, rgba(125,211,192,0.35), transparent 55%)',
+                          }}
+                          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                        />
+                      )}
+                      <span className="relative z-[1]">{opt.label}</span>
+                    </motion.button>
                   )
                 })}
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => playTtsPreview('yandex')}
-                  disabled={loading || ttsPreviewPlaying}
-                  className="px-2 py-2 rounded-xl text-xs font-semibold border bg-white/85 border-[var(--color-lavender)]/45 text-[var(--color-text-secondary)] min-h-[44px] disabled:opacity-55"
-                  style={{ WebkitTapHighlightColor: 'transparent' }}
-                >
-                  {ttsPreviewPlaying && ttsPreviewActiveKey === 'yandex' ? '🔊 …' : '🔊 Образец · Яндекс'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => playTtsPreview('edge')}
-                  disabled={loading || ttsPreviewPlaying}
-                  className="px-2 py-2 rounded-xl text-xs font-semibold border bg-white/85 border-[var(--color-lavender)]/45 text-[var(--color-text-secondary)] min-h-[44px] disabled:opacity-55"
-                  style={{ WebkitTapHighlightColor: 'transparent' }}
-                >
-                  {ttsPreviewPlaying && ttsPreviewActiveKey === 'edge' ? '🔊 …' : '🔊 Образец · Edge'}
-                </button>
+              <div className="grid grid-cols-2 gap-3">
+                {TTS_ENGINE_OPTIONS.map((opt, idx) => {
+                  const playingHere = ttsPreviewPlaying && ttsPreviewActiveKey === opt.key
+                  return (
+                    <motion.button
+                      key={`listen-${opt.key}`}
+                      type="button"
+                      onClick={() => void playTtsPreview(opt.key)}
+                      disabled={loading || ttsPreviewPlaying}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.08 + idx * 0.05, type: 'spring', stiffness: 360, damping: 26 }}
+                      whileHover={loading || ttsPreviewPlaying ? {} : { scale: 1.03 }}
+                      whileTap={loading || ttsPreviewPlaying ? {} : { scale: 0.96 }}
+                      className="min-h-[46px] rounded-xl px-2 py-2.5 text-[13px] font-semibold disabled:opacity-50 disabled:pointer-events-none"
+                      style={{
+                        fontFamily: 'var(--font-sans)',
+                        WebkitTapHighlightColor: 'transparent',
+                        color: 'var(--color-forest-dark)',
+                        background: 'linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(245,250,249,0.88) 100%)',
+                        border: '1.5px solid rgba(107, 196, 181, 0.4)',
+                        boxShadow: '0 4px 14px rgba(90, 184, 168, 0.18), inset 0 1px 0 rgba(255,255,255,0.85)',
+                      }}
+                    >
+                      {playingHere ? '▶ Идёт…' : '▶ Прослушать'}
+                    </motion.button>
+                  )
+                })}
               </div>
-              <p className="text-[11px] text-[var(--color-text-secondary)] mt-2 leading-snug">
-                Короткая запись уже на сервере — без лишних запросов к синтезу. Полный ответ выбранным голосом — после «Получить ответ».
-              </p>
             </div>
 
             <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold text-[var(--color-text-primary)]">Фоновая музыка</p>
-                <span className="text-xs text-[var(--color-text-secondary)]">
+              <motion.p
+                className="voice-premium-label text-[var(--color-forest-dark)] mb-2"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                Фоновая музыка
+              </motion.p>
+              <div className="flex items-center justify-end mb-2">
+                <span
+                  className="text-[11px] text-[var(--color-text-secondary)]"
+                  style={{ fontFamily: 'var(--font-sans)' }}
+                >
                   Нажми кнопку — послушай 10с
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                {BG_MUSIC_OPTIONS.map((opt) => {
+                {BG_MUSIC_OPTIONS.map((opt, idx) => {
                   const active = selectedMusicKey === opt.key
                   return (
-                    <button
+                    <motion.button
                       key={opt.key}
                       type="button"
                       onClick={() => playBgPreview(opt.key)}
                       disabled={loading}
-                      className={[
-                        'px-3 py-2 rounded-xl text-sm font-semibold border min-h-[46px] transition-all',
-                        active
-                          ? 'bg-[var(--color-glow-teal)]/25 border-[var(--color-glow-teal)] text-[var(--color-forest-dark)] shadow-md'
-                          : 'bg-white/80 border-[var(--color-lavender)]/40 text-[var(--color-text-secondary)] hover:bg-white/95',
-                      ].join(' ')}
-                      style={{ WebkitTapHighlightColor: 'transparent', outline: 'none' }}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.04 * idx, type: 'spring', stiffness: 400, damping: 28 }}
+                      whileHover={loading ? {} : { y: -1, scale: 1.02 }}
+                      whileTap={loading ? {} : { scale: 0.97 }}
+                      className="px-2 py-2.5 rounded-xl text-[13px] font-semibold border min-h-[48px] transition-shadow disabled:opacity-50 disabled:pointer-events-none"
+                      style={{
+                        fontFamily: 'var(--font-sans)',
+                        WebkitTapHighlightColor: 'transparent',
+                        outline: 'none',
+                        color: active ? 'var(--color-forest-dark)' : 'var(--color-text-secondary)',
+                        background: active
+                          ? 'linear-gradient(160deg, rgba(232,248,244,0.95) 0%, rgba(255,255,255,0.88) 100%)'
+                          : 'linear-gradient(180deg, rgba(255,255,255,0.78) 0%, rgba(248,245,255,0.72) 100%)',
+                        border: active
+                          ? '2px solid rgba(107, 196, 181, 0.55)'
+                          : '1.5px solid rgba(184, 164, 224, 0.32)',
+                        boxShadow: active
+                          ? '0 8px 20px rgba(90, 184, 168, 0.2), inset 0 1px 0 rgba(255,255,255,0.85)'
+                          : '0 4px 12px rgba(45, 62, 46, 0.07)',
+                      }}
                     >
                       {bgPreviewPlaying && active ? 'Идёт…' : opt.label}
-                    </button>
+                    </motion.button>
                   )
                 })}
               </div>
