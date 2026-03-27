@@ -84,6 +84,39 @@ export function getBackendUrl(): string {
   return ''
 }
 
+/** Сырые MP3 образцов TTS в памяти — подгружаются параллельно при старте и при открытии «Голос». */
+const ttsVoicePreviewBytes = new Map<string, ArrayBuffer>()
+
+export function getTtsVoicePreviewBytesCached(engine: string): ArrayBuffer | undefined {
+  return ttsVoicePreviewBytes.get(engine)
+}
+
+export function rememberTtsVoicePreviewBytes(engine: string, bytes: ArrayBuffer): void {
+  ttsVoicePreviewBytes.set(engine, bytes)
+}
+
+/** Загрузить оба образца сразу (после loadBackendConfig), чтобы по нажатию не ждать сеть. */
+export async function prefetchTtsVoicePreviews(): Promise<void> {
+  const backend = getBackendUrl()
+  if (!backend || typeof window === 'undefined') return
+  const engines = ['yandex', 'edge'] as const
+  await Promise.all(
+    engines.map(async (engine) => {
+      if (ttsVoicePreviewBytes.has(engine)) return
+      try {
+        const res = await fetch(`${backend}/mini-app/voice-tts-preview/${engine}`, {
+          cache: 'force-cache',
+        })
+        if (!res.ok) return
+        const buf = await res.arrayBuffer()
+        ttsVoicePreviewBytes.set(engine, buf)
+      } catch {
+        /* ignore */
+      }
+    }),
+  )
+}
+
 /** Для диагностики «Нет связи»: данные для debug UI. */
 export function getConnectionDiag(): { search: string; backend: string; initDataLength: number } {
   if (typeof window === 'undefined') return { search: '', backend: '', initDataLength: 0 }

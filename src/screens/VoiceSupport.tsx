@@ -1,6 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { apiVoiceReply, getBackendUrl, loadBackendConfig } from '../api/client'
+import {
+  apiVoiceReply,
+  getBackendUrl,
+  loadBackendConfig,
+  getTtsVoicePreviewBytesCached,
+  rememberTtsVoicePreviewBytes,
+  prefetchTtsVoicePreviews,
+} from '../api/client'
 
 const container = {
   hidden: { opacity: 0 },
@@ -131,19 +138,40 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
         ctx = new AudioContextClass()
         ttsPreviewCtxRef.current = ctx
       }
+      const audioCtx = ctx
+      void prefetchTtsVoicePreviews()
       void (async () => {
-        for (const engine of TTS_ENGINE_OPTIONS.map((o) => o.key)) {
-          if (cancelled) break
-          try {
-            const res = await fetch(`${backend}/mini-app/voice-tts-preview/${engine}`)
-            if (!res.ok) continue
-            const arr = await res.arrayBuffer()
-            const buf = await ctx.decodeAudioData(arr.slice(0))
-            if (!cancelled) ttsBuffersRef.current.set(engine, buf)
-          } catch {
-            /* ignore */
+        const engines = TTS_ENGINE_OPTIONS.map((o) => o.key)
+        const loadBytes = async (engine: TtsEngineKey): Promise<ArrayBuffer | null> => {
+          let raw = getTtsVoicePreviewBytesCached(engine)
+          if (!raw) {
+            try {
+              const res = await fetch(`${backend}/mini-app/voice-tts-preview/${engine}`, {
+                cache: 'force-cache',
+              })
+              if (!res.ok) return null
+              raw = await res.arrayBuffer()
+              rememberTtsVoicePreviewBytes(engine, raw)
+            } catch {
+              return null
+            }
           }
+          return raw
         }
+        const raws = await Promise.all(engines.map(loadBytes))
+        await Promise.all(
+          engines.map(async (engine, idx) => {
+            if (cancelled || ttsBuffersRef.current.has(engine)) return
+            const raw = raws[idx]
+            if (!raw) return
+            try {
+              const buf = await audioCtx.decodeAudioData(raw.slice(0))
+              if (!cancelled) ttsBuffersRef.current.set(engine, buf)
+            } catch {
+              /* ignore */
+            }
+          }),
+        )
       })()
     } catch {
       /* ignore */
@@ -279,9 +307,15 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
 
         let buffer = ttsBuffersRef.current.get(engine)
         if (!buffer) {
-          const res = await fetch(`${backend}/mini-app/voice-tts-preview/${engine}`)
-          if (!res.ok) throw new Error('preview fetch')
-          const arr = await res.arrayBuffer()
+          let arr = getTtsVoicePreviewBytesCached(engine)
+          if (!arr) {
+            const res = await fetch(`${backend}/mini-app/voice-tts-preview/${engine}`, {
+              cache: 'force-cache',
+            })
+            if (!res.ok) throw new Error('preview fetch')
+            arr = await res.arrayBuffer()
+            rememberTtsVoicePreviewBytes(engine, arr)
+          }
           buffer = await ctx.decodeAudioData(arr.slice(0))
           ttsBuffersRef.current.set(engine, buffer)
         }
