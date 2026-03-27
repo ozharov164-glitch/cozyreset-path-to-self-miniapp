@@ -651,55 +651,31 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
             </div>
 
             <div className="mb-4">
-              <motion.p
-                className="voice-premium-label text-[var(--color-forest-dark)] mb-2"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                Фоновая музыка
-              </motion.p>
-              <div className="flex items-center justify-end mb-2">
-                <span
-                  className="text-[11px] text-[var(--color-text-secondary)]"
-                  style={{ fontFamily: 'var(--font-sans)' }}
-                >
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">Фоновая музыка</p>
+                <span className="text-xs text-[var(--color-text-secondary)]">
                   Нажми кнопку — послушай 10с
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                {BG_MUSIC_OPTIONS.map((opt, idx) => {
+                {BG_MUSIC_OPTIONS.map((opt) => {
                   const active = selectedMusicKey === opt.key
                   return (
-                    <motion.button
+                    <button
                       key={opt.key}
                       type="button"
                       onClick={() => playBgPreview(opt.key)}
                       disabled={loading}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.04 * idx, type: 'spring', stiffness: 400, damping: 28 }}
-                      whileHover={loading ? {} : { y: -1, scale: 1.02 }}
-                      whileTap={loading ? {} : { scale: 0.97 }}
-                      className="px-2 py-2.5 rounded-xl text-[13px] font-semibold border min-h-[48px] transition-shadow disabled:opacity-50 disabled:pointer-events-none"
-                      style={{
-                        fontFamily: 'var(--font-sans)',
-                        WebkitTapHighlightColor: 'transparent',
-                        outline: 'none',
-                        color: active ? 'var(--color-forest-dark)' : 'var(--color-text-secondary)',
-                        background: active
-                          ? 'linear-gradient(160deg, rgba(232,248,244,0.95) 0%, rgba(255,255,255,0.88) 100%)'
-                          : 'linear-gradient(180deg, rgba(255,255,255,0.78) 0%, rgba(248,245,255,0.72) 100%)',
-                        border: active
-                          ? '2px solid rgba(107, 196, 181, 0.55)'
-                          : '1.5px solid rgba(184, 164, 224, 0.32)',
-                        boxShadow: active
-                          ? '0 8px 20px rgba(90, 184, 168, 0.2), inset 0 1px 0 rgba(255,255,255,0.85)'
-                          : '0 4px 12px rgba(45, 62, 46, 0.07)',
-                      }}
+                      className={[
+                        'px-3 py-2 rounded-xl text-sm font-semibold border min-h-[46px] transition-all',
+                        active
+                          ? 'bg-[var(--color-glow-teal)]/25 border-[var(--color-glow-teal)] text-[var(--color-forest-dark)] shadow-md'
+                          : 'bg-white/80 border-[var(--color-lavender)]/40 text-[var(--color-text-secondary)] hover:bg-white/95',
+                      ].join(' ')}
+                      style={{ WebkitTapHighlightColor: 'transparent', outline: 'none' }}
                     >
                       {bgPreviewPlaying && active ? 'Идёт…' : opt.label}
-                    </motion.button>
+                    </button>
                   )
                 })}
               </div>
