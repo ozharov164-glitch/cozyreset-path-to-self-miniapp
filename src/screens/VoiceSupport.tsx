@@ -41,8 +41,6 @@ const TTS_ENGINE_OPTIONS = [
 type TtsEngineKey = (typeof TTS_ENGINE_OPTIONS)[number]['key']
 
 const TTS_PREVIEW_MAX_SEC = 12
-const TTS_FADE_IN_SEC = 0.14
-const TTS_FADE_OUT_SEC = 0.38
 
 function formatTime(sec: number): string {
   if (!Number.isFinite(sec) || sec < 0) return '0:00'
@@ -72,9 +70,9 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
   const bgPreviewRef = useRef<HTMLAudioElement | null>(null)
   const bgPreviewTimerRef = useRef<number | null>(null)
   const bgPreviewReqIdRef = useRef(0)
-  const ttsPreviewCtxRef = useRef<AudioContext | null>(null)
-  const ttsBuffersRef = useRef<Map<TtsEngineKey, AudioBuffer>>(new Map())
-  const ttsActiveSourceRef = useRef<AudioBufferSourceNode | null>(null)
+  const ttsPreviewRef = useRef<HTMLAudioElement | null>(null)
+  const ttsPreviewTimerRef = useRef<number | null>(null)
+  const ttsPreviewBlobUrlRef = useRef<string | null>(null)
   const ttsPreviewReqIdRef = useRef(0)
   const [voiceBackendReady, setVoiceBackendReady] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -102,21 +100,27 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
 
   useEffect(() => {
     return () => {
-      const s = ttsActiveSourceRef.current
-      if (s) {
+      if (ttsPreviewTimerRef.current) {
+        window.clearTimeout(ttsPreviewTimerRef.current)
+        ttsPreviewTimerRef.current = null
+      }
+      if (ttsPreviewRef.current) {
         try {
-          s.stop()
+          ttsPreviewRef.current.pause()
         } catch {
           /* ignore */
         }
-        ttsActiveSourceRef.current = null
+        ttsPreviewRef.current.src = ''
+        ttsPreviewRef.current = null
       }
-      const ctx = ttsPreviewCtxRef.current
-      if (ctx && ctx.state !== 'closed') {
-        void ctx.close()
+      if (ttsPreviewBlobUrlRef.current) {
+        try {
+          URL.revokeObjectURL(ttsPreviewBlobUrlRef.current)
+        } catch {
+          /* ignore */
+        }
+        ttsPreviewBlobUrlRef.current = null
       }
-      ttsPreviewCtxRef.current = null
-      ttsBuffersRef.current.clear()
     }
   }, [])
 
@@ -126,59 +130,8 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
 
   useEffect(() => {
     if (!voiceBackendReady) return
-    const backend = getBackendUrl()
-    if (!backend) return
-    let cancelled = false
-    try {
-      const AudioContextClass =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-      let ctx = ttsPreviewCtxRef.current
-      if (!ctx || ctx.state === 'closed') {
-        ctx = new AudioContextClass()
-        ttsPreviewCtxRef.current = ctx
-      }
-      const audioCtx = ctx
-      void prefetchTtsVoicePreviews()
-      void (async () => {
-        const engines = TTS_ENGINE_OPTIONS.map((o) => o.key)
-        const loadBytes = async (engine: TtsEngineKey): Promise<ArrayBuffer | null> => {
-          let raw = getTtsVoicePreviewBytesCached(engine)
-          if (!raw) {
-            try {
-              const res = await fetch(`${backend}/mini-app/voice-tts-preview/${engine}`, {
-                cache: 'force-cache',
-              })
-              if (!res.ok) return null
-              raw = await res.arrayBuffer()
-              rememberTtsVoicePreviewBytes(engine, raw)
-            } catch {
-              return null
-            }
-          }
-          return raw
-        }
-        const raws = await Promise.all(engines.map(loadBytes))
-        await Promise.all(
-          engines.map(async (engine, idx) => {
-            if (cancelled || ttsBuffersRef.current.has(engine)) return
-            const raw = raws[idx]
-            if (!raw) return
-            try {
-              const buf = await audioCtx.decodeAudioData(raw.slice(0))
-              if (!cancelled) ttsBuffersRef.current.set(engine, buf)
-            } catch {
-              /* ignore */
-            }
-          }),
-        )
-      })()
-    } catch {
-      /* ignore */
-    }
-    return () => {
-      cancelled = true
-    }
+    if (!getBackendUrl()) return
+    void prefetchTtsVoicePreviews()
   }, [voiceBackendReady])
 
   const playBgPreview = useCallback((key: BgMusicKey) => {
@@ -266,21 +219,35 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     }
   }, [setError])
 
-  const stopTtsWebPlayback = useCallback(() => {
-    const s = ttsActiveSourceRef.current
-    if (s) {
+  const stopTtsPreviewPlayback = useCallback(() => {
+    if (ttsPreviewTimerRef.current) {
+      window.clearTimeout(ttsPreviewTimerRef.current)
+      ttsPreviewTimerRef.current = null
+    }
+    const prevUrl = ttsPreviewBlobUrlRef.current
+    const a = ttsPreviewRef.current
+    if (a) {
       try {
-        s.stop(0)
+        a.pause()
       } catch {
-        /* already stopped */
+        /* ignore */
       }
-      ttsActiveSourceRef.current = null
+      a.src = ''
+      ttsPreviewRef.current = null
+    }
+    if (prevUrl) {
+      try {
+        URL.revokeObjectURL(prevUrl)
+      } catch {
+        /* ignore */
+      }
+      ttsPreviewBlobUrlRef.current = null
     }
   }, [])
 
   const playTtsPreview = useCallback(
     async (engine: TtsEngineKey) => {
-      stopTtsWebPlayback()
+      stopTtsPreviewPlayback()
       ttsPreviewReqIdRef.current += 1
       const reqId = ttsPreviewReqIdRef.current
 
@@ -294,80 +261,84 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
       setTtsPreviewPlaying(true)
       setTtsPreviewActiveKey(engine)
 
-      try {
-        let ctx = ttsPreviewCtxRef.current
-        if (!ctx || ctx.state === 'closed') {
-          const AudioContextClass =
-            window.AudioContext ||
-            (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-          ctx = new AudioContextClass()
-          ttsPreviewCtxRef.current = ctx
+      let settled = false
+      const settle = (fromTimer?: boolean) => {
+        if (settled) return
+        if (ttsPreviewReqIdRef.current !== reqId) return
+        settled = true
+        if (ttsPreviewTimerRef.current) {
+          window.clearTimeout(ttsPreviewTimerRef.current)
+          ttsPreviewTimerRef.current = null
         }
-        await ctx.resume()
-
-        let buffer = ttsBuffersRef.current.get(engine)
-        if (!buffer) {
-          let arr = getTtsVoicePreviewBytesCached(engine)
-          if (!arr) {
-            const res = await fetch(`${backend}/mini-app/voice-tts-preview/${engine}`, {
-              cache: 'force-cache',
-            })
-            if (!res.ok) throw new Error('preview fetch')
-            arr = await res.arrayBuffer()
-            rememberTtsVoicePreviewBytes(engine, arr)
+        const el = ttsPreviewRef.current
+        if (el && fromTimer) {
+          try {
+            el.pause()
+            el.currentTime = 0
+          } catch {
+            /* ignore */
           }
-          buffer = await ctx.decodeAudioData(arr.slice(0))
-          ttsBuffersRef.current.set(engine, buffer)
         }
+        setTtsPreviewPlaying(false)
+        setTtsPreviewActiveKey(null)
+        const url = ttsPreviewBlobUrlRef.current
+        if (url) {
+          try {
+            URL.revokeObjectURL(url)
+          } catch {
+            /* ignore */
+          }
+          ttsPreviewBlobUrlRef.current = null
+        }
+        ttsPreviewRef.current = null
+      }
 
+      try {
+        let arr = getTtsVoicePreviewBytesCached(engine)
+        if (!arr) {
+          const res = await fetch(`${backend}/mini-app/voice-tts-preview/${engine}`, {
+            cache: 'force-cache',
+          })
+          if (!res.ok) throw new Error('preview fetch')
+          arr = await res.arrayBuffer()
+          rememberTtsVoicePreviewBytes(engine, arr)
+        }
         if (ttsPreviewReqIdRef.current !== reqId) {
-          setTtsPreviewPlaying(false)
-          setTtsPreviewActiveKey(null)
+          settle()
           return
         }
 
-        const durTotal = Math.min(TTS_PREVIEW_MAX_SEC, buffer.duration)
-        const gain = ctx.createGain()
-        const src = ctx.createBufferSource()
-        src.buffer = buffer
-        src.connect(gain)
-        gain.connect(ctx.destination)
+        const blob = new Blob([arr], { type: 'audio/mpeg' })
+        const blobUrl = URL.createObjectURL(blob)
+        ttsPreviewBlobUrlRef.current = blobUrl
 
-        const now = ctx.currentTime
-        const end = now + durTotal
+        const audio = new Audio(blobUrl)
+        ttsPreviewRef.current = audio
 
-        gain.gain.setValueAtTime(0, now)
-        gain.gain.linearRampToValueAtTime(1, now + TTS_FADE_IN_SEC)
+        const onErr = () => settle()
 
-        if (durTotal > TTS_FADE_IN_SEC + TTS_FADE_OUT_SEC) {
-          gain.gain.setValueAtTime(1, end - TTS_FADE_OUT_SEC)
-          gain.gain.linearRampToValueAtTime(0, end)
-        } else {
-          gain.gain.linearRampToValueAtTime(0, end)
-        }
-
-        ttsActiveSourceRef.current = src
-        src.onended = () => {
-          gain.disconnect()
-          if (ttsActiveSourceRef.current === src) {
-            ttsActiveSourceRef.current = null
-          }
-          if (ttsPreviewReqIdRef.current === reqId) {
-            setTtsPreviewPlaying(false)
-            setTtsPreviewActiveKey(null)
-          }
-        }
-
-        src.start(now)
-        src.stop(end + 0.06)
+        audio.addEventListener(
+          'loadedmetadata',
+          () => {
+            if (ttsPreviewReqIdRef.current !== reqId) {
+              settle()
+              return
+            }
+            void audio.play().catch(onErr)
+            ttsPreviewTimerRef.current = window.setTimeout(
+              () => settle(true),
+              TTS_PREVIEW_MAX_SEC * 1000,
+            )
+          },
+          { once: true },
+        )
+        audio.addEventListener('ended', () => settle(), { once: true })
+        audio.addEventListener('error', onErr, { once: true })
       } catch {
-        if (ttsPreviewReqIdRef.current === reqId) {
-          setTtsPreviewPlaying(false)
-          setTtsPreviewActiveKey(null)
-        }
+        if (ttsPreviewReqIdRef.current === reqId) settle()
       }
     },
-    [stopTtsWebPlayback],
+    [stopTtsPreviewPlayback],
   )
 
   useEffect(() => {
@@ -484,8 +455,10 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     }
     setError(null)
     bgPreviewReqIdRef.current += 1
-    stopTtsWebPlayback()
+    stopTtsPreviewPlayback()
     ttsPreviewReqIdRef.current += 1
+    setTtsPreviewPlaying(false)
+    setTtsPreviewActiveKey(null)
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl)
       setAudioUrl(null)
