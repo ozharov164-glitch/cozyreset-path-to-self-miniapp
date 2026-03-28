@@ -117,6 +117,38 @@ export async function prefetchTtsVoicePreviews(): Promise<void> {
   )
 }
 
+/** Сегменты предпрослушивания фонов (calm1–3) — чтобы по нажатию сразу играть, без ожидания fetch. */
+const bgVoicePreviewBytes = new Map<string, ArrayBuffer>()
+
+export function getBgVoicePreviewBytesCached(key: string): ArrayBuffer | undefined {
+  return bgVoicePreviewBytes.get(key)
+}
+
+export function rememberBgVoicePreviewBytes(key: string, bytes: ArrayBuffer): void {
+  bgVoicePreviewBytes.set(key, bytes)
+}
+
+export async function prefetchBgVoicePreviews(): Promise<void> {
+  const backend = getBackendUrl()
+  if (!backend || typeof window === 'undefined') return
+  const keys = ['calm1', 'calm2', 'calm3'] as const
+  await Promise.all(
+    keys.map(async (key) => {
+      if (bgVoicePreviewBytes.has(key)) return
+      try {
+        const res = await fetch(`${backend}/mini-app/voice-background/${key}`, {
+          cache: 'force-cache',
+        })
+        if (!res.ok) return
+        const buf = await res.arrayBuffer()
+        bgVoicePreviewBytes.set(key, buf)
+      } catch {
+        /* ignore */
+      }
+    }),
+  )
+}
+
 /** Для диагностики «Нет связи»: данные для debug UI. */
 export function getConnectionDiag(): { search: string; backend: string; initDataLength: number } {
   if (typeof window === 'undefined') return { search: '', backend: '', initDataLength: 0 }

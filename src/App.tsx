@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ensureAuth, loadBackendConfig, getConnectionDiag, refreshInitData, prefetchTtsVoicePreviews } from './api/client'
+import {
+  ensureAuth,
+  loadBackendConfig,
+  getConnectionDiag,
+  refreshInitData,
+  prefetchTtsVoicePreviews,
+  prefetchBgVoicePreviews,
+} from './api/client'
 import { AmbientBackground } from './components/AmbientBackground'
 import { Dashboard } from './screens/Dashboard'
 import { Catalog } from './screens/Catalog'
@@ -37,10 +44,12 @@ function AppContent() {
     loadBackendConfig().then(() => {
       refreshInitData()
       void prefetchTtsVoicePreviews()
+      void prefetchBgVoicePreviews()
       ;[400, 2000].forEach((ms) => {
         window.setTimeout(() => {
           if (!mounted) return
           void prefetchTtsVoicePreviews()
+          void prefetchBgVoicePreviews()
         }, ms)
       })
       if (mounted && SHOW_CONNECTION_DIAG) setConnectionDiag(getConnectionDiag())

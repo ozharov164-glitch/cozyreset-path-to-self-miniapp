@@ -7,6 +7,9 @@ import {
   getTtsVoicePreviewBytesCached,
   rememberTtsVoicePreviewBytes,
   prefetchTtsVoicePreviews,
+  getBgVoicePreviewBytesCached,
+  rememberBgVoicePreviewBytes,
+  prefetchBgVoicePreviews,
 } from '../api/client'
 
 const container = {
@@ -24,7 +27,6 @@ const item = {
 
 const SPEEDS = [0.75, 1, 1.25, 1.5] as const
 const PREVIEW_SECONDS = 10
-const PREVIEW_SEEK_FROM_MIDDLE_SECONDS = 5
 
 const BG_MUSIC_OPTIONS = [
   { key: 'calm1', label: 'Фон 1' },
@@ -132,6 +134,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     if (!voiceBackendReady) return
     if (!getBackendUrl()) return
     void prefetchTtsVoicePreviews()
+    void prefetchBgVoicePreviews()
   }, [voiceBackendReady])
 
   const playBgPreview = useCallback((key: BgMusicKey) => {
@@ -158,59 +161,77 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
         return
       }
 
-      // Чтобы не зависеть от Range/кэша браузера, грузим MP3 как blob и играем из object URL.
+      // Blob из кэша (prefetch) или fetch — сразу play(), без ожидания loadedmetadata и без seek в середину (иначе задержка после тапа).
       const previewUrl = `${backend}/mini-app/voice-background/${key}`
       void (async () => {
+        let blobUrl: string | null = null
         try {
-          const res = await fetch(previewUrl, { method: 'GET' })
-          if (!res.ok) throw new Error(`HTTP ${res.status}`)
-          const blob = await res.blob()
-          const blobUrl = URL.createObjectURL(blob)
-
-          if (bgPreviewReqIdRef.current !== reqId) {
-            URL.revokeObjectURL(blobUrl)
-            return
+          let buf: ArrayBuffer
+          const cached = getBgVoicePreviewBytesCached(key)
+          if (cached) {
+            buf = cached
+          } else {
+            const res = await fetch(previewUrl, { method: 'GET', cache: 'force-cache' })
+            if (!res.ok) throw new Error(`HTTP ${res.status}`)
+            buf = await res.arrayBuffer()
+            rememberBgVoicePreviewBytes(key, buf)
           }
 
+          if (bgPreviewReqIdRef.current !== reqId) return
+
+          blobUrl = URL.createObjectURL(new Blob([buf], { type: 'audio/mpeg' }))
           const audio = new Audio(blobUrl)
+          audio.preload = 'auto'
           bgPreviewRef.current = audio
 
-          const onLoaded = () => {
-            const dur = audio.duration
-            const mid = Number.isFinite(dur) ? dur / 2 : 0
-            const start = Math.max(0, mid - PREVIEW_SEEK_FROM_MIDDLE_SECONDS)
-            if (Number.isFinite(start) && start > 0) audio.currentTime = start
-            audio
-              .play()
-              .catch(() => {
-                setBgPreviewPlaying(false)
-              })
-
-            bgPreviewTimerRef.current = window.setTimeout(() => {
+          const cleanup = () => {
+            if (bgPreviewTimerRef.current) {
+              window.clearTimeout(bgPreviewTimerRef.current)
+              bgPreviewTimerRef.current = null
+            }
+            try {
+              audio.pause()
+            } catch {
+              /* ignore */
+            }
+            audio.src = ''
+            if (blobUrl) {
               try {
-                audio.pause()
-                audio.currentTime = 0
-              } finally {
-                setBgPreviewPlaying(false)
                 URL.revokeObjectURL(blobUrl)
+              } catch {
+                /* ignore */
               }
-            }, PREVIEW_SECONDS * 1000)
+              blobUrl = null
+            }
+            setBgPreviewPlaying(false)
           }
 
           const onErr = () => {
             if (bgPreviewReqIdRef.current !== reqId) return
-            setBgPreviewPlaying(false)
+            cleanup()
+          }
+
+          audio.addEventListener('error', onErr, { once: true })
+
+          const onPlaying = () => {
+            if (bgPreviewReqIdRef.current !== reqId) return
+            bgPreviewTimerRef.current = window.setTimeout(cleanup, PREVIEW_SECONDS * 1000)
+          }
+          audio.addEventListener('playing', onPlaying, { once: true })
+
+          void audio.play().catch(() => {
+            if (bgPreviewReqIdRef.current !== reqId) return
+            cleanup()
+          })
+        } catch {
+          if (bgPreviewReqIdRef.current !== reqId) return
+          if (blobUrl) {
             try {
               URL.revokeObjectURL(blobUrl)
             } catch {
               /* ignore */
             }
           }
-
-          audio.addEventListener('loadedmetadata', onLoaded, { once: true })
-          audio.addEventListener('error', onErr, { once: true })
-        } catch {
-          if (bgPreviewReqIdRef.current !== reqId) return
           setBgPreviewPlaying(false)
         }
       })()
