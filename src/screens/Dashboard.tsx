@@ -139,8 +139,11 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
             </span>
             Моя статистика
           </h3>
-          <p className="font-display text-[15px] font-semibold text-[var(--color-forest-dark)] mb-5 leading-snug">
+          <p className="font-display text-[15px] font-semibold text-[var(--color-forest-dark)] mb-1.5 leading-snug">
             Оцени свой прогресс
+          </p>
+          <p className="text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
+            Настроение, тесты, ритуалы и диалоги с ИИ — наглядно и с анимацией.
           </p>
           <button
             type="button"
