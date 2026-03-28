@@ -192,6 +192,32 @@ body {
 .btn-primary:hover { filter: brightness(1.05); }
 .btn-primary:active { transform: scale(0.98); box-shadow: 0 2px 10px rgba(216, 154, 159, 0.35); }
 
+/* CTA «Статистика» на главной — мятный → лаванда, как в макете */
+.btn-stats-cta {
+  background: linear-gradient(
+    95deg,
+    rgba(107, 196, 181, 0.52) 0%,
+    rgba(184, 164, 224, 0.4) 52%,
+    rgba(212, 200, 240, 0.48) 100%
+  );
+  color: var(--color-forest-dark) !important;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow:
+    0 4px 18px rgba(100, 80, 140, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+.btn-stats-cta:hover {
+  filter: brightness(1.03);
+  box-shadow:
+    0 6px 22px rgba(100, 80, 140, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.btn-stats-cta:active {
+  transform: scale(0.98);
+}
+
 /* Вторичная кнопка — контур + лёгкая заливка */
 .btn-secondary {
   background: linear-gradient(145deg, rgba(255,255,255,0.9) 0%, rgba(248,245,255,0.85) 100%);

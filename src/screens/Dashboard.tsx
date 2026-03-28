@@ -128,25 +128,27 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
         </motion.div>
 
         <motion.div
-          className="card-premium p-5 mb-4 relative overflow-hidden"
+          className="card-premium p-5 mb-4 shadow-[0_8px_32px_-6px_rgba(100,80,140,0.14)] border border-white/80"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.42, delay: 0.04, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
-          <div
-            className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-glow-teal)]/15 blur-2xl pointer-events-none"
-            aria-hidden
-          />
-          <h3 className="text-base font-bold text-[var(--color-text-primary)] mb-1 flex items-center gap-2">
-            <span aria-hidden>📊</span> Моя статистика
+          <h3 className="font-display text-base font-bold text-[var(--color-text-primary)] mb-1.5 flex items-center gap-2 tracking-tight">
+            <span aria-hidden className="select-none">
+              📊
+            </span>
+            Моя статистика
           </h3>
-          <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
+          <p className="font-display text-[15px] font-semibold text-[var(--color-forest-dark)] mb-1.5 leading-snug">
+            Оцени свой прогресс
+          </p>
+          <p className="text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
             Настроение, тесты, ритуалы и диалоги с ИИ — наглядно и с анимацией.
           </p>
           <button
             type="button"
             onClick={() => useAppStore.getState().setScreen('statistics')}
-            className="w-full py-3.5 px-4 rounded-xl min-h-[48px] font-semibold text-[var(--color-forest-dark)] bg-gradient-to-r from-[var(--color-glow-teal)]/35 to-[var(--color-lavender)]/40 border border-[var(--color-lavender)]/30 shadow-sm active:scale-[0.99] transition-transform"
+            className="btn-stats-cta w-full py-3.5 px-4 rounded-xl min-h-[48px]"
             style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
             Открыть статистику
