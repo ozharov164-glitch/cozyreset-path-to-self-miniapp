@@ -613,22 +613,20 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                       transition={{ delay: 0.06 * idx, type: 'spring', stiffness: 380, damping: 28 }}
                       whileHover={loading ? {} : { y: -2, scale: 1.02 }}
                       whileTap={loading ? {} : { scale: 0.97 }}
-                      className="relative min-h-[52px] rounded-2xl px-3 py-3 text-center font-semibold tracking-tight overflow-hidden disabled:opacity-50 disabled:pointer-events-none"
+                      className="voice-select-chip relative min-h-[52px] rounded-2xl px-3 py-3 text-center text-[1.05rem] font-semibold overflow-hidden disabled:opacity-50 disabled:pointer-events-none"
                       style={{
-                        fontFamily: 'var(--font-voice-display)',
-                        fontSize: '1.05rem',
                         WebkitTapHighlightColor: 'transparent',
                         outline: 'none',
                         color: active ? 'var(--color-forest-dark)' : 'var(--color-text-secondary)',
                         background: active
-                          ? 'linear-gradient(155deg, rgba(255,255,255,0.95) 0%, rgba(232,248,244,0.92) 45%, rgba(214,236,228,0.88) 100%)'
-                          : 'linear-gradient(165deg, rgba(255,255,255,0.72) 0%, rgba(248,245,255,0.65) 100%)',
+                          ? 'linear-gradient(155deg, rgba(255,255,255,0.97) 0%, rgba(232,248,244,0.94) 45%, rgba(214,236,228,0.9) 100%)'
+                          : 'linear-gradient(165deg, rgba(255,255,255,0.78) 0%, rgba(248,245,255,0.7) 100%)',
                         border: active
-                          ? '2px solid rgba(107, 196, 181, 0.65)'
-                          : '1.5px solid rgba(184, 164, 224, 0.35)',
+                          ? '2px solid rgba(107, 196, 181, 0.55)'
+                          : '1.5px solid rgba(184, 164, 224, 0.38)',
                         boxShadow: active
-                          ? '0 10px 28px rgba(90, 184, 168, 0.28), 0 0 0 1px rgba(255,255,255,0.65) inset, 0 1px 0 rgba(255,255,255,0.9) inset'
-                          : '0 6px 18px rgba(45, 62, 46, 0.08), inset 0 1px 0 rgba(255,255,255,0.75)',
+                          ? '0 12px 32px rgba(90, 184, 168, 0.22), 0 0 0 1px rgba(255,255,255,0.7) inset, 0 1px 0 rgba(255,255,255,0.95) inset'
+                          : '0 8px 22px rgba(45, 62, 46, 0.07), inset 0 1px 0 rgba(255,255,255,0.82)',
                       }}
                     >
                       {active && (
@@ -637,7 +635,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                           className="absolute inset-0 pointer-events-none rounded-2xl"
                           style={{
                             background:
-                              'radial-gradient(ellipse 120% 80% at 50% 0%, rgba(125,211,192,0.35), transparent 55%)',
+                              'radial-gradient(ellipse 120% 80% at 50% 0%, rgba(125,211,192,0.32), transparent 55%)',
                           }}
                           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                         />
@@ -661,14 +659,14 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                       transition={{ delay: 0.08 + idx * 0.05, type: 'spring', stiffness: 360, damping: 26 }}
                       whileHover={loading || ttsPreviewPlaying ? {} : { scale: 1.03 }}
                       whileTap={loading || ttsPreviewPlaying ? {} : { scale: 0.96 }}
-                      className="min-h-[46px] rounded-xl px-2 py-2.5 text-[13px] font-semibold disabled:opacity-50 disabled:pointer-events-none"
+                      className="font-display min-h-[46px] rounded-xl px-2 py-2.5 text-[13px] font-semibold tracking-tight disabled:opacity-50 disabled:pointer-events-none"
                       style={{
-                        fontFamily: 'var(--font-sans)',
                         WebkitTapHighlightColor: 'transparent',
                         color: 'var(--color-forest-dark)',
-                        background: 'linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(245,250,249,0.88) 100%)',
-                        border: '1.5px solid rgba(107, 196, 181, 0.4)',
-                        boxShadow: '0 4px 14px rgba(90, 184, 168, 0.18), inset 0 1px 0 rgba(255,255,255,0.85)',
+                        background: 'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(245,250,249,0.9) 100%)',
+                        border: '1.5px solid rgba(107, 196, 181, 0.42)',
+                        boxShadow:
+                          '0 5px 16px rgba(90, 184, 168, 0.16), inset 0 1px 0 rgba(255,255,255,0.92)',
                       }}
                     >
                       {playingHere ? '▶ Идёт…' : '▶ Прослушать'}
@@ -679,31 +677,54 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
             </div>
 
             <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold text-[var(--color-text-primary)]">Фоновая музыка</p>
-                <span className="text-xs text-[var(--color-text-secondary)]">
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <p className="voice-premium-label text-[var(--color-forest-dark)]">Фоновая музыка</p>
+                <span className="text-[11px] font-medium leading-tight text-[var(--color-text-secondary)] text-right max-w-[52%]">
                   Нажми кнопку — послушай 10с
                 </span>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                {BG_MUSIC_OPTIONS.map((opt) => {
+              <div className="grid grid-cols-3 gap-2.5">
+                {BG_MUSIC_OPTIONS.map((opt, idx) => {
                   const active = selectedMusicKey === opt.key
+                  const playingHere = bgPreviewPlaying && active
                   return (
-                    <button
+                    <motion.button
                       key={opt.key}
                       type="button"
                       onClick={() => playBgPreview(opt.key)}
                       disabled={loading}
-                      className={[
-                        'px-3 py-2 rounded-xl text-sm font-semibold border min-h-[46px] transition-all',
-                        active
-                          ? 'bg-[var(--color-glow-teal)]/25 border-[var(--color-glow-teal)] text-[var(--color-forest-dark)] shadow-md'
-                          : 'bg-white/80 border-[var(--color-lavender)]/40 text-[var(--color-text-secondary)] hover:bg-white/95',
-                      ].join(' ')}
-                      style={{ WebkitTapHighlightColor: 'transparent', outline: 'none' }}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.04 * idx, type: 'spring', stiffness: 380, damping: 28 }}
+                      whileHover={loading ? {} : { y: -1, scale: 1.03 }}
+                      whileTap={loading ? {} : { scale: 0.97 }}
+                      className="voice-select-chip relative min-h-[50px] rounded-2xl px-2 py-2.5 text-[0.95rem] font-semibold text-center overflow-hidden disabled:opacity-50 disabled:pointer-events-none"
+                      style={{
+                        WebkitTapHighlightColor: 'transparent',
+                        outline: 'none',
+                        color: active ? 'var(--color-forest-dark)' : 'var(--color-text-secondary)',
+                        background: active
+                          ? 'linear-gradient(155deg, rgba(255,255,255,0.97) 0%, rgba(232,248,244,0.93) 48%, rgba(220,236,248,0.88) 100%)'
+                          : 'linear-gradient(165deg, rgba(255,255,255,0.76) 0%, rgba(248,245,255,0.68) 100%)',
+                        border: active
+                          ? '2px solid rgba(107, 196, 181, 0.5)'
+                          : '1.5px solid rgba(184, 164, 224, 0.36)',
+                        boxShadow: active
+                          ? '0 10px 26px rgba(90, 184, 168, 0.2), 0 0 0 1px rgba(255,255,255,0.65) inset'
+                          : '0 6px 18px rgba(45, 62, 46, 0.07), inset 0 1px 0 rgba(255,255,255,0.8)',
+                      }}
                     >
-                      {bgPreviewPlaying && active ? 'Идёт…' : opt.label}
-                    </button>
+                      {active && (
+                        <span
+                          className="absolute inset-0 pointer-events-none rounded-2xl"
+                          style={{
+                            background:
+                              'radial-gradient(ellipse 130% 90% at 50% 0%, rgba(125,211,192,0.28), transparent 58%)',
+                          }}
+                        />
+                      )}
+                      <span className="relative z-[1]">{playingHere ? 'Идёт…' : opt.label}</span>
+                    </motion.button>
                   )
                 })}
               </div>
@@ -741,7 +762,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
               />
               <div className="flex justify-end">
                 <motion.span
-                  className="text-xs text-[var(--color-text-secondary)]"
+                  className="font-display text-xs font-medium tabular-nums tracking-tight text-[var(--color-text-secondary)]"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3 }}
@@ -791,7 +812,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
               type="button"
               onClick={handleSubmit}
               disabled={loading}
-              className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] relative overflow-hidden transition-all duration-300 disabled:opacity-60 disabled:pointer-events-none"
+              className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] relative overflow-hidden font-display font-semibold tracking-tight shadow-[0_8px_28px_rgba(216,154,159,0.35)] transition-all duration-300 disabled:opacity-60 disabled:pointer-events-none"
               whileHover={!loading ? { scale: 1.02 } : {}}
               whileTap={!loading ? { scale: 0.98 } : {}}
             >

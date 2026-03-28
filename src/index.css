@@ -31,9 +31,17 @@
 }
 
 .voice-support-screen .voice-premium-label {
-  font-family: var(--font-voice-display);
+  font-family: var(--font-display);
   font-weight: 600;
   font-size: 0.95rem;
+  letter-spacing: -0.02em;
+}
+
+/* Единый вид цифр на чипах «Голос N» / «Фон N» */
+.voice-support-screen .voice-select-chip {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
   letter-spacing: -0.02em;
 }
 
