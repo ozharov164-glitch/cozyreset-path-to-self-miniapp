@@ -1,8 +1,9 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { apiStatistics, type StatsPeriod } from '../api/client'
+import { apiStatistics, type ApiStatisticsResult, type StatsPeriod } from '../api/client'
 import { useAuthStore } from '../store/authStore'
+import { useAppStore } from '../store/appStore'
 import { goBackToBot } from '../utils/telegram'
 import { PeriodSelector } from '../components/statistics/PeriodSelector'
 import { KPICards } from '../components/statistics/KPICards'
@@ -20,21 +21,32 @@ interface StatisticsPageProps {
 
 export function StatisticsPage({ onBack }: StatisticsPageProps) {
   const [period, setPeriod] = useState<StatsPeriod>('month')
-  const authReady = useAuthStore((s) => s.isInitialized)
+  /** Синхронно с App.tsx: после ensureAuth, а не только isInitialized из persist (иначе гонка с токеном). */
+  const appAuthReady = useAppStore((s) => s.authReady)
+  const appSaveToken = useAuthStore((s) => s.appSaveToken)
 
-  const { data, isPending, isFetching, refetch } = useQuery({
-    queryKey: ['statistics', period],
-    queryFn: () => apiStatistics(period),
-    enabled: authReady,
+  const { data, isPending, isFetching, refetch, isError } = useQuery<ApiStatisticsResult, Error>({
+    queryKey: ['statistics', period, appSaveToken ?? ''],
+    queryFn: async () => {
+      const r = await apiStatistics(period)
+      if (r.status === 'ok') return r
+      if ('premium_required' in r && r.premium_required) return r
+      throw new Error('error' in r ? r.error : 'Ошибка загрузки')
+    },
+    enabled: appAuthReady,
     staleTime: 45_000,
     placeholderData: keepPreviousData,
+    refetchOnMount: 'always',
+    retry: 2,
+    retryDelay: (attempt) => 280 * (attempt + 1),
   })
 
   const ok = data && 'status' in data && data.status === 'ok'
   const stats = ok ? data.stats : undefined
   const needPremium = Boolean(data && 'premium_required' in data && data.premium_required)
-  const loadError = Boolean(data && !ok && !needPremium)
-  const showSkeleton = !authReady || (isPending && data === undefined && !needPremium)
+  const loadError = isError || Boolean(data && !ok && !needPremium)
+  const showSkeleton =
+    !appAuthReady || (isPending && data === undefined && !needPremium && !isError)
 
   return (
     <div className="min-h-screen flex flex-col safe-area">
@@ -117,7 +129,7 @@ export function StatisticsPage({ onBack }: StatisticsPageProps) {
             </motion.div>
           )}
 
-          {!needPremium && !loadError && authReady && stats && ok && !showSkeleton && (
+          {!needPremium && !loadError && appAuthReady && stats && ok && !showSkeleton && (
             <motion.div
               key="content"
               initial={{ opacity: 0 }}

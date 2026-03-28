@@ -2,7 +2,14 @@ import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../store/authStore'
-import { apiTestHistory, apiAiSuggestions, apiStatistics, getBackendUrl, syncPremiumFromInit } from '../api/client'
+import {
+  apiTestHistory,
+  apiAiSuggestions,
+  apiStatistics,
+  getBackendUrl,
+  syncPremiumFromInit,
+  type ApiStatisticsResult,
+} from '../api/client'
 import { useAppStore } from '../store/appStore'
 import { goBackToBot, copyQuestionToClipboard } from '../utils/telegram'
 
@@ -29,6 +36,7 @@ function formatDateWithTime(iso: string): string {
 export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
   const queryClient = useQueryClient()
   const authReady = useAuthStore((s) => s.isInitialized)
+  const appAuthReady = useAppStore((s) => s.authReady)
   const appSaveToken = useAuthStore((s) => s.appSaveToken)
   const openResultFromHistory = useAppStore((s) => s.openResultFromHistory)
   const tg = typeof window !== 'undefined' ? window.Telegram?.WebApp : undefined
@@ -58,7 +66,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
   }
 
   useEffect(() => {
-    if (!authReady || !appSaveToken) return
+    if (!appAuthReady || !appSaveToken) return
     const run = async () => {
       let premium = useAuthStore.getState().isPremium
       if (premium === null) {
@@ -66,11 +74,12 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
         premium = useAuthStore.getState().isPremium
       }
       if (premium === true) {
-        await queryClient.prefetchQuery({
-          queryKey: ['statistics', 'month'],
+        await queryClient.prefetchQuery<ApiStatisticsResult>({
+          queryKey: ['statistics', 'month', appSaveToken ?? ''],
           queryFn: async () => {
             const r = await apiStatistics('month')
-            if (r.status === 'ok') return r.stats
+            if (r.status === 'ok') return r
+            if ('premium_required' in r && r.premium_required) return r
             throw new Error('stats')
           },
           staleTime: 60_000,
@@ -78,7 +87,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
       }
     }
     void run()
-  }, [authReady, appSaveToken, queryClient])
+  }, [appAuthReady, appSaveToken, queryClient])
 
   return (
     <div className="min-h-screen flex flex-col safe-area">
