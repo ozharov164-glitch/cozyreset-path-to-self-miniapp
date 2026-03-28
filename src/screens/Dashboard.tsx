@@ -1,7 +1,8 @@
+import { useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../store/authStore'
-import { apiTestHistory, apiAiSuggestions, getBackendUrl } from '../api/client'
+import { apiTestHistory, apiAiSuggestions, apiStatistics, getBackendUrl, syncPremiumFromInit } from '../api/client'
 import { useAppStore } from '../store/appStore'
 import { goBackToBot, copyQuestionToClipboard } from '../utils/telegram'
 
@@ -26,6 +27,7 @@ function formatDateWithTime(iso: string): string {
 }
 
 export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
+  const queryClient = useQueryClient()
   const authReady = useAuthStore((s) => s.isInitialized)
   const appSaveToken = useAuthStore((s) => s.appSaveToken)
   const openResultFromHistory = useAppStore((s) => s.openResultFromHistory)
@@ -54,6 +56,29 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
   const openResult = (id: string) => {
     openResultFromHistory(id)
   }
+
+  useEffect(() => {
+    if (!authReady || !appSaveToken) return
+    const run = async () => {
+      let premium = useAuthStore.getState().isPremium
+      if (premium === null) {
+        await syncPremiumFromInit()
+        premium = useAuthStore.getState().isPremium
+      }
+      if (premium === true) {
+        await queryClient.prefetchQuery({
+          queryKey: ['statistics', 'month'],
+          queryFn: async () => {
+            const r = await apiStatistics('month')
+            if (r.status === 'ok') return r.stats
+            throw new Error('stats')
+          },
+          staleTime: 60_000,
+        })
+      }
+    }
+    void run()
+  }, [authReady, appSaveToken, queryClient])
 
   return (
     <div className="min-h-screen flex flex-col safe-area">
@@ -99,6 +124,32 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
             style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
             Каталог тестов
+          </button>
+        </motion.div>
+
+        <motion.div
+          className="card-premium p-5 mb-4 relative overflow-hidden"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.42, delay: 0.04, ease: [0.25, 0.46, 0.45, 0.94] }}
+        >
+          <div
+            className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-glow-teal)]/15 blur-2xl pointer-events-none"
+            aria-hidden
+          />
+          <h3 className="text-base font-bold text-[var(--color-text-primary)] mb-1 flex items-center gap-2">
+            <span aria-hidden>📊</span> Моя статистика
+          </h3>
+          <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
+            Настроение, тесты, ритуалы и диалоги с ИИ — наглядно и с анимацией.
+          </p>
+          <button
+            type="button"
+            onClick={() => useAppStore.getState().setScreen('statistics')}
+            className="w-full py-3.5 px-4 rounded-xl min-h-[48px] font-semibold text-[var(--color-forest-dark)] bg-gradient-to-r from-[var(--color-glow-teal)]/35 to-[var(--color-lavender)]/40 border border-[var(--color-lavender)]/30 shadow-sm active:scale-[0.99] transition-transform"
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+          >
+            Открыть статистику
           </button>
         </motion.div>
 

@@ -16,6 +16,7 @@ import { Result } from './screens/Result'
 import { History } from './screens/History'
 import { VoiceSupport } from './screens/VoiceSupport'
 import { SelfRealization } from './screens/SelfRealization'
+import { StatisticsPage } from './screens/StatisticsPage'
 import { useAppStore } from './store/appStore'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 0 } } })
@@ -100,6 +101,7 @@ function AppContent() {
         {screen === 'history' && <History onBack={() => setScreen('dashboard')} />}
         {screen === 'voiceSupport' && <VoiceSupport onBack={() => setScreen('dashboard')} />}
         {screen === 'selfRealization' && <SelfRealization onBack={() => setScreen('dashboard')} />}
+        {screen === 'statistics' && <StatisticsPage onBack={() => setScreen('dashboard')} />}
         {screen === 'dashboard' && (
           <Dashboard onOpenCatalog={() => setScreen('catalog')} onOpenHistory={() => setScreen('history')} />
         )}

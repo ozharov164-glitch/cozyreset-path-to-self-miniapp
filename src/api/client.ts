@@ -226,13 +226,16 @@ export async function ensureAuth(): Promise<string | null> {
         body: JSON.stringify({ start_token: startToken }),
       })
       if (res.ok) {
-        const data = await res.json()
-        const newToken = (data as { app_save_token?: string }).app_save_token?.trim()
+        const data = (await res.json()) as { app_save_token?: string; isPremium?: boolean }
+        const newToken = data.app_save_token?.trim()
         if (newToken) {
           setTokenPersist(newToken)
           useAuthStore.getState().setInitialized(true)
-          return newToken
         }
+        if (typeof data.isPremium === 'boolean') {
+          useAuthStore.getState().setPremium(data.isPremium)
+        }
+        if (newToken) return newToken
       }
     } catch (e) {
       if (DEBUG) console.warn('[PTS] ensureAuth: start_token error', e)
@@ -262,8 +265,11 @@ export async function ensureAuth(): Promise<string | null> {
         useAuthStore.getState().setInitialized(true)
         return null
       }
-      const data = await res.json()
-      const newToken = (data as { app_save_token?: string }).app_save_token?.trim()
+      const data = (await res.json()) as { app_save_token?: string; isPremium?: boolean }
+      const newToken = data.app_save_token?.trim()
+      if (typeof data.isPremium === 'boolean') {
+        useAuthStore.getState().setPremium(data.isPremium)
+      }
       if (newToken) {
         setTokenPersist(newToken)
         useAuthStore.getState().setInitialized(true)
@@ -334,8 +340,11 @@ async function fetchWithAuth(
         body: JSON.stringify({ initData }),
       })
       if (res.ok) {
-        const data = await res.json()
-        const newToken = (data as { app_save_token?: string }).app_save_token?.trim()
+        const data = (await res.json()) as { app_save_token?: string; isPremium?: boolean }
+        const newToken = data.app_save_token?.trim()
+        if (typeof data.isPremium === 'boolean') {
+          useAuthStore.getState().setPremium(data.isPremium)
+        }
         if (newToken) {
           setTokenPersist(newToken)
           token = newToken
@@ -420,6 +429,76 @@ export async function apiTestHistory(): Promise<{ items: Array<{ id: string; tes
   if (!res.ok) return { items: [] }
   const data = await res.json()
   return data as { items: Array<{ id: string; testId: string; testTitle: string; completedAt: string }> }
+}
+
+/** Если в сессии уже есть token, но isPremium ещё не подтянут — один запрос /mini-app/init по initData. */
+export async function syncPremiumFromInit(): Promise<void> {
+  const backend = getBackendUrl()
+  const initData = getInitDataString()
+  if (!backend || !initData) return
+  try {
+    const res = await fetch(`${backend}/mini-app/init`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ initData }),
+    })
+    if (!res.ok) return
+    const data = (await res.json()) as { isPremium?: boolean; app_save_token?: string }
+    if (typeof data.isPremium === 'boolean') {
+      useAuthStore.getState().setPremium(data.isPremium)
+    }
+    const t = data.app_save_token?.trim()
+    if (t) setTokenPersist(t)
+  } catch {
+    /* ignore */
+  }
+}
+
+export type StatsPeriod = 'week' | 'month' | 'all'
+
+export interface MiniAppStatisticsBundle {
+  kpi: {
+    days_with_bot: number
+    total_checkins: number
+    total_tests: number
+    total_rituals: number
+    total_ai_messages: number
+  }
+  mood_over_time: Array<{ date: string; morning_mood: number | null; evening_mood: number | null }>
+  daily_activity: Array<{ date: string; checkins: number; tests: number; rituals: number; ai_messages: number }>
+  test_popularity: Array<{ test_name: string; count: number }>
+  ai_activity_over_time: Array<{
+    date: string
+    messages: number
+    user_messages: number
+    assistant_messages: number
+  }>
+  period: string
+}
+
+export type ApiStatisticsResult =
+  | { status: 'ok'; stats: MiniAppStatisticsBundle }
+  | { error: string; premium_required?: boolean; status: number }
+
+export async function apiStatistics(period: StatsPeriod): Promise<ApiStatisticsResult> {
+  const res = await fetchWithAuth('/mini-app/statistics', {
+    method: 'POST',
+    body: JSON.stringify({ period }),
+  })
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>
+  if (res.status === 403) {
+    return { error: 'premium', premium_required: true, status: 403 }
+  }
+  if (!res.ok) {
+    return {
+      error: typeof data.error === 'string' ? data.error : 'Ошибка загрузки',
+      status: res.status,
+    }
+  }
+  if (data.status === 'ok' && data.stats && typeof data.stats === 'object') {
+    return { status: 'ok', stats: data.stats as MiniAppStatisticsBundle }
+  }
+  return { error: 'Некорректный ответ', status: res.status }
 }
 
 export async function apiClearTestHistory(): Promise<{ ok: boolean; deleted: number } | { error: string }> {
