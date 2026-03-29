@@ -50,12 +50,30 @@ export function Catalog({ onBack }: CatalogProps) {
               transition={{ delay: i * 0.07, duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
               <div className="flex items-start justify-between gap-2 mb-2">
-                <h3 className="font-bold text-[var(--color-text-primary)] text-base">{test.title}</h3>
-                {isCompleted && (
-                  <span className="shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full bg-[var(--color-glow-teal)]/20 text-[var(--color-glow-teal)]">
-                    Пройден
-                  </span>
-                )}
+                <h3 className="font-bold text-[var(--color-text-primary)] text-base flex-1 min-w-0 pr-1 leading-snug">
+                  {test.title}
+                </h3>
+                <div className="shrink-0 flex flex-col items-end gap-1.5">
+                  {test.isNew && (
+                    <motion.span
+                      className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.12em] px-2.5 py-1 rounded-full text-white shadow-md"
+                      style={{
+                        background: 'linear-gradient(120deg, #5eb9a8 0%, #8b7ab8 45%, #c4a8d8 100%)',
+                        boxShadow: '0 2px 14px rgba(107, 196, 181, 0.35), 0 0 0 1px rgba(255,255,255,0.25) inset',
+                      }}
+                      initial={{ opacity: 0, scale: 0.92 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.07 + 0.1, type: 'spring', stiffness: 320, damping: 22 }}
+                    >
+                      Новинка
+                    </motion.span>
+                  )}
+                  {isCompleted && (
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[var(--color-glow-teal)]/20 text-[var(--color-glow-teal)]">
+                      Пройден
+                    </span>
+                  )}
+                </div>
               </div>
               <p className="text-sm text-[var(--color-text-secondary)] mb-3 leading-relaxed">{test.description}</p>
               <p className="text-xs text-[var(--color-text-secondary)] mb-4">
