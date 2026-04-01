@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/authStore'
 import {
   apiTestHistory,
   apiAiSuggestions,
+  apiCommunityPulse,
   apiStatistics,
   getBackendUrl,
   syncPremiumFromInit,
@@ -12,6 +13,7 @@ import {
 } from '../api/client'
 import { useAppStore } from '../store/appStore'
 import { goBackToBot, copyQuestionToClipboard } from '../utils/telegram'
+import { CommunityPulse } from '../components/CommunityPulse'
 
 interface DashboardProps {
   onOpenCatalog: () => void
@@ -60,6 +62,14 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
     enabled: authReady && !!appSaveToken && items.length > 0,
   })
   const suggestions = suggestionsData?.suggestions ?? []
+
+  const { data: pulseData, isLoading: pulseLoading } = useQuery({
+    queryKey: ['community-pulse', appSaveToken ?? ''],
+    queryFn: () => apiCommunityPulse(),
+    enabled: authReady && !!appSaveToken,
+    staleTime: 60_000,
+    refetchOnMount: true,
+  })
 
   const openResult = (id: string) => {
     openResultFromHistory(id)
@@ -135,6 +145,10 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
             Каталог тестов
           </button>
         </motion.div>
+
+        {authReady && appSaveToken && (
+          <CommunityPulse data={pulseData} isLoading={pulseLoading} />
+        )}
 
         <motion.div
           className="card-premium p-5 mb-4 shadow-[0_8px_32px_-6px_rgba(100,80,140,0.14)] border border-white/80"
