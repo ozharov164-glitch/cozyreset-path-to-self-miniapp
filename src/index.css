@@ -56,6 +56,42 @@ html, body {
   min-height: 100dvh;
 }
 
+/* Подложка: в Telegram с тёмной темой body был прозрачным — визуально «чёрный экран» */
+html.pts-app {
+  background-color: var(--tg-theme-bg-color, #ede6f8);
+}
+
+html.pts-app body {
+  background-color: transparent;
+}
+
+/*
+ * Telegram iOS / WKWebView: сочетание mask-composite (::before у pts-pulse-card) и сильного
+ * backdrop-filter на карточках иногда даёт пустой слой (контент не рисуется).
+ */
+html.tg-mini-app .pts-pulse-card::before {
+  display: none !important;
+}
+
+html.tg-mini-app .pts-pulse-card {
+  border: 1px solid rgba(184, 164, 224, 0.42);
+  background: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.99) 0%,
+    rgba(252, 248, 255, 0.98) 45%,
+    rgba(245, 238, 252, 0.97) 100%
+  );
+  box-shadow:
+    0 4px 24px -4px rgba(107, 196, 181, 0.14),
+    0 0 0 1px rgba(255, 255, 255, 0.85) inset;
+}
+
+html.tg-mini-app .card-premium,
+html.tg-mini-app .glass-card {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
 #root {
   min-height: 100%;
   min-height: 100dvh;

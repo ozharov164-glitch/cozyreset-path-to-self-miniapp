@@ -19,6 +19,7 @@ import { SelfRealization } from './screens/SelfRealization'
 import { StatisticsPage } from './screens/StatisticsPage'
 import { SpecialistBrief } from './screens/SpecialistBrief'
 import { useAppStore } from './store/appStore'
+import { AppErrorBoundary } from './components/AppErrorBoundary'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 0 } } })
 
@@ -30,6 +31,9 @@ function AppContent() {
   const [connectionDiag, setConnectionDiag] = useState<{ search: string; backend: string; initDataLength: number } | null>(null)
 
   useEffect(() => {
+    if (window.Telegram?.WebApp) {
+      document.documentElement.classList.add('tg-mini-app')
+    }
     const tg = window.Telegram?.WebApp
     refreshInitData()
     tg?.ready()
@@ -115,7 +119,9 @@ function AppContent() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppContent />
+      <AppErrorBoundary>
+        <AppContent />
+      </AppErrorBoundary>
     </QueryClientProvider>
   )
 }

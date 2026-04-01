@@ -132,7 +132,7 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
       <div className="relative z-[1] flex-1 flex flex-col max-w-[420px] mx-auto w-full px-3 pb-8">
         <motion.div
           key={current?.id}
-          className="pts-pulse-card pts-pulse-card--soft p-5 mb-4 overflow-hidden"
+          className="card-premium p-5 mb-4 overflow-hidden shadow-[0_8px_32px_-6px_rgba(100,80,140,0.14)] border border-white/85"
           initial={reduceMotion ? false : { opacity: 0, y: 14, scale: 0.985 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={cardTransition}
