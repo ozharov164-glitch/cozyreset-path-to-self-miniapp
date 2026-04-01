@@ -40,6 +40,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
   const authReady = useAuthStore((s) => s.isInitialized)
   const appAuthReady = useAppStore((s) => s.authReady)
   const appSaveToken = useAuthStore((s) => s.appSaveToken)
+  const isPremium = useAuthStore((s) => s.isPremium)
   const openResultFromHistory = useAppStore((s) => s.openResultFromHistory)
   const tg = typeof window !== 'undefined' ? window.Telegram?.WebApp : undefined
   const userName = tg?.initDataUnsafe?.user?.first_name || 'друг'
@@ -148,6 +149,41 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
 
         {authReady && appSaveToken && (
           <CommunityPulse data={pulseData} isLoading={pulseLoading} />
+        )}
+
+        {authReady && appSaveToken && (
+          <motion.div
+            className="card-premium p-5 mb-4"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.42, delay: 0.03, ease: [0.25, 0.46, 0.45, 0.94] }}
+          >
+            <h3 className="font-display text-base font-bold text-[var(--color-text-primary)] mb-1.5 flex items-center gap-2 tracking-tight">
+              <span aria-hidden className="select-none">
+                📄
+              </span>
+              К специалисту
+            </h3>
+            <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
+              Ответь на короткую анкету — ИИ поможет собрать связный текст и скачать PDF для визита к психологу или коучу.
+            </p>
+            {isPremium === true ? (
+              <button
+                type="button"
+                onClick={() => useAppStore.getState().setScreen('specialistBrief')}
+                className="w-full py-3.5 px-4 rounded-xl btn-premium-glow min-h-[48px] font-semibold"
+                style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+              >
+                Заполнить анкету
+              </button>
+            ) : isPremium === false ? (
+              <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
+                Доступно с Премиум — оформи подписку в боте через «Тарифы» или кнопку в меню 💛
+              </p>
+            ) : (
+              <p className="text-sm text-[var(--color-text-secondary)]">Проверяем доступ…</p>
+            )}
+          </motion.div>
         )}
 
         <motion.div

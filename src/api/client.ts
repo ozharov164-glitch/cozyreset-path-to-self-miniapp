@@ -619,6 +619,63 @@ export async function apiCommunityPulse(): Promise<CommunityPulseResponse> {
   return { error: 'Некорректный ответ' }
 }
 
+const SPECIALIST_BRIEF_GENERATE_TIMEOUT_MS = 120000
+
+export type SpecialistBriefGenerateResult =
+  | { downloadUrl: string; fileName: string; aiGenerated: boolean }
+  | { error: string; status?: number; premium_required?: boolean }
+
+/** Анкета «К специалисту» → PDF (премиум; ИИ — DeepSeek через бэкенд при наличии ключа). */
+export async function apiSpecialistBriefGenerate(
+  answers: { id: string; answer: string }[],
+): Promise<SpecialistBriefGenerateResult> {
+  const controller = new AbortController()
+  const timeoutId = window.setTimeout(() => controller.abort(), SPECIALIST_BRIEF_GENERATE_TIMEOUT_MS)
+  try {
+    const res = await fetchWithAuth('/mini-app/specialist-brief-generate', {
+      method: 'POST',
+      body: JSON.stringify({ answers }),
+      signal: controller.signal,
+    })
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>
+    if (res.status === 403) {
+      return {
+        error: typeof data.error === 'string' ? data.error : 'Доступно с Премиум',
+        status: 403,
+        premium_required: !!data.premium_required,
+      }
+    }
+    if (!res.ok) {
+      const msg =
+        typeof data.error === 'string'
+          ? data.error
+          : res.status === 401
+            ? 'Открой приложение из бота — нужна авторизация'
+            : res.status === 429
+              ? 'Слишком много запросов. Попробуй позже.'
+              : 'Не удалось сформировать PDF'
+      return { error: msg, status: res.status }
+    }
+    const downloadUrl = typeof data.downloadUrl === 'string' ? data.downloadUrl.trim() : ''
+    const fileName = typeof data.fileName === 'string' ? data.fileName.trim() : 'k-specialistu-cozyreset.pdf'
+    if (!downloadUrl) {
+      return { error: 'Пустой ответ сервера', status: res.status }
+    }
+    return {
+      downloadUrl,
+      fileName,
+      aiGenerated: !!data.aiGenerated,
+    }
+  } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') {
+      return { error: 'Превышено время ожидания. Попробуй ещё раз.', status: 0 }
+    }
+    return { error: 'Нет связи с сервером', status: 0 }
+  } finally {
+    window.clearTimeout(timeoutId)
+  }
+}
+
 /** Таймаут запроса голосового ответа (LLM + TTS может занять до 1–2 минут). */
 const VOICE_REPLY_TIMEOUT_MS = 120000
 

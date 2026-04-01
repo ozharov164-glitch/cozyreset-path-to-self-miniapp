@@ -12,6 +12,11 @@ export interface TelegramWebAppInitDataUnsafe {
   hash?: string
 }
 
+export interface TelegramDownloadFileParams {
+  url: string
+  file_name: string
+}
+
 export interface TelegramWebApp {
   initData: string
   initDataUnsafe: TelegramWebAppInitDataUnsafe
@@ -25,6 +30,9 @@ export interface TelegramWebApp {
   close: () => void
   openTelegramLink: (url: string) => void
   showAlert: (message: string) => void
+  /** Bot API 8.0+ — нативное скачивание по публичному HTTPS URL */
+  downloadFile?: (params: TelegramDownloadFileParams, callback?: (accepted: boolean) => void) => void
+  isVersionAtLeast?: (version: string) => boolean
   HapticFeedback?: {
     impactOccurred: (style: 'light' | 'medium' | 'heavy') => void
   }

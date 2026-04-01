@@ -9,6 +9,7 @@ export type Screen =
   | 'voiceSupport'
   | 'selfRealization'
   | 'statistics'
+  | 'specialistBrief'
 
 interface AppState {
   screen: Screen
