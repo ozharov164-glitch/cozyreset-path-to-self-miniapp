@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { SpecialistBriefPdfPreview } from '../components/SpecialistBriefPdfPreview'
 import { SPECIALIST_BRIEF_QUESTIONS } from '../data/specialistBriefQuestions'
 import { apiSpecialistBriefGenerate } from '../api/client'
-import { fetchSpecialistPdfOnce, forceDownloadPdfBlob } from '../utils/specialistBriefDownload'
+import { downloadPdfCrossPlatform, fetchSpecialistPdfOnce } from '../utils/specialistBriefDownload'
 import { goBackToBot } from '../utils/telegram'
 
 type AnswersMap = Record<string, string>
@@ -24,6 +24,7 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [preview, setPreview] = useState<PreviewState | null>(null)
+  const [savingPdf, setSavingPdf] = useState(false)
 
   const total = SPECIALIST_BRIEF_QUESTIONS.length
   const current = SPECIALIST_BRIEF_QUESTIONS[step]
@@ -48,6 +49,18 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
 
   const goNext = () => setStep((s) => Math.min(s + 1, total - 1))
   const goSkip = () => goNext()
+
+  const handleDownloadPdf = async () => {
+    if (!preview || savingPdf) return
+    setSavingPdf(true)
+    try {
+      await downloadPdfCrossPlatform(preview.blob, preview.fileName)
+    } catch {
+      window.Telegram?.WebApp?.showAlert?.('Не удалось сохранить PDF. Попробуй ещё раз или открой мини-приложение в браузере.')
+    } finally {
+      setSavingPdf(false)
+    }
+  }
 
   const handleGenerate = async () => {
     setError(null)
@@ -132,11 +145,12 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
           <div className="flex flex-col gap-2 shrink-0 pt-0.5">
             <button
               type="button"
-              onClick={() => forceDownloadPdfBlob(preview.blob, preview.fileName)}
-              className="w-full py-3.5 rounded-xl btn-premium-glow min-h-[48px] font-semibold"
+              onClick={() => void handleDownloadPdf()}
+              disabled={savingPdf}
+              className="w-full py-3.5 rounded-xl btn-premium-glow min-h-[48px] font-semibold disabled:opacity-60"
               style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
-              Скачать PDF
+              {savingPdf ? 'Сохраняем…' : 'Скачать PDF'}
             </button>
             <button
               type="button"
