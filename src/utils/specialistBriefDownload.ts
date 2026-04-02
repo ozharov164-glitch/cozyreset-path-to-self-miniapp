@@ -54,7 +54,7 @@ function tryAnchorDownload(blob: Blob, safeName: string, mime: string): boolean 
 }
 
 export type DownloadPdfOptions = {
-  /** Публичный HTTPS URL: второй GET после предпросмотра — для Telegram.downloadFile / openLink / повторного fetch */
+  /** Публичный HTTPS URL (до 2 GET после генерации). Если файл уже снят с сервера, перед openLink делаем HEAD → остаётся сохранение из blob. */
   httpsDownloadUrl?: string | null
 }
 
@@ -68,7 +68,17 @@ export async function downloadPdfCrossPlatform(
   options?: DownloadPdfOptions,
 ): Promise<void> {
   const safeName = ensurePdfFileName(fileName)
-  const httpsUrl = (options?.httpsDownloadUrl || '').trim()
+  let httpsUrl = (options?.httpsDownloadUrl || '').trim()
+  if (httpsUrl) {
+    try {
+      const headRes = await fetch(httpsUrl, { method: 'HEAD', cache: 'no-store' })
+      if (headRes.status === 404) {
+        httpsUrl = ''
+      }
+    } catch {
+      /* сеть / CORS — пробуем прежние пути */
+    }
+  }
   const tg = window.Telegram?.WebApp
   const inTg = isTelegramWebApp()
 
