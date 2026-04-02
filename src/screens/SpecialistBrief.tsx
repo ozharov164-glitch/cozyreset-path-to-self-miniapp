@@ -337,17 +337,18 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
           </motion.div>
         )}
 
-        <motion.p
-          className="text-[11px] text-[var(--color-text-secondary)] mt-4 leading-relaxed px-1"
-          initial={reduceMotion ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.15 }}
+        <motion.div
+          className="mt-4 mx-0.5 rounded-2xl border border-[var(--color-lavender)]/45 bg-gradient-to-br from-white/[0.97] via-white/92 to-[rgba(250,248,255,0.94)] shadow-[0_10px_40px_-12px_rgba(90,70,130,0.18),inset_0_1px_0_rgba(255,255,255,0.9)] px-4 py-3.5"
+          initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, duration: 0.35 }}
         >
-          Документ для разговора с психологом или коучем — не диагноз. При остром кризисе вызови скорую (112) или
-          обратись{' '}
-          <span className="text-[var(--color-forest-dark)] font-semibold">на линию доверия</span>.
-          После просмотра можешь скачать PDF — без скачивания при выходе из приложения файл не сохранится.
-        </motion.p>
+          <p className="font-display text-xs leading-relaxed text-[var(--color-text-secondary)] text-center tracking-[0.01em]">
+            Документ для разговора со специалистом — не диагноз. При остром кризисе вызови скорую (112) или обратись{' '}
+            <span className="text-[var(--color-forest-dark)] font-semibold">на линию доверия</span>. После просмотра
+            можешь скачать PDF — без скачивания при выходе из приложения файл не сохранится.
+          </p>
+        </motion.div>
       </div>
     </div>
   )

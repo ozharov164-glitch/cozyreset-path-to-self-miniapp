@@ -18,7 +18,7 @@ export const SPECIALIST_BRIEF_QUESTIONS: { id: string; text: string }[] = [
   },
   {
     id: 'tried_before',
-    text: 'Что ты уже пробовал(а) справляться или менять ситуацию?',
+    text: 'Что ты уже делал(а), чтобы справляться с ситуацией или изменить что-то в ней?',
   },
   {
     id: 'expectations',

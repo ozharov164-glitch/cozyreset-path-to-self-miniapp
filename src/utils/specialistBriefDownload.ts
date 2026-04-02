@@ -25,7 +25,11 @@ function tgAlert(message: string): void {
   }
 }
 
-/** Скачивание через <a download> с запасным MIME и длинным revoke (ПК иногда медленнее). */
+function isTelegramWebApp(): boolean {
+  return typeof window.Telegram?.WebApp !== 'undefined'
+}
+
+/** Скачивание через <a download> (вне Telegram; в TG blob:-ссылки дают диалог «Перейти по ссылке»). */
 function tryAnchorDownload(blob: Blob, safeName: string, mime: string): boolean {
   const b = new Blob([blob], { type: mime })
   const url = URL.createObjectURL(b)
@@ -50,17 +54,13 @@ function tryAnchorDownload(blob: Blob, safeName: string, mime: string): boolean 
 }
 
 export type DownloadPdfOptions = {
-  /** Публичный HTTPS URL второго GET (после предпросмотра) — для Telegram.downloadFile / openLink */
+  /** Публичный HTTPS URL: второй GET после предпросмотра — для Telegram.downloadFile / openLink / повторного fetch */
   httpsDownloadUrl?: string | null
 }
 
-function isInsideTelegramWebApp(): boolean {
-  return typeof window.Telegram?.WebApp !== 'undefined'
-}
-
 /**
- * Кроссплатформенное сохранение PDF: в Telegram — нативное скачивание или открытие HTTPS; иначе «Сохранить как», якорь.
- * Не использует window.open(blob:) внутри Telegram (диалог «Перейти по ссылке» и пустой результат).
+ * Кроссплатформенное сохранение PDF.
+ * В Telegram не вызываем window.open(blob:) и не кликаем по blob:-якорю — только HTTPS или запись с диска через picker.
  */
 export async function downloadPdfCrossPlatform(
   blob: Blob,
@@ -70,10 +70,10 @@ export async function downloadPdfCrossPlatform(
   const safeName = ensurePdfFileName(fileName)
   const httpsUrl = (options?.httpsDownloadUrl || '').trim()
   const tg = window.Telegram?.WebApp
-  const inTg = isInsideTelegramWebApp()
+  const inTg = isTelegramWebApp()
 
-  // 1) Telegram: Bot API 8.0+ — нативная загрузка по HTTPS (без blob)
-  if (httpsUrl && inTg && tg && typeof tg.downloadFile === 'function' && tg.isVersionAtLeast?.('8.0')) {
+  // 1) Bot API 8.0+: нативное скачивание по HTTPS
+  if (httpsUrl && tg && typeof tg.downloadFile === 'function' && tg.isVersionAtLeast?.('8.0')) {
     try {
       await new Promise<void>((resolve, reject) => {
         tg.downloadFile!({ url: httpsUrl, file_name: safeName }, (accepted) => {
@@ -83,17 +83,34 @@ export async function downloadPdfCrossPlatform(
       })
       return
     } catch {
-      // отмена или ошибка — openLink или blob
+      // отмена / ошибка — ниже
     }
   }
 
-  // 2) Telegram Desktop / macOS: внешний браузер по той же ссылке (второй GET — файл ещё на сервере)
-  if (httpsUrl && inTg && tg && typeof tg.openLink === 'function') {
+  // 2) Telegram: системное открытие ссылки (часто внешний браузер с нормальной загрузкой)
+  if (httpsUrl && tg && typeof tg.openLink === 'function') {
     tg.openLink(httpsUrl)
     return
   }
 
-  // 3) Chrome / Edge: системный диалог «Сохранить как»
+  // 3) Обычный браузер / запасной путь: новая вкладка по HTTPS
+  if (httpsUrl) {
+    const opened = window.open(httpsUrl, '_blank', 'noopener,noreferrer')
+    if (opened) return
+  }
+
+  // 4) Второй GET в том же контексте (CORS уже прошёл при предпросмотре) — свежий blob без нового blob:-URL для навигации
+  let outBlob = blob
+  if (httpsUrl) {
+    try {
+      const res = await fetch(httpsUrl, { method: 'GET', cache: 'no-store' })
+      if (res.ok) outBlob = await res.blob()
+    } catch {
+      /* оставляем preview blob */
+    }
+  }
+
+  // 5) Chromium: «Сохранить как» (Telegram Desktop WebView2 часто поддерживает)
   if (typeof window.showSaveFilePicker === 'function') {
     try {
       const handle = await window.showSaveFilePicker({
@@ -106,7 +123,7 @@ export async function downloadPdfCrossPlatform(
         ],
       })
       const writable = await handle.createWritable()
-      await writable.write(await blob.arrayBuffer())
+      await writable.write(await outBlob.arrayBuffer())
       await writable.close()
       return
     } catch (e) {
@@ -114,35 +131,31 @@ export async function downloadPdfCrossPlatform(
     }
   }
 
-  // 4) Старый Edge / IE-режим
   const nav = navigator as Navigator & { msSaveOrOpenBlob?: (b: Blob, name?: string) => boolean }
   if (typeof nav.msSaveOrOpenBlob === 'function') {
-    const ok = nav.msSaveOrOpenBlob(new Blob([blob], { type: 'application/octet-stream' }), safeName)
+    const ok = nav.msSaveOrOpenBlob(new Blob([outBlob], { type: 'application/octet-stream' }), safeName)
     if (ok) return
   }
 
-  // 5) Якорь: сначала «файл», затем явный PDF
-  if (tryAnchorDownload(blob, safeName, 'application/octet-stream')) return
-  if (tryAnchorDownload(blob, safeName, 'application/pdf')) return
-
-  // 6) Вне Telegram: новая вкладка с blob (в TG это даёт бесполезный диалог про blob:)
+  // 6) Якорь / blob-вкладка только вне Telegram
   if (!inTg) {
-    const pdfUrl = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
-    const opened = window.open(pdfUrl, '_blank', 'noopener,noreferrer')
+    if (tryAnchorDownload(outBlob, safeName, 'application/octet-stream')) return
+    if (tryAnchorDownload(outBlob, safeName, 'application/pdf')) return
+    const pdfUrl = URL.createObjectURL(new Blob([outBlob], { type: 'application/pdf' }))
+    const openedPdf = window.open(pdfUrl, '_blank', 'noopener,noreferrer')
     window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 180_000)
-    if (opened) {
+    if (openedPdf) {
       tgAlert('Если загрузка не началась: в новой вкладке нажми Ctrl+S (ПК) или «Сохранить» в меню браузера.')
+      return
+    }
+    if (httpsUrl) {
+      window.open(httpsUrl, '_blank', 'noopener,noreferrer')
       return
     }
   }
 
-  if (httpsUrl && !inTg) {
-    window.open(httpsUrl, '_blank', 'noopener,noreferrer')
-    return
-  }
-
   tgAlert(
-    'Не удалось сохранить PDF из этого окна. Обнови Telegram до последней версии или открой мини-приложение в браузере.',
+    'Не удалось сохранить файл из окна Telegram. Открой мини-приложение в браузере (⋮ → «Открыть в…») или скачай с телефона.',
   )
 }
 
@@ -151,7 +164,7 @@ export function forceDownloadPdfBlob(blob: Blob, fileName: string): void {
   void downloadPdfCrossPlatform(blob, fileName)
 }
 
-/** Один GET по одноразовой ссылке — дальше только blob (предпросмотр + скачивание). */
+/** Первый GET по одноразовой ссылке для предпросмотра (на сервере разрешён второй GET на скачивание). */
 export async function fetchSpecialistPdfOnce(downloadUrl: string): Promise<Blob> {
   const res = await fetch(downloadUrl, { method: 'GET', cache: 'no-store' })
   if (!res.ok) {
