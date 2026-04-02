@@ -29,6 +29,8 @@ export interface TelegramWebApp {
   expand: () => void
   close: () => void
   openTelegramLink: (url: string) => void
+  /** Открыть HTTPS-ссылку во внешнем браузере / системном обработчике */
+  openLink?: (url: string, options?: { try_instant_view?: boolean }) => void
   showAlert: (message: string) => void
   /** Bot API 8.0+ — нативное скачивание по публичному HTTPS URL */
   downloadFile?: (params: TelegramDownloadFileParams, callback?: (accepted: boolean) => void) => void

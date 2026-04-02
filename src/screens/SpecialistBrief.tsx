@@ -15,7 +15,7 @@ interface SpecialistBriefProps {
   onBack: () => void
 }
 
-type PreviewState = { blob: Blob; fileName: string }
+type PreviewState = { blob: Blob; fileName: string; downloadUrl: string }
 
 export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
   const reduceMotion = useReducedMotion()
@@ -54,7 +54,9 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
     if (!preview || savingPdf) return
     setSavingPdf(true)
     try {
-      await downloadPdfCrossPlatform(preview.blob, preview.fileName)
+      await downloadPdfCrossPlatform(preview.blob, preview.fileName, {
+        httpsDownloadUrl: preview.downloadUrl,
+      })
     } catch {
       window.Telegram?.WebApp?.showAlert?.('Не удалось сохранить PDF. Попробуй ещё раз или открой мини-приложение в браузере.')
     } finally {
@@ -89,6 +91,7 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
       setPreview({
         blob,
         fileName: res.fileName || 'k-specialistu-cozyreset.pdf',
+        downloadUrl: res.downloadUrl,
       })
     } finally {
       setBusy(false)
@@ -126,8 +129,9 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
           <div className="rounded-2xl border border-amber-200/90 bg-gradient-to-br from-amber-50/95 to-orange-50/80 px-3.5 py-2.5 mb-2 shadow-sm shrink-0">
             <p className="text-xs font-semibold text-amber-950/90 leading-snug mb-1">Файл одноразовый</p>
             <p className="text-[11px] text-amber-950/80 leading-relaxed">
-              После выхода из мини-приложения PDF у нас не сохраняется — нажми «Скачать PDF», чтобы сохранить на устройство.
-              Ссылка на сервер уже использована для этого экрана.
+              После выхода из мини-приложения PDF у нас не хранится — нажми «Скачать PDF». На компьютере в Telegram файл
+              чаще сохраняется через системное окно или браузер по той же защищённой ссылке (второй запрос после
+              предпросмотра).
             </p>
           </div>
 

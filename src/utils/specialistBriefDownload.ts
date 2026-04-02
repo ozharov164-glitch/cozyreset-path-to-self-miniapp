@@ -49,14 +49,51 @@ function tryAnchorDownload(blob: Blob, safeName: string, mime: string): boolean 
   }
 }
 
-/**
- * Кроссплатформенное сохранение PDF: Chromium «Сохранить как», legacy Edge, якорь, новая вкладка.
- * Работает из жеста пользователя (кнопка); на ПК в Telegram Desktop предпочтителен File System Access API.
- */
-export async function downloadPdfCrossPlatform(blob: Blob, fileName: string): Promise<void> {
-  const safeName = ensurePdfFileName(fileName)
+export type DownloadPdfOptions = {
+  /** Публичный HTTPS URL второго GET (после предпросмотра) — для Telegram.downloadFile / openLink */
+  httpsDownloadUrl?: string | null
+}
 
-  // 1) Chrome / Edge / Telegram Desktop (WebView2): системный диалог «Сохранить как»
+function isInsideTelegramWebApp(): boolean {
+  return typeof window.Telegram?.WebApp !== 'undefined'
+}
+
+/**
+ * Кроссплатформенное сохранение PDF: в Telegram — нативное скачивание или открытие HTTPS; иначе «Сохранить как», якорь.
+ * Не использует window.open(blob:) внутри Telegram (диалог «Перейти по ссылке» и пустой результат).
+ */
+export async function downloadPdfCrossPlatform(
+  blob: Blob,
+  fileName: string,
+  options?: DownloadPdfOptions,
+): Promise<void> {
+  const safeName = ensurePdfFileName(fileName)
+  const httpsUrl = (options?.httpsDownloadUrl || '').trim()
+  const tg = window.Telegram?.WebApp
+  const inTg = isInsideTelegramWebApp()
+
+  // 1) Telegram: Bot API 8.0+ — нативная загрузка по HTTPS (без blob)
+  if (httpsUrl && inTg && tg && typeof tg.downloadFile === 'function' && tg.isVersionAtLeast?.('8.0')) {
+    try {
+      await new Promise<void>((resolve, reject) => {
+        tg.downloadFile!({ url: httpsUrl, file_name: safeName }, (accepted) => {
+          if (accepted) resolve()
+          else reject(new Error('tg-download-declined'))
+        })
+      })
+      return
+    } catch {
+      // отмена или ошибка — openLink или blob
+    }
+  }
+
+  // 2) Telegram Desktop / macOS: внешний браузер по той же ссылке (второй GET — файл ещё на сервере)
+  if (httpsUrl && inTg && tg && typeof tg.openLink === 'function') {
+    tg.openLink(httpsUrl)
+    return
+  }
+
+  // 3) Chrome / Edge: системный диалог «Сохранить как»
   if (typeof window.showSaveFilePicker === 'function') {
     try {
       const handle = await window.showSaveFilePicker({
@@ -77,27 +114,36 @@ export async function downloadPdfCrossPlatform(blob: Blob, fileName: string): Pr
     }
   }
 
-  // 2) Старый Edge / IE-режим
+  // 4) Старый Edge / IE-режим
   const nav = navigator as Navigator & { msSaveOrOpenBlob?: (b: Blob, name?: string) => boolean }
   if (typeof nav.msSaveOrOpenBlob === 'function') {
     const ok = nav.msSaveOrOpenBlob(new Blob([blob], { type: 'application/octet-stream' }), safeName)
     if (ok) return
   }
 
-  // 3) Универсальный якорь: сначала «файл», затем явный PDF
+  // 5) Якорь: сначала «файл», затем явный PDF
   if (tryAnchorDownload(blob, safeName, 'application/octet-stream')) return
   if (tryAnchorDownload(blob, safeName, 'application/pdf')) return
 
-  // 4) Новая вкладка — пользователь сохраняет через Ctrl+S / меню (часть десктопов блокирует download)
-  const pdfUrl = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
-  const opened = window.open(pdfUrl, '_blank', 'noopener,noreferrer')
-  window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 180_000)
-  if (opened) {
-    tgAlert('Если загрузка не началась: в новой вкладке нажми Ctrl+S (ПК) или «Сохранить» в меню браузера.')
+  // 6) Вне Telegram: новая вкладка с blob (в TG это даёт бесполезный диалог про blob:)
+  if (!inTg) {
+    const pdfUrl = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
+    const opened = window.open(pdfUrl, '_blank', 'noopener,noreferrer')
+    window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 180_000)
+    if (opened) {
+      tgAlert('Если загрузка не началась: в новой вкладке нажми Ctrl+S (ПК) или «Сохранить» в меню браузера.')
+      return
+    }
+  }
+
+  if (httpsUrl && !inTg) {
+    window.open(httpsUrl, '_blank', 'noopener,noreferrer')
     return
   }
 
-  tgAlert('Не удалось сохранить PDF. Открой мини-приложение во внешнем браузере или с телефона.')
+  tgAlert(
+    'Не удалось сохранить PDF из этого окна. Обнови Telegram до последней версии или открой мини-приложение в браузере.',
+  )
 }
 
 /** @deprecated используй downloadPdfCrossPlatform */
