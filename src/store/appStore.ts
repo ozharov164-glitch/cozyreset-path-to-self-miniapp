@@ -10,6 +10,7 @@ export type Screen =
   | 'selfRealization'
   | 'statistics'
   | 'specialistBrief'
+  | 'therapyMap'
 
 interface AppState {
   screen: Screen

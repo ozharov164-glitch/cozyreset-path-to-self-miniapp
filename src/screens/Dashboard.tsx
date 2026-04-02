@@ -186,6 +186,42 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
           </motion.div>
         )}
 
+        {authReady && appSaveToken && (
+          <motion.div
+            className="card-premium p-5 mb-4"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.42, delay: 0.035, ease: [0.25, 0.46, 0.45, 0.94] }}
+          >
+            <h3 className="font-display text-base font-bold text-[var(--color-text-primary)] mb-1.5 flex items-center gap-2 tracking-tight">
+              <span aria-hidden className="select-none">
+                🗺️
+              </span>
+              Карта терапии
+            </h3>
+            <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
+              Границы, ценности и пожелания к формату работы — связный PDF для психолога или коуча. Не про симптомы, а
+              про то, как с тобой комфортнее быть в процессе.
+            </p>
+            {isPremium === true ? (
+              <button
+                type="button"
+                onClick={() => useAppStore.getState().setScreen('therapyMap')}
+                className="w-full py-3.5 px-4 rounded-xl btn-premium-glow min-h-[48px] font-semibold"
+                style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+              >
+                Собрать карту
+              </button>
+            ) : isPremium === false ? (
+              <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
+                Доступно с Премиум — оформи подписку в боте 💛
+              </p>
+            ) : (
+              <p className="text-sm text-[var(--color-text-secondary)]">Проверяем доступ…</p>
+            )}
+          </motion.div>
+        )}
+
         <motion.div
           className="card-premium p-5 mb-4 shadow-[0_8px_32px_-6px_rgba(100,80,140,0.14)] border border-white/80"
           initial={{ opacity: 0, y: 12 }}

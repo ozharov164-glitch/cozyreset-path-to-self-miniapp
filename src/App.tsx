@@ -18,6 +18,7 @@ import { VoiceSupport } from './screens/VoiceSupport'
 import { SelfRealization } from './screens/SelfRealization'
 import { StatisticsPage } from './screens/StatisticsPage'
 import { SpecialistBrief } from './screens/SpecialistBrief'
+import { TherapyMap } from './screens/TherapyMap'
 import { useAppStore } from './store/appStore'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
 
@@ -108,6 +109,7 @@ function AppContent() {
         {screen === 'selfRealization' && <SelfRealization onBack={() => setScreen('dashboard')} />}
         {screen === 'statistics' && <StatisticsPage onBack={() => setScreen('dashboard')} />}
         {screen === 'specialistBrief' && <SpecialistBrief onBack={() => setScreen('dashboard')} />}
+        {screen === 'therapyMap' && <TherapyMap onBack={() => setScreen('dashboard')} />}
         {screen === 'dashboard' && (
           <Dashboard onOpenCatalog={() => setScreen('catalog')} onOpenHistory={() => setScreen('history')} />
         )}
