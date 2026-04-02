@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { SpecialistBriefPdfPreview } from '../components/SpecialistBriefPdfPreview'
 import { SPECIALIST_BRIEF_QUESTIONS } from '../data/specialistBriefQuestions'
 import { apiSpecialistBriefGenerate } from '../api/client'
-import { downloadPdfCrossPlatform, fetchSpecialistPdfOnce } from '../utils/specialistBriefDownload'
+import { downloadPdfCrossPlatform, fetchSpecialistPdfOnce, pdfBlobFromBase64 } from '../utils/specialistBriefDownload'
 import { goBackToBot } from '../utils/telegram'
 
 type AnswersMap = Record<string, string>
@@ -83,7 +83,9 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
       }
       let blob: Blob
       try {
-        blob = await fetchSpecialistPdfOnce(res.downloadUrl)
+        blob = res.previewPdfBase64
+          ? pdfBlobFromBase64(res.previewPdfBase64)
+          : await fetchSpecialistPdfOnce(res.downloadUrl)
       } catch {
         setError('Не удалось загрузить PDF для просмотра. Попробуй сформировать ещё раз.')
         return

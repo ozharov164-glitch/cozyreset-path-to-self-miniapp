@@ -623,7 +623,7 @@ export async function apiCommunityPulse(): Promise<CommunityPulseResponse> {
 const SPECIALIST_BRIEF_GENERATE_TIMEOUT_MS = 240000
 
 export type SpecialistBriefGenerateResult =
-  | { downloadUrl: string; fileName: string; aiGenerated: boolean }
+  | { downloadUrl: string; fileName: string; aiGenerated: boolean; previewPdfBase64?: string }
   | { error: string; status?: number; premium_required?: boolean }
 
 /** Анкета «К специалисту» → PDF (премиум; ИИ — DeepSeek через бэкенд при наличии ключа). */
@@ -662,10 +662,15 @@ export async function apiSpecialistBriefGenerate(
     if (!downloadUrl) {
       return { error: 'Пустой ответ сервера', status: res.status }
     }
+    const previewPdfBase64 =
+      typeof data.previewPdfBase64 === 'string' && data.previewPdfBase64.length > 100
+        ? data.previewPdfBase64
+        : undefined
     return {
       downloadUrl,
       fileName,
       aiGenerated: !!data.aiGenerated,
+      ...(previewPdfBase64 ? { previewPdfBase64 } : {}),
     }
   } catch (e) {
     if (e instanceof Error && e.name === 'AbortError') {
@@ -684,7 +689,13 @@ export async function apiSpecialistBriefGenerate(
 const THERAPY_MAP_GENERATE_TIMEOUT_MS = 240000
 
 export type TherapyMapGenerateResult =
-  | { downloadUrl: string; fileName: string; aiGenerated: boolean; exportMode?: string }
+  | {
+      downloadUrl: string
+      fileName: string
+      aiGenerated: boolean
+      exportMode?: string
+      previewPdfBase64?: string
+    }
   | { error: string; status?: number; premium_required?: boolean }
 
 /** «Карта терапии» → PDF (премиум; DeepSeek через бэкенд). */
@@ -732,11 +743,16 @@ export async function apiTherapyMapGenerate(payload: {
     if (!downloadUrl) {
       return { error: 'Пустой ответ сервера', status: res.status }
     }
+    const previewB64 =
+      typeof data.previewPdfBase64 === 'string' && data.previewPdfBase64.length > 100
+        ? data.previewPdfBase64
+        : undefined
     return {
       downloadUrl,
       fileName,
       aiGenerated: !!data.aiGenerated,
       exportMode: typeof data.exportMode === 'string' ? data.exportMode : undefined,
+      ...(previewB64 ? { previewPdfBase64: previewB64 } : {}),
     }
   } catch (e) {
     if (e instanceof Error && e.name === 'AbortError') {

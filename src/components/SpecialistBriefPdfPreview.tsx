@@ -8,10 +8,12 @@ pdfjs.GlobalWorkerOptions.workerSrc = workerSrc
 
 type Props = {
   file: Blob
+  /** Без текстового слоя — быстрее на телефонах в WebView (предпросмотр). */
+  fastRender?: boolean
 }
 
 /** Полный предпросмотр: все страницы подряд, прокрутка как у длинного документа. */
-export function SpecialistBriefPdfPreview({ file }: Props) {
+export function SpecialistBriefPdfPreview({ file, fastRender = true }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const [pageWidth, setPageWidth] = useState(340)
   const [numPages, setNumPages] = useState<number | null>(null)
@@ -55,8 +57,8 @@ export function SpecialistBriefPdfPreview({ file }: Props) {
               <Page
                 pageNumber={i + 1}
                 width={pageWidth}
-                renderTextLayer
-                renderAnnotationLayer
+                renderTextLayer={!fastRender}
+                renderAnnotationLayer={!fastRender}
                 className="!bg-white"
               />
             </div>

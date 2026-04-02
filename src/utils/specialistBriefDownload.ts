@@ -182,3 +182,12 @@ export async function fetchSpecialistPdfOnce(downloadUrl: string): Promise<Blob>
   }
   return res.blob()
 }
+
+/** Предпросмотр без второго HTTP: сервер кладёт PDF в ответ generate (base64, до ~900 КБ файла). */
+export function pdfBlobFromBase64(b64: string): Blob {
+  const s = (b64 || '').replace(/\s/g, '')
+  const binary = atob(s)
+  const arr = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i)
+  return new Blob([arr], { type: 'application/pdf' })
+}
