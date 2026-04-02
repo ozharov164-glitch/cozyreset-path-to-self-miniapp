@@ -125,7 +125,7 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
             <p className="text-xs font-semibold text-amber-950/90 leading-snug mb-1.5">Файл одноразовый</p>
             <p className="text-[11px] text-amber-950/80 leading-relaxed">
               После выхода из мини-приложения PDF у нас не сохраняется — скачай на устройство, если хочешь открыть позже.
-              Ссылка на сервере действует только для этого просмотра и одной загрузки.
+              Ссылка на сервере срабатывает один раз: мы уже забрали файл для этого экрана.
             </p>
           </div>
 
