@@ -239,7 +239,7 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
               className="w-full py-3.5 rounded-xl btn-premium-glow min-h-[48px] font-semibold disabled:opacity-50"
               style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
-              {busy ? 'Формируем PDF…' : 'Скачать PDF'}
+              {busy ? 'Формируем PDF… до 2–3 мин' : 'Скачать PDF'}
             </button>
           </motion.div>
         )}

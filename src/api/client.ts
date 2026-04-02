@@ -619,7 +619,8 @@ export async function apiCommunityPulse(): Promise<CommunityPulseResponse> {
   return { error: 'Некорректный ответ' }
 }
 
-const SPECIALIST_BRIEF_GENERATE_TIMEOUT_MS = 120000
+/** LLM + PDF + nginx до первого байта — запас против 504 при медленной модели */
+const SPECIALIST_BRIEF_GENERATE_TIMEOUT_MS = 240000
 
 export type SpecialistBriefGenerateResult =
   | { downloadUrl: string; fileName: string; aiGenerated: boolean }
@@ -668,7 +669,11 @@ export async function apiSpecialistBriefGenerate(
     }
   } catch (e) {
     if (e instanceof Error && e.name === 'AbortError') {
-      return { error: 'Превышено время ожидания. Попробуй ещё раз.', status: 0 }
+      return {
+        error:
+          'Сервер долго формировал PDF (иногда до 2–3 минут). Подожди и попробуй ещё раз — таймаут увеличен.',
+        status: 0,
+      }
     }
     return { error: 'Нет связи с сервером', status: 0 }
   } finally {
