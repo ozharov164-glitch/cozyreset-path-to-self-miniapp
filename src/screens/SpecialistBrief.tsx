@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
+import { SpecialistBriefPdfPreview } from '../components/SpecialistBriefPdfPreview'
 import { SPECIALIST_BRIEF_QUESTIONS } from '../data/specialistBriefQuestions'
 import { apiSpecialistBriefGenerate } from '../api/client'
-import { downloadPdfBlob, fetchSpecialistPdfOnce } from '../utils/specialistBriefDownload'
+import { fetchSpecialistPdfOnce, forceDownloadPdfBlob } from '../utils/specialistBriefDownload'
 import { goBackToBot } from '../utils/telegram'
 
 type AnswersMap = Record<string, string>
@@ -14,7 +15,7 @@ interface SpecialistBriefProps {
   onBack: () => void
 }
 
-type PreviewState = { blob: Blob; objectUrl: string; fileName: string }
+type PreviewState = { blob: Blob; fileName: string }
 
 export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
   const reduceMotion = useReducedMotion()
@@ -38,16 +39,7 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
 
   const cardTransition = reduceMotion ? { duration: 0 } : { duration: 0.42, ease: [0.22, 1, 0.36, 1] as const }
 
-  useEffect(() => {
-    return () => {
-      if (preview?.objectUrl) URL.revokeObjectURL(preview.objectUrl)
-    }
-  }, [preview?.objectUrl])
-
-  const clearPreview = () => {
-    if (preview?.objectUrl) URL.revokeObjectURL(preview.objectUrl)
-    setPreview(null)
-  }
+  const clearPreview = () => setPreview(null)
 
   const setCurrentAnswer = (v: string) => {
     if (!current) return
@@ -81,11 +73,8 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
         setError('Не удалось загрузить PDF для просмотра. Попробуй сформировать ещё раз.')
         return
       }
-      if (preview?.objectUrl) URL.revokeObjectURL(preview.objectUrl)
-      const objectUrl = URL.createObjectURL(blob)
       setPreview({
         blob,
-        objectUrl,
         fileName: res.fileName || 'k-specialistu-cozyreset.pdf',
       })
     } finally {
@@ -97,8 +86,8 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
 
   if (preview) {
     return (
-      <div className="min-h-screen flex flex-col safe-area relative overflow-x-hidden">
-        <header className="relative z-[2] card-premium h-14 flex items-center justify-between px-4 mb-3 rounded-2xl shrink-0">
+      <div className="h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden safe-area relative w-full">
+        <header className="relative z-[2] card-premium h-14 flex items-center justify-between px-4 mb-2 rounded-2xl shrink-0 mx-3 mt-1">
           <button
             type="button"
             onClick={() => clearPreview()}
@@ -108,7 +97,7 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
             ← К анкете
           </button>
           <h1 className="font-display text-sm font-bold text-[var(--color-text-primary)] tracking-tight text-center px-1">
-            Предпросмотр PDF
+            Предпросмотр
           </h1>
           <button
             type="button"
@@ -120,30 +109,30 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
           </button>
         </header>
 
-        <div className="relative z-[1] flex-1 flex flex-col max-w-[420px] mx-auto w-full px-3 pb-6 min-h-0">
-          <div className="rounded-2xl border border-amber-200/90 bg-gradient-to-br from-amber-50/95 to-orange-50/80 px-3.5 py-3 mb-3 shadow-sm">
-            <p className="text-xs font-semibold text-amber-950/90 leading-snug mb-1.5">Файл одноразовый</p>
+        <div className="relative z-[1] flex-1 flex flex-col min-h-0 max-w-[420px] w-full mx-auto px-3 pb-3">
+          <div className="rounded-2xl border border-amber-200/90 bg-gradient-to-br from-amber-50/95 to-orange-50/80 px-3.5 py-2.5 mb-2 shadow-sm shrink-0">
+            <p className="text-xs font-semibold text-amber-950/90 leading-snug mb-1">Файл одноразовый</p>
             <p className="text-[11px] text-amber-950/80 leading-relaxed">
-              После выхода из мини-приложения PDF у нас не сохраняется — скачай на устройство, если хочешь открыть позже.
-              Ссылка на сервере срабатывает один раз: мы уже забрали файл для этого экрана.
+              После выхода из мини-приложения PDF у нас не сохраняется — нажми «Скачать PDF», чтобы сохранить на устройство.
+              Ссылка на сервер уже использована для этого экрана.
             </p>
           </div>
 
-          <div className="flex-1 min-h-[42vh] rounded-2xl border border-[var(--color-lavender)]/35 bg-white/90 overflow-hidden shadow-inner mb-3">
-            <iframe
-              title="Предпросмотр PDF"
-              src={preview.objectUrl}
-              className="w-full h-full min-h-[42vh] border-0 bg-neutral-100"
-            />
+          <div
+            className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain rounded-2xl border border-[var(--color-lavender)]/35 bg-[rgba(255,255,255,0.92)] shadow-inner px-2 py-3 mb-2"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            <SpecialistBriefPdfPreview file={preview.blob} />
           </div>
-          <p className="text-[11px] text-[var(--color-text-secondary)] mb-3 px-0.5">
-            Не отображается встроенный просмотр? Нажми «Скачать PDF» — откроется в системном приложении.
+
+          <p className="text-[11px] text-[var(--color-text-secondary)] mb-2 px-0.5 shrink-0 leading-relaxed">
+            Листай весь документ выше — все страницы подряд. Кнопка «Скачать PDF» сразу запускает сохранение файла (как раньше из бота).
           </p>
 
-          <div className="flex flex-col gap-2 mt-auto">
+          <div className="flex flex-col gap-2 shrink-0 pt-0.5">
             <button
               type="button"
-              onClick={() => downloadPdfBlob(preview.blob, preview.fileName)}
+              onClick={() => forceDownloadPdfBlob(preview.blob, preview.fileName)}
               className="w-full py-3.5 rounded-xl btn-premium-glow min-h-[48px] font-semibold"
               style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >

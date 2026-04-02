@@ -1,19 +1,29 @@
-/** Скачивание PDF с устройства (blob — надёжно при одноразовой ссылке с сервера). */
-export function downloadPdfBlob(blob: Blob, fileName: string): void {
+/** Принудительное скачивание файла (как «Сохранить»), а не открытие во встроенном просмотрщике. */
+export function forceDownloadPdfBlob(blob: Blob, fileName: string): void {
   const tg = typeof window !== 'undefined' ? window.Telegram?.WebApp : undefined
-  const url = URL.createObjectURL(blob)
+  const name = (fileName || 'k-specialistu-cozyreset.pdf').trim()
+  const safeName = name.toLowerCase().endsWith('.pdf') ? name : `${name}.pdf`
+
+  const octet = new Blob([blob], { type: 'application/octet-stream' })
+  const url = URL.createObjectURL(octet)
+
   try {
     const a = document.createElement('a')
     a.href = url
-    a.download = fileName || 'k-specialistu-cozyreset.pdf'
+    a.download = safeName
+    a.setAttribute('download', safeName)
     a.rel = 'noopener'
+    a.style.display = 'none'
     document.body.appendChild(a)
     a.click()
-    a.remove()
+    requestAnimationFrame(() => {
+      a.remove()
+      URL.revokeObjectURL(url)
+    })
   } catch {
-    tg?.showAlert?.('Не удалось сохранить файл. Попробуй ещё раз.')
+    URL.revokeObjectURL(url)
+    tg?.showAlert?.('Не удалось начать скачивание. Попробуй ещё раз или открой из «Файлов».')
   }
-  window.setTimeout(() => URL.revokeObjectURL(url), 90_000)
 }
 
 /** Один GET по одноразовой ссылке — дальше только blob (предпросмотр + скачивание). */
