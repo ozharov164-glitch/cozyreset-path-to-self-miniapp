@@ -200,8 +200,8 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
               Карта терапии
             </h3>
             <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
-              Границы, ценности и пожелания к формату работы — связный PDF для психолога или коуча. Не про симптомы, а
-              про то, как с тобой комфортнее быть в процессе.
+              Темп, границы, опоры и пожелания к формату — связный PDF для психолога или коуча. Не про симптомы, а про
+              то, как тебе спокойнее в процессе.
             </p>
             {isPremium === true ? (
               <button

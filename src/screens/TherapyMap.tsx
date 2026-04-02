@@ -401,13 +401,15 @@ export function TherapyMap({ onBack }: TherapyMapProps) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={spring}
                 >
-                  Это не про «с чем пришёл», а про то, <strong className="text-[var(--color-forest-dark)]">как</strong>{' '}
-                  тебе комфортно работать с психологом или коучем: границы, темп, опоры. Документ можно принести на приём.
+                  Здесь не нужно описывать «с чем пришёл» — это про то,{' '}
+                  <strong className="text-[var(--color-forest-dark)]">как</strong> тебе комфортно в процессе: с какой
+                  скоростью говорить, какие темы пока не трогать, от чего берёшь опору. Готовый текст можно принести на
+                  приём.
                 </motion.p>
               )}
 
               <motion.h2
-                className="font-display text-base font-bold text-[var(--color-text-primary)] mb-4 leading-snug"
+                className="font-display text-base font-bold text-[var(--color-text-primary)] mb-4 leading-snug whitespace-pre-line"
                 initial={reduceMotion ? false : { opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ ...spring, delay: reduceMotion ? 0 : 0.04 }}
@@ -423,7 +425,7 @@ export function TherapyMap({ onBack }: TherapyMapProps) {
                 <textarea
                   value={answers[current?.id || ''] || ''}
                   onChange={(e) => setCurrentAnswer(e.target.value)}
-                  placeholder="Напиши так, как тебе комфортно…"
+                  placeholder="Можно коротко или развёрнуто — как удобнее…"
                   maxLength={2000}
                   rows={6}
                   className="w-full rounded-xl border border-[var(--color-lavender)]/45 bg-white/90 px-3 py-3 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]/70 resize-y min-h-[140px] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] focus:outline-none focus:ring-2 focus:ring-[var(--color-glow-teal)]/35 focus:border-[var(--color-glow-teal)]/50 transition-shadow duration-200"
