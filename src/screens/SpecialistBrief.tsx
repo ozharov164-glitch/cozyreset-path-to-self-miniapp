@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { SPECIALIST_BRIEF_QUESTIONS } from '../data/specialistBriefQuestions'
 import { apiSpecialistBriefGenerate } from '../api/client'
-import { downloadSpecialistPdf } from '../utils/specialistBriefDownload'
+import { downloadPdfBlob, fetchSpecialistPdfOnce } from '../utils/specialistBriefDownload'
 import { goBackToBot } from '../utils/telegram'
 
 type AnswersMap = Record<string, string>
@@ -14,12 +14,15 @@ interface SpecialistBriefProps {
   onBack: () => void
 }
 
+type PreviewState = { blob: Blob; objectUrl: string; fileName: string }
+
 export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
   const reduceMotion = useReducedMotion()
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState<AnswersMap>(initialAnswers)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [preview, setPreview] = useState<PreviewState | null>(null)
 
   const total = SPECIALIST_BRIEF_QUESTIONS.length
   const current = SPECIALIST_BRIEF_QUESTIONS[step]
@@ -34,6 +37,17 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
     : { type: 'spring' as const, stiffness: 420, damping: 32, mass: 0.85 }
 
   const cardTransition = reduceMotion ? { duration: 0 } : { duration: 0.42, ease: [0.22, 1, 0.36, 1] as const }
+
+  useEffect(() => {
+    return () => {
+      if (preview?.objectUrl) URL.revokeObjectURL(preview.objectUrl)
+    }
+  }, [preview?.objectUrl])
+
+  const clearPreview = () => {
+    if (preview?.objectUrl) URL.revokeObjectURL(preview.objectUrl)
+    setPreview(null)
+  }
 
   const setCurrentAnswer = (v: string) => {
     if (!current) return
@@ -60,15 +74,20 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
         setError(res.error)
         return
       }
-      downloadSpecialistPdf(res.downloadUrl, res.fileName)
-      const tg = window.Telegram?.WebApp
-      if (res.aiGenerated) {
-        tg?.showAlert?.('PDF готов. В документе — твои ответы и сжатый текст для разговора со специалистом.')
-      } else {
-        tg?.showAlert?.(
-          'PDF готов с твоими ответами. Сейчас оформление ИИ недоступно — при следующем разе попробуй снова.',
-        )
+      let blob: Blob
+      try {
+        blob = await fetchSpecialistPdfOnce(res.downloadUrl)
+      } catch {
+        setError('Не удалось загрузить PDF для просмотра. Попробуй сформировать ещё раз.')
+        return
       }
+      if (preview?.objectUrl) URL.revokeObjectURL(preview.objectUrl)
+      const objectUrl = URL.createObjectURL(blob)
+      setPreview({
+        blob,
+        objectUrl,
+        fileName: res.fileName || 'k-specialistu-cozyreset.pdf',
+      })
     } finally {
       setBusy(false)
     }
@@ -76,9 +95,76 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
 
   const progress = ((step + 1) / total) * 100
 
+  if (preview) {
+    return (
+      <div className="min-h-screen flex flex-col safe-area relative overflow-x-hidden">
+        <header className="relative z-[2] card-premium h-14 flex items-center justify-between px-4 mb-3 rounded-2xl shrink-0">
+          <button
+            type="button"
+            onClick={() => clearPreview()}
+            className="min-h-[44px] min-w-[52px] flex items-center justify-center py-2 px-3 -my-1 -ml-1 rounded-xl text-sm font-semibold text-[var(--color-forest-dark)]"
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+          >
+            ← К анкете
+          </button>
+          <h1 className="font-display text-sm font-bold text-[var(--color-text-primary)] tracking-tight text-center px-1">
+            Предпросмотр PDF
+          </h1>
+          <button
+            type="button"
+            onClick={() => goBackToBot()}
+            className="min-h-[44px] text-xs font-medium text-[var(--color-glow-teal)] px-2"
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+          >
+            В бота
+          </button>
+        </header>
+
+        <div className="relative z-[1] flex-1 flex flex-col max-w-[420px] mx-auto w-full px-3 pb-6 min-h-0">
+          <div className="rounded-2xl border border-amber-200/90 bg-gradient-to-br from-amber-50/95 to-orange-50/80 px-3.5 py-3 mb-3 shadow-sm">
+            <p className="text-xs font-semibold text-amber-950/90 leading-snug mb-1.5">Файл одноразовый</p>
+            <p className="text-[11px] text-amber-950/80 leading-relaxed">
+              После выхода из мини-приложения PDF у нас не сохраняется — скачай на устройство, если хочешь открыть позже.
+              Ссылка на сервере действует только для этого просмотра и одной загрузки.
+            </p>
+          </div>
+
+          <div className="flex-1 min-h-[42vh] rounded-2xl border border-[var(--color-lavender)]/35 bg-white/90 overflow-hidden shadow-inner mb-3">
+            <iframe
+              title="Предпросмотр PDF"
+              src={preview.objectUrl}
+              className="w-full h-full min-h-[42vh] border-0 bg-neutral-100"
+            />
+          </div>
+          <p className="text-[11px] text-[var(--color-text-secondary)] mb-3 px-0.5">
+            Не отображается встроенный просмотр? Нажми «Скачать PDF» — откроется в системном приложении.
+          </p>
+
+          <div className="flex flex-col gap-2 mt-auto">
+            <button
+              type="button"
+              onClick={() => downloadPdfBlob(preview.blob, preview.fileName)}
+              className="w-full py-3.5 rounded-xl btn-premium-glow min-h-[48px] font-semibold"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            >
+              Скачать PDF
+            </button>
+            <button
+              type="button"
+              onClick={() => clearPreview()}
+              className="w-full py-3 rounded-xl btn-secondary min-h-[48px] font-semibold text-[var(--color-text-primary)]"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            >
+              Закрыть без скачивания
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex flex-col safe-area relative overflow-x-hidden">
-      {/* Локальные «блики» для экрана (поверх AmbientBackground) */}
       {!reduceMotion && (
         <>
           <motion.div
@@ -239,7 +325,7 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
               className="w-full py-3.5 rounded-xl btn-premium-glow min-h-[48px] font-semibold disabled:opacity-50"
               style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
-              {busy ? 'Формируем PDF… до 2–3 мин' : 'Скачать PDF'}
+              {busy ? 'Формируем PDF… до 2–3 мин' : 'Сформировать и посмотреть'}
             </button>
           </motion.div>
         )}
@@ -253,6 +339,7 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
           Документ для разговора с психологом или коучем — не диагноз. При остром кризисе вызови скорую (112) или
           обратись{' '}
           <span className="text-[var(--color-forest-dark)] font-semibold">на линию доверия</span>.
+          После просмотра можешь скачать PDF — без скачивания при выходе из приложения файл не сохранится.
         </motion.p>
       </div>
     </div>

@@ -1,31 +1,26 @@
-/** Скачивание PDF: Telegram.downloadFile (Bot API 8.0+) или blob fallback. */
-export function downloadSpecialistPdf(downloadUrl: string, fileName: string): void {
+/** Скачивание PDF с устройства (blob — надёжно при одноразовой ссылке с сервера). */
+export function downloadPdfBlob(blob: Blob, fileName: string): void {
   const tg = typeof window !== 'undefined' ? window.Telegram?.WebApp : undefined
-  if (tg?.downloadFile) {
-    try {
-      tg.downloadFile({ url: downloadUrl, file_name: fileName })
-      return
-    } catch {
-      // fallback ниже
-    }
+  const url = URL.createObjectURL(blob)
+  try {
+    const a = document.createElement('a')
+    a.href = url
+    a.download = fileName || 'k-specialistu-cozyreset.pdf'
+    a.rel = 'noopener'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+  } catch {
+    tg?.showAlert?.('Не удалось сохранить файл. Попробуй ещё раз.')
   }
-  void fetch(downloadUrl, { method: 'GET' })
-    .then((res) => {
-      if (!res.ok) throw new Error(String(res.status))
-      return res.blob()
-    })
-    .then((blob) => {
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = fileName || 'k-specialistu.pdf'
-      a.rel = 'noopener'
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
-    })
-    .catch(() => {
-      tg?.showAlert?.('Не удалось скачать файл. Открой ссылку в браузере или попробуй позже.')
-    })
+  window.setTimeout(() => URL.revokeObjectURL(url), 90_000)
+}
+
+/** Один GET по одноразовой ссылке — дальше только blob (предпросмотр + скачивание). */
+export async function fetchSpecialistPdfOnce(downloadUrl: string): Promise<Blob> {
+  const res = await fetch(downloadUrl, { method: 'GET', cache: 'no-store' })
+  if (!res.ok) {
+    throw new Error(`pdf ${res.status}`)
+  }
+  return res.blob()
 }
