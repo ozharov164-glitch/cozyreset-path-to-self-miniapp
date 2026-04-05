@@ -178,7 +178,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
               </button>
             ) : isPremium === false ? (
               <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-                Доступно с Премиум — оформи подписку в боте через «Тарифы» или кнопку в меню 💛
+                Доступно с премиум-подпиской — оформи её в боте через «Тарифы» или кнопку в меню 💛
               </p>
             ) : (
               <p className="text-sm text-[var(--color-text-secondary)]">Проверяем доступ…</p>
@@ -214,7 +214,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
               </button>
             ) : isPremium === false ? (
               <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-                Доступно с Премиум — оформи подписку в боте 💛
+                Доступно с премиум-подпиской — оформи её в боте 💛
               </p>
             ) : (
               <p className="text-sm text-[var(--color-text-secondary)]">Проверяем доступ…</p>
