@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { useEffect, type ComponentType } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../store/authStore'
 import {
@@ -14,6 +14,17 @@ import {
 import { useAppStore } from '../store/appStore'
 import { goBackToBot, copyQuestionToClipboard } from '../utils/telegram'
 import { CommunityPulse } from '../components/CommunityPulse'
+import { PremiumCard } from '../components/PremiumCard'
+import {
+  IconChart,
+  IconHeartLine,
+  IconLayers,
+  IconMic,
+  IconMapPin,
+  IconPulse,
+  IconSparkle,
+  IconSprout,
+} from '../components/FeatureIcons'
 
 interface DashboardProps {
   onOpenCatalog: () => void
@@ -35,8 +46,26 @@ function formatDateWithTime(iso: string): string {
   }
 }
 
+function CardHeading({
+  icon: Icon,
+  title,
+  iconClassName,
+}: {
+  icon: ComponentType<{ className?: string }>
+  title: string
+  iconClassName: string
+}) {
+  return (
+    <h3 className="font-display text-base font-bold text-[var(--color-text-primary)] mb-1 flex items-start gap-2.5 tracking-tight leading-snug">
+      <Icon className={`shrink-0 mt-0.5 ${iconClassName}`} aria-hidden />
+      <span>{title}</span>
+    </h3>
+  )
+}
+
 export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
   const queryClient = useQueryClient()
+  const reduceMotion = useReducedMotion()
   const authReady = useAuthStore((s) => s.isInitialized)
   const appAuthReady = useAppStore((s) => s.authReady)
   const appSaveToken = useAuthStore((s) => s.appSaveToken)
@@ -59,7 +88,6 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
   const { data: suggestionsData } = useQuery({
     queryKey: ['ai-suggestions-dashboard', appSaveToken ?? ''],
     queryFn: () => apiAiSuggestions(),
-    // Не дергаем API до токена из /mini-app/init — иначе 401 и гонка с initData
     enabled: authReady && !!appSaveToken && items.length > 0,
   })
   const suggestions = suggestionsData?.suggestions ?? []
@@ -100,42 +128,44 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
     void run()
   }, [appAuthReady, appSaveToken, queryClient])
 
+  const headerMotion = reduceMotion
+    ? {}
+    : { initial: { opacity: 0, y: -10 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.42, ease: [0.22, 1, 0.36, 1] } }
+
   return (
     <div className="min-h-screen flex flex-col safe-area">
-      <header className="card-premium h-14 flex items-center justify-between px-4 mb-5 rounded-2xl">
+      <motion.header
+        className="header-app-glass h-14 flex items-center justify-between px-4 mb-5 rounded-2xl"
+        {...headerMotion}
+      >
         <button
           type="button"
           onClick={() => goBackToBot()}
-          className="min-h-[44px] min-w-[52px] flex items-center justify-center py-2 px-3 -my-1 -ml-1 rounded-xl text-sm font-semibold select-none tracking-tight text-[var(--color-forest-dark)]"
+          className="min-h-[44px] min-w-[52px] flex items-center justify-center py-2 px-3 -my-1 -ml-1 rounded-xl text-sm font-semibold select-none tracking-tight text-[var(--color-forest-dark)] transition-transform active:scale-[0.97]"
           style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
         >
           ← В бота
         </button>
         <h1 className="font-display text-base font-bold text-[var(--color-text-primary)] tracking-tight">
-          Путь к Себе
+          Путь к себе
         </h1>
         <button
           type="button"
           onClick={() => onOpenHistory()}
-          className="min-h-[44px] min-w-[52px] flex items-center justify-center py-2 px-3 -my-1 -mr-1 rounded-xl text-sm font-medium text-[var(--color-glow-teal)] active:opacity-80 select-none"
+          className="min-h-[44px] min-w-[52px] flex items-center justify-center py-2 px-3 -my-1 -mr-1 rounded-xl text-sm font-semibold text-[var(--color-glow-teal)] active:opacity-80 select-none transition-transform active:scale-[0.97]"
           style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
         >
           История
         </button>
-      </header>
+      </motion.header>
 
       <div className="flex-1 flex flex-col max-w-[420px] mx-auto w-full px-3 pb-6">
-        <motion.div
-          className="card-premium p-5 mb-4"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
-        >
-          <h2 className="font-display text-xl font-bold text-[var(--color-text-primary)] mb-1 tracking-tight">
+        <PremiumCard accent="coral" delay={0}>
+          <h2 className="font-display text-xl font-bold text-[var(--color-text-primary)] mb-1.5 tracking-tight">
             Привет, {userName}!
           </h2>
-          <p className="text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
-            Здесь — срез твоего состояния. Каждый тест помогает заметить динамику и опереться на себя.
+          <p className="text-[15px] text-[var(--color-text-secondary)] mb-5 leading-relaxed">
+            Здесь — срез твоего состояния. Каждый тест помогает тебе.
           </p>
           <button
             type="button"
@@ -145,27 +175,17 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
           >
             Каталог тестов
           </button>
-        </motion.div>
+        </PremiumCard>
 
         {authReady && appSaveToken && (
           <CommunityPulse data={pulseData} isLoading={pulseLoading} />
         )}
 
         {authReady && appSaveToken && (
-          <motion.div
-            className="card-premium p-5 mb-4"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.42, delay: 0.03, ease: [0.25, 0.46, 0.45, 0.94] }}
-          >
-            <h3 className="font-display text-base font-bold text-[var(--color-text-primary)] mb-1.5 flex items-center gap-2 tracking-tight">
-              <span aria-hidden className="select-none">
-                📄
-              </span>
-              К специалисту
-            </h3>
+          <PremiumCard accent="lavender" delay={0.03}>
+            <CardHeading icon={IconChart} title="К специалисту" iconClassName="text-[#6b7eb8]" />
             <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
-              Ответь на короткую анкету — ИИ поможет собрать связный текст и скачать PDF для визита к психологу или коучу.
+              Ответь на короткую анкету — ИИ поможет собрать связный текст и скачать PDF для психолога или коуча. 💛
             </p>
             {isPremium === true ? (
               <button
@@ -183,22 +203,12 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
             ) : (
               <p className="text-sm text-[var(--color-text-secondary)]">Проверяем доступ…</p>
             )}
-          </motion.div>
+          </PremiumCard>
         )}
 
         {authReady && appSaveToken && (
-          <motion.div
-            className="card-premium p-5 mb-4"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.42, delay: 0.035, ease: [0.25, 0.46, 0.45, 0.94] }}
-          >
-            <h3 className="font-display text-base font-bold text-[var(--color-text-primary)] mb-1.5 flex items-center gap-2 tracking-tight">
-              <span aria-hidden className="select-none">
-                🗺️
-              </span>
-              Карта терапии
-            </h3>
+          <PremiumCard accent="mint" delay={0.04}>
+            <CardHeading icon={IconMapPin} title="Карта терапии" iconClassName="text-[#3d9e8f]" />
             <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
               Темп, границы, опоры и пожелания к формату — связный PDF для специалиста. Не про симптомы, а про то, как
               тебе спокойнее в процессе.
@@ -219,21 +229,11 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
             ) : (
               <p className="text-sm text-[var(--color-text-secondary)]">Проверяем доступ…</p>
             )}
-          </motion.div>
+          </PremiumCard>
         )}
 
-        <motion.div
-          className="card-premium p-5 mb-4 shadow-[0_8px_32px_-6px_rgba(100,80,140,0.14)] border border-white/80"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.42, delay: 0.04, ease: [0.25, 0.46, 0.45, 0.94] }}
-        >
-          <h3 className="font-display text-base font-bold text-[var(--color-text-primary)] mb-1.5 flex items-center gap-2 tracking-tight">
-            <span aria-hidden className="select-none">
-              📊
-            </span>
-            Моя статистика
-          </h3>
+        <PremiumCard accent="slate" delay={0.05}>
+          <CardHeading icon={IconPulse} title="Моя статистика" iconClassName="text-[#5c7caf]" />
           <p className="font-display text-[15px] font-semibold text-[var(--color-forest-dark)] mb-1.5 leading-snug">
             Оцени свой прогресс
           </p>
@@ -248,17 +248,10 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
           >
             Открыть статистику
           </button>
-        </motion.div>
+        </PremiumCard>
 
-        <motion.div
-          className="card-premium p-5 mb-4"
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.06, ease: [0.25, 0.46, 0.45, 0.94] }}
-        >
-          <h3 className="text-base font-bold text-[var(--color-text-primary)] mb-1 flex items-center gap-2">
-            <span aria-hidden>🎙️</span> Голосовая поддержка
-          </h3>
+        <PremiumCard accent="lavender" delay={0.1}>
+          <CardHeading icon={IconMic} title="Голосовая поддержка" iconClassName="text-[var(--color-glow-teal-dim)]" />
           <p className="text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
             Напиши, что на душе — ИИ ответит тёплым голосом, в стиле психологической поддержки.
           </p>
@@ -270,17 +263,10 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
           >
             Ответ голосом
           </button>
-        </motion.div>
+        </PremiumCard>
 
-        <motion.div
-          className="card-premium p-5 mb-4"
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
-        >
-          <h3 className="text-base font-bold text-[var(--color-text-primary)] mb-1 flex items-center gap-2">
-            <span aria-hidden>❤️</span> Ритм Сердца
-          </h3>
+        <PremiumCard accent="rose" delay={0.13}>
+          <CardHeading icon={IconHeartLine} title="Ритм Сердца" iconClassName="text-[#c97a8a]" />
           <p className="text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
             Тап в такт дыханию — 90 секунд, затем комментарий от ИИ и короткая мелодия.
           </p>
@@ -297,17 +283,10 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
           >
             Играть
           </button>
-        </motion.div>
+        </PremiumCard>
 
-        <motion.div
-          className="card-premium p-5 mb-4"
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.12, ease: [0.25, 0.46, 0.45, 0.94] }}
-        >
-          <h3 className="text-base font-bold text-[var(--color-text-primary)] mb-1 flex items-center gap-2">
-            <span aria-hidden>🌱</span> Самореализация
-          </h3>
+        <PremiumCard accent="mint" delay={0.16}>
+          <CardHeading icon={IconSprout} title="Самореализация" iconClassName="text-[#4aab9c]" />
           <p className="text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
             Уверенность, учёба, цели, анти‑прокрастинация — опиши трудности и работай над ними в тандеме с ИИ.
           </p>
@@ -317,27 +296,18 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
             className="w-full py-3.5 px-4 rounded-xl btn-premium-glow min-h-[48px]"
             style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
-            🌱 Открыть «Самореализацию»
+            Открыть «Самореализацию»
           </button>
-        </motion.div>
+        </PremiumCard>
 
-        <motion.div
-          className="card-premium rounded-2xl p-5 mb-4"
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.14, ease: [0.25, 0.46, 0.45, 0.94] }}
-        >
-          <h3 className="text-base font-bold text-[var(--color-forest-dark)] mb-1">
-            Твоё состояние
-          </h3>
+        <PremiumCard accent="lavender" delay={0.19}>
+          <CardHeading icon={IconLayers} title="Твоё состояние" iconClassName="text-[#9b8bc9]" />
           <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
             Регулярные замеры помогают видеть прогресс и бережнее относиться к себе. Здесь — твой срез.
           </p>
 
           {showHistoryLoading ? (
-            <p className="text-sm text-[var(--color-text-secondary)] py-2">
-              Загрузка…
-            </p>
+            <p className="text-sm text-[var(--color-text-secondary)] py-2">Загрузка…</p>
           ) : items.length === 0 ? (
             <p className="text-sm text-[var(--color-text-secondary)] py-2">
               Пока нет сохранённых результатов. Пройди первый тест из каталога — он станет началом твоей карты.
@@ -346,11 +316,11 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
             <>
               <div className="flex items-center gap-2 mb-4">
                 <motion.span
-                  className="text-2xl font-bold"
+                  className="text-2xl font-bold font-display"
                   style={{ color: 'var(--color-glow-teal)' }}
-                  initial={{ scale: 0.8 }}
+                  initial={reduceMotion ? false : { scale: 0.82 }}
                   animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                  transition={{ type: 'spring', stiffness: 220, damping: 18 }}
                 >
                   {items.length}
                 </motion.span>
@@ -358,19 +328,21 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
                   {items.length === 1 ? 'тест пройден' : items.length < 5 ? 'теста пройдено' : 'тестов пройдено'}
                 </span>
               </div>
-              <p className="text-xs text-[var(--color-text-secondary)] mb-3">Последние результаты:</p>
+              <p className="text-xs text-[var(--color-text-secondary)] mb-3 font-medium tracking-wide uppercase opacity-80">
+                Последние результаты
+              </p>
               <ul className="space-y-2">
                 {recentItems.map((item, i) => (
                   <motion.li
                     key={item.id}
-                    initial={{ opacity: 0, x: -8 }}
+                    initial={reduceMotion ? false : { opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.3, delay: 0.15 + i * 0.05 }}
+                    transition={{ duration: 0.32, delay: 0.2 + i * 0.045, ease: [0.22, 1, 0.36, 1] }}
                   >
                     <button
                       type="button"
                       onClick={() => openResult(item.id)}
-                      className="w-full text-left min-h-[44px] py-2.5 px-3 rounded-xl transition-all hover:bg-[var(--color-lavender-soft)]/20 active:scale-[0.99] select-none border border-[var(--color-lavender)]/30 text-[var(--color-text-primary)]"
+                      className="w-full text-left min-h-[44px] py-2.5 px-3 rounded-xl transition-all hover:bg-white/35 active:scale-[0.99] select-none border border-white/50 text-[var(--color-text-primary)] shadow-sm"
                       style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                     >
                       <span className="block text-sm font-medium truncate">{item.testTitle}</span>
@@ -393,22 +365,15 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
               )}
             </>
           )}
-        </motion.div>
+        </PremiumCard>
 
         {items.length > 0 && suggestions.length > 0 && (
-          <motion.div
-            className="card-premium rounded-2xl p-5 mb-4"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.18, ease: [0.25, 0.46, 0.45, 0.94] }}
-          >
-            <h4 className="text-base font-bold text-[var(--color-forest-dark)] mb-2">
-              Проработать с ИИ в боте
-            </h4>
+          <PremiumCard accent="coral" delay={0.22}>
+            <CardHeading icon={IconSparkle} title="Проработать с ИИ в боте" iconClassName="text-[#c98a90]" />
             <p className="text-sm text-[var(--color-text-secondary)] mb-1 leading-relaxed">
               На основе твоих тестов — темы, которые стоит обсудить с поддержкой в боте:
             </p>
-            <p className="text-xs mb-3 text-[var(--color-glow-teal)] font-medium">
+            <p className="text-xs mb-3 text-[var(--color-glow-teal)] font-semibold tracking-wide">
               Нажми на вопрос — скопируется
             </p>
             <ul className="space-y-2 mb-4">
@@ -418,7 +383,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
                   <button
                     type="button"
                     onClick={() => copyQuestionToClipboard(s)}
-                    className="copyable-question text-left flex-1 min-h-[44px] py-2 px-2 -mx-2 rounded-lg hover:bg-[var(--color-lavender-soft)]/15 transition-colors"
+                    className="copyable-question text-left flex-1 min-h-[44px] py-2 px-2 -mx-2 rounded-lg hover:bg-white/25 transition-colors"
                   >
                     {s}
                   </button>
@@ -433,21 +398,19 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
             >
               Вернуться в бота
             </button>
-          </motion.div>
+          </PremiumCard>
         )}
 
         {!authReady && (
-          <p className="text-center text-sm text-[var(--color-text-secondary)] px-4 py-2">
-            Загрузка...
-          </p>
+          <p className="text-center text-sm text-[var(--color-text-secondary)] px-4 py-2">Загрузка...</p>
         )}
 
         <motion.p
-          className="text-sm text-center mt-auto pt-4"
+          className="text-sm text-center mt-auto pt-4 leading-relaxed"
           style={{ color: 'var(--color-text-secondary)' }}
-          initial={{ opacity: 0 }}
+          initial={reduceMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: reduceMotion ? 0 : 0.45, duration: 0.5 }}
         >
           Глубже работа с состоянием — в боте: поддержка, практики и ежедневная забота о себе.
         </motion.p>
