@@ -636,7 +636,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
           <button
             type="button"
             onClick={() => goBackToBot()}
-            className="min-h-[44px] min-w-[92px] flex items-center justify-center rounded-xl text-sm font-semibold btn-premium-glow px-3"
+            className="min-h-[44px] min-w-[92px] flex items-center justify-center rounded-xl text-sm font-semibold btn-primary px-3"
             style={{ WebkitTapHighlightColor: 'transparent' }}
           >
             В бота
@@ -935,7 +935,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
         <button
           type="button"
           onClick={() => goBackToBot()}
-          className="min-h-[44px] min-w-[92px] flex items-center justify-center rounded-xl text-sm font-semibold btn-premium-glow px-3"
+          className="min-h-[44px] min-w-[92px] flex items-center justify-center rounded-xl text-sm font-semibold btn-primary px-3"
           style={{ WebkitTapHighlightColor: 'transparent' }}
         >
           В бота

@@ -210,7 +210,7 @@ export function TherapyMap({ onBack }: TherapyMapProps) {
               type="button"
               onClick={() => void handleDownloadPdf()}
               disabled={savingPdf}
-              className="w-full py-3.5 rounded-xl btn-premium-glow min-h-[48px] font-semibold disabled:opacity-60"
+              className="w-full py-3.5 rounded-xl btn-primary min-h-[48px] font-semibold disabled:opacity-60"
               style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
               {savingPdf ? 'Сохраняем…' : 'Скачать PDF'}
@@ -455,7 +455,7 @@ export function TherapyMap({ onBack }: TherapyMapProps) {
               type="button"
               onClick={() => void handleGenerate()}
               disabled={busy || !canGoExport || !shortSelectionOk}
-              className="w-full py-3.5 rounded-xl btn-premium-glow min-h-[48px] font-semibold disabled:opacity-50"
+              className="w-full py-3.5 rounded-xl btn-primary min-h-[48px] font-semibold disabled:opacity-50"
               style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
               {busy ? 'Формируем PDF… до 2–3 мин' : 'Сформировать и посмотреть'}

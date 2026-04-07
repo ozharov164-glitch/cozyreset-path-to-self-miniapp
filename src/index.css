@@ -65,27 +65,6 @@ html.pts-app body {
   background-color: transparent;
 }
 
-/*
- * Telegram iOS / WKWebView: сочетание mask-composite (::before у pts-pulse-card) и сильного
- * backdrop-filter на карточках иногда даёт пустой слой (контент не рисуется).
- */
-html.tg-mini-app .pts-pulse-card::before {
-  display: none !important;
-}
-
-html.tg-mini-app .pts-pulse-card {
-  border: 1px solid rgba(184, 164, 224, 0.42);
-  background: linear-gradient(
-    155deg,
-    rgba(255, 255, 255, 0.99) 0%,
-    rgba(252, 248, 255, 0.98) 45%,
-    rgba(245, 238, 252, 0.97) 100%
-  );
-  box-shadow:
-    0 4px 24px -4px rgba(107, 196, 181, 0.14),
-    0 0 0 1px rgba(255, 255, 255, 0.85) inset;
-}
-
 html.tg-mini-app .card-premium,
 html.tg-mini-app .glass-card {
   -webkit-backdrop-filter: none !important;
@@ -293,83 +272,6 @@ body {
     0 1px 0 rgba(255, 255, 255, 0.95) inset;
 }
 
-/* Карточка «Пульс приложения»: рамка-градиент + мягкое свечение */
-.pts-pulse-card {
-  position: relative;
-  background: linear-gradient(
-    155deg,
-    rgba(255, 255, 255, 0.99) 0%,
-    rgba(252, 248, 255, 0.97) 40%,
-    rgba(245, 238, 252, 0.95) 100%
-  );
-  border: 1px solid transparent;
-  background-clip: padding-box;
-  box-shadow:
-    0 4px 24px -4px rgba(107, 196, 181, 0.18),
-    0 12px 40px -12px rgba(184, 164, 224, 0.22),
-    0 0 0 1px rgba(255, 255, 255, 0.85) inset;
-}
-
-.pts-pulse-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(
-    135deg,
-    rgba(232, 180, 184, 0.65) 0%,
-    rgba(184, 164, 224, 0.55) 45%,
-    rgba(107, 196, 181, 0.5) 100%
-  );
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.pts-pulse-card > * {
-  position: relative;
-  z-index: 1;
-}
-
-.pts-pulse-card--soft {
-  box-shadow: 0 8px 28px -8px rgba(184, 164, 224, 0.15);
-}
-
-.pts-pulse-dot--muted {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: linear-gradient(145deg, rgba(184, 164, 224, 0.5), rgba(107, 196, 181, 0.45));
-  animation: ptsPulseBreath 1.4s ease-in-out infinite;
-}
-
-@keyframes ptsPulseBreath {
-  0%,
-  100% {
-    opacity: 0.55;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.08);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .pts-pulse-dot--muted,
-  .pts-pulse-ring {
-    animation: none !important;
-  }
-}
-
 .card-premium--accent-slate {
   border-color: rgba(180, 195, 220, 0.45);
   box-shadow:
@@ -443,32 +345,6 @@ html.tg-mini-app .header-app-glass {
 .btn-primary:hover { filter: brightness(1.05); }
 .btn-primary:active { transform: scale(0.98); box-shadow: 0 2px 10px rgba(216, 154, 159, 0.35); }
 
-/* CTA «Статистика» на главной — мятный → лаванда, как в макете */
-.btn-stats-cta {
-  background: linear-gradient(
-    95deg,
-    rgba(107, 196, 181, 0.52) 0%,
-    rgba(184, 164, 224, 0.4) 52%,
-    rgba(212, 200, 240, 0.48) 100%
-  );
-  color: var(--color-forest-dark) !important;
-  font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  box-shadow:
-    0 4px 18px rgba(100, 80, 140, 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.55);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-}
-.btn-stats-cta:hover {
-  filter: brightness(1.03);
-  box-shadow:
-    0 6px 22px rgba(100, 80, 140, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-}
-.btn-stats-cta:active {
-  transform: scale(0.98);
-}
-
 /* Вторичная кнопка — контур + лёгкая заливка */
 .btn-secondary {
   background: linear-gradient(145deg, rgba(255,255,255,0.9) 0%, rgba(248,245,255,0.85) 100%);
@@ -480,54 +356,6 @@ html.tg-mini-app .header-app-glass {
 }
 .btn-secondary:hover { border-color: rgba(184, 164, 224, 0.8); box-shadow: 0 4px 16px rgba(184, 164, 224, 0.2); }
 .btn-secondary:active { transform: scale(0.98); }
-
-/* Премиум glow-кнопка: для ключевых CTA (самореализация и т.п.) */
-@keyframes premiumShimmer {
-  0% { transform: translateX(-120%) skewX(-18deg); opacity: 0; }
-  15% { opacity: 1; }
-  55% { opacity: 1; }
-  100% { transform: translateX(120%) skewX(-18deg); opacity: 0; }
-}
-
-.btn-premium-glow {
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(135deg, #e8b4b8 0%, #d89a9f 45%, #b8a4e0 100%);
-  color: #fff !important;
-  font-weight: 700;
-  border: none;
-  box-shadow:
-    0 6px 26px rgba(216, 154, 159, 0.45),
-    0 2px 10px rgba(184, 164, 224, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-  transform: translateZ(0);
-}
-
-.btn-premium-glow::after {
-  content: "";
-  position: absolute;
-  top: -40%;
-  left: -60%;
-  width: 60%;
-  height: 180%;
-  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.55) 50%, rgba(255,255,255,0) 100%);
-  transform: skewX(-18deg);
-  animation: premiumShimmer 2.6s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.btn-premium-glow:hover {
-  filter: brightness(1.06) saturate(1.04);
-  box-shadow:
-    0 10px 36px rgba(216, 154, 159, 0.55),
-    0 4px 18px rgba(184, 164, 224, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
-}
-
-.btn-premium-glow:active {
-  transform: scale(0.98);
-}
 
 .safe-area {
   padding-left: max(16px, env(safe-area-inset-left));

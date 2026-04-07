@@ -101,7 +101,7 @@ export function StatisticsPage({ onBack }: StatisticsPageProps) {
               <button
                 type="button"
                 onClick={() => goBackToBot()}
-                className="w-full py-3.5 px-4 rounded-xl btn-premium-glow min-h-[48px] font-semibold"
+                className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
                 style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
               >
                 Перейти в бота

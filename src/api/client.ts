@@ -582,43 +582,6 @@ export async function apiAiSuggestions(
   }
 }
 
-export type CommunityPulseResponse =
-  | {
-      status: 'ok'
-      pulse: {
-        showNumbers: true
-        peopleToday: number
-        testsCompletedToday: number
-        heartSessionsToday: number
-        dayIso: string
-      }
-    }
-  | {
-      status: 'ok'
-      pulse: {
-        showNumbers: false
-        privacyMessage: string
-      }
-    }
-  | { status: 'forbidden'; premium_required?: boolean }
-  | { error: string }
-
-/** Анонимный «пульс» сообщества за сегодня (только премиум). */
-export async function apiCommunityPulse(): Promise<CommunityPulseResponse> {
-  const res = await fetchWithAuth('/mini-app/community-pulse', { method: 'POST', body: '{}' })
-  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>
-  if (res.status === 403 && data.status === 'forbidden') {
-    return { status: 'forbidden', premium_required: !!data.premium_required }
-  }
-  if (!res.ok) {
-    return { error: typeof data.error === 'string' ? data.error : 'Ошибка загрузки' }
-  }
-  if (data.status === 'ok' && data.pulse && typeof data.pulse === 'object') {
-    return data as unknown as CommunityPulseResponse
-  }
-  return { error: 'Некорректный ответ' }
-}
-
 /** LLM + PDF + nginx до первого байта — запас против 504 при медленной модели */
 const SPECIALIST_BRIEF_GENERATE_TIMEOUT_MS = 240000
 

@@ -5,7 +5,6 @@ import { useAuthStore } from '../store/authStore'
 import {
   apiTestHistory,
   apiAiSuggestions,
-  apiCommunityPulse,
   apiStatistics,
   getBackendUrl,
   syncPremiumFromInit,
@@ -13,7 +12,6 @@ import {
 } from '../api/client'
 import { useAppStore } from '../store/appStore'
 import { goBackToBot, copyQuestionToClipboard } from '../utils/telegram'
-import { CommunityPulse } from '../components/CommunityPulse'
 import { PremiumCard } from '../components/PremiumCard'
 import {
   IconChart,
@@ -91,14 +89,6 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
     enabled: authReady && !!appSaveToken && items.length > 0,
   })
   const suggestions = suggestionsData?.suggestions ?? []
-
-  const { data: pulseData, isLoading: pulseLoading } = useQuery({
-    queryKey: ['community-pulse', appSaveToken ?? ''],
-    queryFn: () => apiCommunityPulse(),
-    enabled: authReady && !!appSaveToken,
-    staleTime: 60_000,
-    refetchOnMount: true,
-  })
 
   const openResult = (id: string) => {
     openResultFromHistory(id)
@@ -178,10 +168,6 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
         </PremiumCard>
 
         {authReady && appSaveToken && (
-          <CommunityPulse data={pulseData} isLoading={pulseLoading} />
-        )}
-
-        {authReady && appSaveToken && (
           <PremiumCard accent="lavender" delay={0.03}>
             <CardHeading icon={IconChart} title="К специалисту" iconClassName="text-[#6b7eb8]" />
             <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
@@ -191,7 +177,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
               <button
                 type="button"
                 onClick={() => useAppStore.getState().setScreen('specialistBrief')}
-                className="w-full py-3.5 px-4 rounded-xl btn-premium-glow min-h-[48px] font-semibold"
+                className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
                 style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
               >
                 Заполнить анкету
@@ -217,7 +203,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
               <button
                 type="button"
                 onClick={() => useAppStore.getState().setScreen('therapyMap')}
-                className="w-full py-3.5 px-4 rounded-xl btn-premium-glow min-h-[48px] font-semibold"
+                className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
                 style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
               >
                 Собрать карту
@@ -243,7 +229,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
           <button
             type="button"
             onClick={() => useAppStore.getState().setScreen('statistics')}
-            className="btn-stats-cta w-full py-3.5 px-4 rounded-xl min-h-[48px]"
+            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
             style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
             Открыть статистику
@@ -281,7 +267,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
             className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px]"
             style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
-            Играть
+            Открыть
           </button>
         </PremiumCard>
 
@@ -293,7 +279,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
           <button
             type="button"
             onClick={() => useAppStore.getState().setScreen('selfRealization')}
-            className="w-full py-3.5 px-4 rounded-xl btn-premium-glow min-h-[48px]"
+            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
             style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
             Открыть «Самореализацию»
