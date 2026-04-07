@@ -355,7 +355,11 @@ html.tg-mini-app .header-app-glass {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: linear-gradient(135deg, #e8b4b8 0%, #d89a9f 45%, #b8a4e0 100%);
+  -webkit-appearance: none;
+  appearance: none;
+  /* Подложка: в WKWebView после навигации иногда «просвечивает» белый фон кнопки */
+  background-color: #d89a9f;
+  background-image: linear-gradient(135deg, #e8b4b8 0%, #d89a9f 45%, #b8a4e0 100%);
   color: #fff !important;
   font-weight: 600;
   border: none;
@@ -364,6 +368,7 @@ html.tg-mini-app .header-app-glass {
     0 2px 10px rgba(184, 164, 224, 0.25),
     inset 0 1px 0 rgba(255, 255, 255, 0.25);
   transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  isolation: isolate;
   transform: translateZ(0);
 }
 .btn-primary::before {
@@ -376,7 +381,7 @@ html.tg-mini-app .header-app-glass {
   background: linear-gradient(
     90deg,
     rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0.42) 50%,
     rgba(255, 255, 255, 0) 100%
   );
   transform: skewX(-18deg);
@@ -398,6 +403,14 @@ html.tg-mini-app .header-app-glass {
     0 2px 8px rgba(184, 164, 224, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
+
+/* Telegram iOS: отдельный композитный слой ломает clip у псевдоэлемента после возврата с другой страницы */
+html.tg-mini-app .btn-primary {
+  transform: none;
+}
+html.tg-mini-app .btn-primary:active {
+  transform: scale(0.98);
+}
 .btn-primary:disabled::before {
   animation: none !important;
   opacity: 0;
@@ -410,13 +423,22 @@ html.tg-mini-app .header-app-glass {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  -webkit-appearance: none;
+  appearance: none;
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 245, 255, 0.88) 100%);
   color: var(--color-forest-dark);
   font-weight: 600;
   border: 2px solid rgba(184, 164, 224, 0.5);
   box-shadow: 0 2px 12px rgba(184, 164, 224, 0.15);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  isolation: isolate;
   transform: translateZ(0);
+}
+html.tg-mini-app .btn-secondary {
+  transform: none;
+}
+html.tg-mini-app .btn-secondary:active {
+  transform: scale(0.98);
 }
 .btn-secondary::before {
   content: "";
@@ -457,11 +479,20 @@ html.tg-mini-app .header-app-glass {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  -webkit-appearance: none;
+  appearance: none;
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.94) 0%, rgba(248, 245, 255, 0.86) 100%);
   border: 1px solid rgba(184, 164, 224, 0.38);
   box-shadow: 0 2px 14px rgba(100, 80, 140, 0.1);
   transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  isolation: isolate;
   transform: translateZ(0);
+}
+html.tg-mini-app .btn-ghost {
+  transform: none;
+}
+html.tg-mini-app .btn-ghost:active {
+  transform: scale(0.97);
 }
 .btn-ghost::before {
   content: "";

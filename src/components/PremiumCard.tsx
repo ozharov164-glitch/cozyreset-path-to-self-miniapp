@@ -29,7 +29,7 @@ export function PremiumCard({
 
   return (
     <motion.div
-      className={`card-premium p-5 mb-4 ${accentCls} ${className}`.trim()}
+      className={`card-premium overflow-hidden p-5 mb-4 ${accentCls} ${className}`.trim()}
       initial={reduce ? false : { opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
