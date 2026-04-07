@@ -28,7 +28,7 @@ export function PeriodSelector({ period, onChange }: PeriodSelectorProps) {
             role="tab"
             aria-selected={active}
             onClick={() => onChange(o.id)}
-            className="relative flex-1 min-h-[44px] rounded-xl text-sm font-semibold z-10 transition-colors"
+            className="pts-btn-shimmer relative flex-1 min-h-[44px] rounded-xl text-sm font-semibold z-10 transition-colors"
             style={{
               color: active ? 'var(--color-forest-dark)' : 'var(--color-text-secondary)',
               touchAction: 'manipulation',
@@ -37,7 +37,7 @@ export function PeriodSelector({ period, onChange }: PeriodSelectorProps) {
             {active && (
               <motion.span
                 layoutId="period-pill"
-                className="absolute inset-0 rounded-xl bg-gradient-to-r from-[var(--color-glow-teal)]/45 to-[var(--color-lavender-soft)]/50 border border-[var(--color-lavender)]/35 shadow-sm"
+                className="absolute inset-0 z-[1] rounded-xl bg-gradient-to-r from-[var(--color-glow-teal)]/45 to-[var(--color-lavender-soft)]/50 border border-[var(--color-lavender)]/35 shadow-sm"
                 transition={{ type: 'spring', stiffness: 400, damping: 30 }}
               />
             )}

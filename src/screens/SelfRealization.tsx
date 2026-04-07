@@ -618,7 +618,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
           <button
             type="button"
             onClick={goBackToList}
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-sm font-semibold text-[var(--color-forest-dark)] bg-white/95 shadow-md border border-[var(--color-lavender)]/20"
+            className="btn-ghost min-h-[44px] min-w-[44px] rounded-xl text-sm font-semibold text-[var(--color-forest-dark)] shadow-md"
             style={{ WebkitTapHighlightColor: 'transparent' }}
           >
             ←
@@ -824,7 +824,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                           type="button"
                           onClick={() => toggleDifficulty(item)}
                           whileTap={{ scale: 0.99 }}
-                          className={`px-3.5 py-2.5 rounded-xl text-sm font-medium border transition-colors ${
+                          className={`pts-btn-shimmer px-3.5 py-2.5 rounded-xl text-sm font-medium border transition-colors ${
                             active
                               ? 'bg-[var(--color-glow-teal)]/25 border-[var(--color-glow-teal)] text-[var(--color-forest-dark)]'
                               : 'border-[var(--color-lavender)]/40 text-[var(--color-text-secondary)] bg-white/80'
@@ -875,7 +875,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                     type="button"
                     onClick={() => void submitAdvance()}
                     disabled={advanceLoading}
-                    className="w-full py-3.5 rounded-xl font-semibold text-[var(--color-forest-dark)] bg-[var(--color-glow-teal)]/30 border border-[var(--color-glow-teal)]/50 min-h-[52px] disabled:opacity-60"
+                    className="w-full py-3.5 rounded-xl btn-primary min-h-[52px] font-semibold disabled:opacity-60"
                     style={{ WebkitTapHighlightColor: 'transparent' }}
                   >
                     {advanceLoading ? 'Открываю следующий этап…' : `Перейти к этапу ${track?.displayStep ?? 0}`}
@@ -890,7 +890,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                   <button
                     type="button"
                     onClick={() => setCompleteOpen(true)}
-                    className="w-full py-3.5 rounded-xl font-semibold text-[var(--color-forest-dark)] bg-[var(--color-glow-teal)]/30 border border-[var(--color-glow-teal)]/50 min-h-[52px]"
+                    className="w-full py-3.5 rounded-xl btn-primary min-h-[52px] font-semibold"
                     style={{ WebkitTapHighlightColor: 'transparent' }}
                   >
                     Задание выполнено
@@ -921,7 +921,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
         <button
           type="button"
           onClick={onBack}
-          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-sm font-semibold text-[var(--color-forest-dark)] bg-white/95 shadow-md border border-[var(--color-lavender)]/20"
+          className="btn-ghost min-h-[44px] min-w-[44px] rounded-xl text-sm font-semibold text-[var(--color-forest-dark)] shadow-md"
           style={{ WebkitTapHighlightColor: 'transparent' }}
         >
           ←
@@ -993,7 +993,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                 onClick={() => openDirection(dir)}
                 whileTap={{ scale: 0.99 }}
                 whileHover={reduceMotion ? undefined : { y: -2, transition: { duration: 0.2 } }}
-                className="w-full text-left card-premium rounded-2xl p-5 min-h-[88px] shadow-md hover:shadow-lg transition-shadow border border-[var(--color-lavender)]/20"
+                className="pts-btn-shimmer w-full text-left card-premium rounded-2xl p-5 min-h-[88px] shadow-md hover:shadow-lg transition-shadow border border-[var(--color-lavender)]/20"
                 style={{ WebkitTapHighlightColor: 'transparent' }}
               >
                 <div className="flex items-start gap-3">

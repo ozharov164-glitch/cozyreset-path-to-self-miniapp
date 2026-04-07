@@ -331,31 +331,203 @@ html.tg-mini-app .header-app-glass {
   backdrop-filter: none !important;
 }
 
-/* Единая главная кнопка — градиент, неотразимая */
+@keyframes pts-btn-shimmer {
+  0% {
+    transform: translateX(-120%) skewX(-18deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(120%) skewX(-18deg);
+    opacity: 0;
+  }
+}
+
+/* Основная CTA: градиент + переливающийся блик (как премиум-кнопки на главной) */
 .btn-primary {
-  background: linear-gradient(135deg, #e8b4b8 0%, #d89a9f 50%, #c98a90 100%);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: linear-gradient(135deg, #e8b4b8 0%, #d89a9f 45%, #b8a4e0 100%);
   color: #fff !important;
   font-weight: 600;
-  box-shadow:
-    0 4px 14px rgba(216, 154, 159, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
   border: none;
+  box-shadow:
+    0 6px 26px rgba(216, 154, 159, 0.45),
+    0 2px 10px rgba(184, 164, 224, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
   transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  transform: translateZ(0);
 }
-.btn-primary:hover { filter: brightness(1.05); }
-.btn-primary:active { transform: scale(0.98); box-shadow: 0 2px 10px rgba(216, 154, 159, 0.35); }
+.btn-primary::before {
+  content: "";
+  position: absolute;
+  top: -40%;
+  left: -60%;
+  width: 60%;
+  height: 180%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-18deg);
+  animation: pts-btn-shimmer 2.6s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+.btn-primary:hover {
+  filter: brightness(1.06) saturate(1.04);
+  box-shadow:
+    0 10px 36px rgba(216, 154, 159, 0.55),
+    0 4px 18px rgba(184, 164, 224, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.btn-primary:active {
+  transform: scale(0.98) translateZ(0);
+  box-shadow:
+    0 3px 16px rgba(216, 154, 159, 0.4),
+    0 2px 8px rgba(184, 164, 224, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.btn-primary:disabled::before {
+  animation: none !important;
+  opacity: 0;
+}
 
-/* Вторичная кнопка — контур + лёгкая заливка */
+/* Вторичная кнопка — светлая заливка + тот же блик, мягче */
 .btn-secondary {
-  background: linear-gradient(145deg, rgba(255,255,255,0.9) 0%, rgba(248,245,255,0.85) 100%);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 245, 255, 0.88) 100%);
   color: var(--color-forest-dark);
   font-weight: 600;
   border: 2px solid rgba(184, 164, 224, 0.5);
   box-shadow: 0 2px 12px rgba(184, 164, 224, 0.15);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transform: translateZ(0);
 }
-.btn-secondary:hover { border-color: rgba(184, 164, 224, 0.8); box-shadow: 0 4px 16px rgba(184, 164, 224, 0.2); }
-.btn-secondary:active { transform: scale(0.98); }
+.btn-secondary::before {
+  content: "";
+  position: absolute;
+  top: -40%;
+  left: -60%;
+  width: 58%;
+  height: 180%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.42) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-18deg);
+  animation: pts-btn-shimmer 2.9s ease-in-out infinite;
+  animation-delay: 0.35s;
+  pointer-events: none;
+  z-index: 0;
+}
+.btn-secondary:hover {
+  border-color: rgba(184, 164, 224, 0.85);
+  box-shadow: 0 4px 16px rgba(184, 164, 224, 0.22);
+  filter: brightness(1.02);
+}
+.btn-secondary:active {
+  transform: scale(0.98) translateZ(0);
+}
+.btn-secondary:disabled::before {
+  animation: none;
+  opacity: 0;
+}
+
+/* Стеклянная кнопка навигации («Назад», «В бота») — тот же блик */
+.btn-ghost {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.94) 0%, rgba(248, 245, 255, 0.86) 100%);
+  border: 1px solid rgba(184, 164, 224, 0.38);
+  box-shadow: 0 2px 14px rgba(100, 80, 140, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  transform: translateZ(0);
+}
+.btn-ghost::before {
+  content: "";
+  position: absolute;
+  top: -40%;
+  left: -60%;
+  width: 55%;
+  height: 180%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-18deg);
+  animation: pts-btn-shimmer 3.1s ease-in-out infinite;
+  animation-delay: 0.2s;
+  pointer-events: none;
+  z-index: 0;
+}
+.btn-ghost:hover {
+  filter: brightness(1.03);
+  box-shadow: 0 4px 18px rgba(100, 80, 140, 0.14);
+}
+.btn-ghost:active {
+  transform: scale(0.97) translateZ(0);
+}
+
+/* Любая кнопка с произвольным фоном (inline style) — только блик */
+.pts-btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.pts-btn-shimmer::before {
+  content: "";
+  position: absolute;
+  top: -40%;
+  left: -60%;
+  width: 60%;
+  height: 180%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-18deg);
+  animation: pts-btn-shimmer 2.6s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.pts-btn-shimmer:disabled::before {
+  animation: none !important;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary::before,
+  .btn-secondary::before,
+  .btn-ghost::before,
+  .pts-btn-shimmer::before {
+    animation: none !important;
+    opacity: 0;
+  }
+}
 
 .safe-area {
   padding-left: max(16px, env(safe-area-inset-left));

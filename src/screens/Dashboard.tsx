@@ -131,7 +131,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
         <button
           type="button"
           onClick={() => goBackToBot()}
-          className="min-h-[44px] min-w-[52px] flex items-center justify-center py-2 px-3 -my-1 -ml-1 rounded-xl text-sm font-semibold select-none tracking-tight text-[var(--color-forest-dark)] transition-transform active:scale-[0.97]"
+          className="btn-ghost min-h-[44px] min-w-[52px] py-2 px-3 -my-1 -ml-1 rounded-xl text-sm font-semibold select-none tracking-tight text-[var(--color-forest-dark)]"
           style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
         >
           ← В бота
@@ -142,7 +142,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
         <button
           type="button"
           onClick={() => onOpenHistory()}
-          className="min-h-[44px] min-w-[52px] flex items-center justify-center py-2 px-3 -my-1 -mr-1 rounded-xl text-sm font-semibold text-[var(--color-glow-teal)] active:opacity-80 select-none transition-transform active:scale-[0.97]"
+          className="btn-ghost min-h-[44px] min-w-[52px] py-2 px-3 -my-1 -mr-1 rounded-xl text-sm font-semibold text-[var(--color-glow-teal)] select-none"
           style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
         >
           История
@@ -328,7 +328,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
                     <button
                       type="button"
                       onClick={() => openResult(item.id)}
-                      className="w-full text-left min-h-[44px] py-2.5 px-3 rounded-xl transition-all hover:bg-white/35 active:scale-[0.99] select-none border border-white/50 text-[var(--color-text-primary)] shadow-sm"
+                      className="pts-btn-shimmer w-full text-left min-h-[44px] py-2.5 px-3 rounded-xl transition-all hover:bg-white/35 active:scale-[0.99] select-none border border-white/50 text-[var(--color-text-primary)] shadow-sm"
                       style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                     >
                       <span className="block text-sm font-medium truncate">{item.testTitle}</span>

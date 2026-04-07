@@ -109,7 +109,7 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
           <button
             type="button"
             onClick={() => clearPreview()}
-            className="min-h-[44px] min-w-[52px] flex items-center justify-center py-2 px-3 -my-1 -ml-1 rounded-xl text-sm font-semibold text-[var(--color-forest-dark)]"
+            className="btn-ghost min-h-[44px] min-w-[52px] py-2 px-3 -my-1 -ml-1 rounded-xl text-sm font-semibold text-[var(--color-forest-dark)]"
             style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
             ← К анкете
@@ -120,7 +120,7 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
           <button
             type="button"
             onClick={() => goBackToBot()}
-            className="min-h-[44px] text-xs font-medium text-[var(--color-glow-teal)] px-2"
+            className="btn-ghost min-h-[44px] text-xs font-medium text-[var(--color-glow-teal)] px-2 rounded-lg"
             style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
             В бота
@@ -197,7 +197,7 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
         <motion.button
           type="button"
           onClick={() => (step > 0 ? setStep((s) => s - 1) : onBack())}
-          className="min-h-[44px] min-w-[52px] flex items-center justify-center py-2 px-3 -my-1 -ml-1 rounded-xl text-sm font-semibold text-[var(--color-forest-dark)]"
+          className="btn-ghost min-h-[44px] min-w-[52px] py-2 px-3 -my-1 -ml-1 rounded-xl text-sm font-semibold text-[var(--color-forest-dark)]"
           style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           whileTap={reduceMotion ? undefined : { scale: 0.96 }}
         >
@@ -214,7 +214,7 @@ export function SpecialistBrief({ onBack }: SpecialistBriefProps) {
         <motion.button
           type="button"
           onClick={() => goBackToBot()}
-          className="min-h-[44px] text-xs font-medium text-[var(--color-glow-teal)] px-2"
+          className="btn-ghost min-h-[44px] text-xs font-medium text-[var(--color-glow-teal)] px-2 rounded-lg"
           style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           whileTap={reduceMotion ? undefined : { scale: 0.96 }}
         >

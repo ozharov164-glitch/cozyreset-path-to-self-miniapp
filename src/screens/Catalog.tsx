@@ -29,7 +29,7 @@ export function Catalog({ onBack }: CatalogProps) {
   return (
     <div className="min-h-screen flex flex-col safe-area pb-6">
       <header className="card-premium h-14 flex items-center px-4 mb-5 rounded-2xl">
-        <button type="button" onClick={onBack} className="text-[var(--color-glow-teal)] font-semibold min-h-[44px] min-w-[52px] flex items-center -ml-1" style={{ WebkitTapHighlightColor: 'transparent' }}>
+        <button type="button" onClick={onBack} className="btn-ghost text-[var(--color-glow-teal)] font-semibold min-h-[44px] min-w-[52px] px-2 -ml-1 rounded-xl" style={{ WebkitTapHighlightColor: 'transparent' }}>
           ← Назад
         </button>
         <h1 className="font-display flex-1 text-center text-base font-bold text-[var(--color-text-primary)] tracking-tight">

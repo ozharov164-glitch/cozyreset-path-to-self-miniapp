@@ -519,7 +519,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
         <button
           type="button"
           onClick={onBack}
-          className="min-w-[52px] text-left font-semibold text-[var(--color-forest-dark)] active:opacity-80 transition-opacity"
+          className="btn-ghost min-w-[52px] px-2 py-1.5 rounded-xl text-left font-semibold text-[var(--color-forest-dark)]"
           style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
         >
           ← Назад
@@ -613,7 +613,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                       transition={{ delay: 0.06 * idx, type: 'spring', stiffness: 380, damping: 28 }}
                       whileHover={loading ? {} : { y: -2, scale: 1.02 }}
                       whileTap={loading ? {} : { scale: 0.97 }}
-                      className="voice-select-chip relative min-h-[52px] rounded-2xl px-3 py-3 text-center text-[1.05rem] font-semibold overflow-hidden disabled:opacity-50 disabled:pointer-events-none"
+                      className="voice-select-chip pts-btn-shimmer relative min-h-[52px] rounded-2xl px-3 py-3 text-center text-[1.05rem] font-semibold overflow-hidden disabled:opacity-50 disabled:pointer-events-none"
                       style={{
                         WebkitTapHighlightColor: 'transparent',
                         outline: 'none',
@@ -640,7 +640,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                         />
                       )}
-                      <span className="relative z-[1]">{opt.label}</span>
+                      <span className="relative z-[2]">{opt.label}</span>
                     </motion.button>
                   )
                 })}
@@ -659,7 +659,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                       transition={{ delay: 0.08 + idx * 0.05, type: 'spring', stiffness: 360, damping: 26 }}
                       whileHover={loading || ttsPreviewPlaying ? {} : { scale: 1.03 }}
                       whileTap={loading || ttsPreviewPlaying ? {} : { scale: 0.96 }}
-                      className="font-display min-h-[46px] rounded-xl px-2 py-2.5 text-[13px] font-semibold tracking-tight disabled:opacity-50 disabled:pointer-events-none"
+                      className="pts-btn-shimmer font-display min-h-[46px] rounded-xl px-2 py-2.5 text-[13px] font-semibold tracking-tight disabled:opacity-50 disabled:pointer-events-none"
                       style={{
                         WebkitTapHighlightColor: 'transparent',
                         color: 'var(--color-forest-dark)',
@@ -698,7 +698,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                       transition={{ delay: 0.04 * idx, type: 'spring', stiffness: 380, damping: 28 }}
                       whileHover={loading ? {} : { y: -1, scale: 1.03 }}
                       whileTap={loading ? {} : { scale: 0.97 }}
-                      className="voice-select-chip relative min-h-[50px] rounded-2xl px-2 py-2.5 text-[0.95rem] font-semibold text-center overflow-hidden disabled:opacity-50 disabled:pointer-events-none"
+                      className="voice-select-chip pts-btn-shimmer relative min-h-[50px] rounded-2xl px-2 py-2.5 text-[0.95rem] font-semibold text-center overflow-hidden disabled:opacity-50 disabled:pointer-events-none"
                       style={{
                         WebkitTapHighlightColor: 'transparent',
                         outline: 'none',
@@ -723,7 +723,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                           }}
                         />
                       )}
-                      <span className="relative z-[1]">{playingHere ? 'Идёт…' : opt.label}</span>
+                      <span className="relative z-[2]">{playingHere ? 'Идёт…' : opt.label}</span>
                     </motion.button>
                   )
                 })}
@@ -812,13 +812,11 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
               type="button"
               onClick={handleSubmit}
               disabled={loading}
-              className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] relative overflow-hidden font-display font-semibold tracking-tight shadow-[0_8px_28px_rgba(216,154,159,0.35)] transition-all duration-300 disabled:opacity-60 disabled:pointer-events-none"
+              className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-display font-semibold tracking-tight transition-all duration-300 disabled:opacity-60 disabled:pointer-events-none"
               whileHover={!loading ? { scale: 1.02 } : {}}
               whileTap={!loading ? { scale: 0.98 } : {}}
             >
-              <span className="relative z-10">
-                {loading ? 'Генерирую ответ…' : 'Получить ответ голосом'}
-              </span>
+              {loading ? 'Генерирую ответ…' : 'Получить ответ голосом'}
             </motion.button>
           </div>
         </motion.div>
@@ -888,7 +886,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                     <motion.button
                       type="button"
                       onClick={togglePlay}
-                      className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-white transition-all active:scale-95"
+                      className="pts-btn-shimmer flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-white transition-all active:scale-95"
                       style={{
                         background: 'linear-gradient(145deg, #5ab8a8 0%, #7dd3c0 100%)',
                         boxShadow: '0 4px 14px rgba(90,184,168,0.4), inset 0 1px 0 rgba(255,255,255,0.3)',
@@ -897,16 +895,18 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                       whileHover={{ scale: 1.05, boxShadow: '0 6px 20px rgba(90,184,168,0.45)' }}
                       whileTap={{ scale: 0.96 }}
                     >
-                      {isPlaying ? (
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                          <rect x="6" y="4" width="4" height="16" rx="1" />
-                          <rect x="14" y="4" width="4" height="16" rx="1" />
-                        </svg>
-                      ) : (
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden style={{ marginLeft: 2 }}>
-                          <path d="M8 5v14l11-7z" />
-                        </svg>
-                      )}
+                      <span className="relative z-[1] flex items-center justify-center">
+                        {isPlaying ? (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                            <rect x="6" y="4" width="4" height="16" rx="1" />
+                            <rect x="14" y="4" width="4" height="16" rx="1" />
+                          </svg>
+                        ) : (
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden style={{ marginLeft: 2 }}>
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                        )}
+                      </span>
                     </motion.button>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2 mb-1">
@@ -942,7 +942,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                         key={speed}
                         type="button"
                         onClick={() => setPlaybackRate(speed)}
-                        className="min-w-[2.5rem] py-1.5 px-2 rounded-lg text-xs font-semibold transition-colors"
+                        className="pts-btn-shimmer min-w-[2.5rem] py-1.5 px-2 rounded-lg text-xs font-semibold transition-colors"
                         style={{
                           background: playbackRate === speed
                             ? 'linear-gradient(145deg, rgba(125,211,192,0.5) 0%, rgba(90,184,168,0.4) 100%)'
@@ -963,7 +963,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                 <motion.button
                   type="button"
                   onClick={() => void handleDownload()}
-                  className="w-full py-3.5 px-4 rounded-xl min-h-[48px] flex items-center justify-center gap-2.5 font-semibold text-[var(--color-forest-dark)] relative overflow-hidden transition-all duration-300"
+                  className="pts-btn-shimmer w-full py-3.5 px-4 rounded-xl min-h-[48px] flex items-center justify-center gap-2.5 font-semibold text-[var(--color-forest-dark)] transition-all duration-300"
                   style={{
                     background: 'linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(248,252,251,0.9) 100%)',
                     border: '2px solid rgba(125,211,192,0.6)',
@@ -977,18 +977,20 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
                   }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
-                  <span>Сохранить в Файлы</span>
+                  <span className="relative z-[1] flex items-center justify-center gap-2.5">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    <span>Сохранить в Файлы</span>
+                  </span>
                 </motion.button>
                 {downloadUrl && (
                   <button
                     type="button"
                     onClick={copyDownloadLink}
-                    className="mt-2 w-full py-2 px-3 rounded-xl text-sm font-medium text-[var(--color-text-secondary)] border border-[rgba(125,211,192,0.4)] bg-transparent active:opacity-80"
+                    className="pts-btn-shimmer mt-2 w-full py-2 px-3 rounded-xl text-sm font-medium text-[var(--color-text-secondary)] border border-[rgba(125,211,192,0.4)] bg-white/40 active:opacity-80"
                   >
                     {copyDone ? 'Ссылка скопирована' : 'Скопировать ссылку для скачивания'}
                   </button>

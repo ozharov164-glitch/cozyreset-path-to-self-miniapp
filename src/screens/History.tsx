@@ -76,7 +76,7 @@ export function History({ onBack }: HistoryProps) {
         <button
           type="button"
           onClick={() => onBack()}
-          className="min-h-[44px] min-w-[52px] flex items-center justify-center -ml-1 rounded-xl text-[var(--color-glow-teal)] font-semibold select-none"
+          className="btn-ghost min-h-[44px] min-w-[52px] px-2 -ml-1 rounded-xl text-[var(--color-glow-teal)] font-semibold select-none"
           style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
         >
           ← Назад
@@ -113,7 +113,7 @@ export function History({ onBack }: HistoryProps) {
             <button
               type="button"
               onClick={() => openResult(item.id)}
-              className="mt-4 min-h-[44px] flex items-center text-sm font-semibold text-[var(--color-glow-teal)] select-none hover:opacity-90"
+              className="btn-ghost mt-4 min-h-[44px] px-3 py-2 rounded-xl text-sm font-semibold text-[var(--color-glow-teal)] select-none"
               style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
               Смотреть результат
@@ -136,7 +136,7 @@ export function History({ onBack }: HistoryProps) {
                 type="button"
                 onClick={handleClearTestHistory}
                 disabled={!!clearing || items.length === 0}
-                className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold border-2 border-[rgba(184,164,224,0.4)] text-[var(--color-text-primary)] bg-white/50 disabled:opacity-50"
+                className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold btn-secondary disabled:opacity-50"
               >
                 {clearing === 'tests' ? 'Очистка…' : 'Очистить историю тестов'}
               </button>
@@ -144,7 +144,7 @@ export function History({ onBack }: HistoryProps) {
                 type="button"
                 onClick={handleClearHeartRhythmHistory}
                 disabled={!!clearing}
-                className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold border-2 border-[rgba(184,164,224,0.4)] text-[var(--color-text-primary)] bg-white/50 disabled:opacity-50"
+                className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold btn-secondary disabled:opacity-50"
               >
                 {clearing === 'heart' ? 'Очистка…' : 'Очистить историю «Ритм Сердца»'}
               </button>

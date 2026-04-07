@@ -187,7 +187,7 @@ export function Result({ onBack }: ResultProps) {
     return (
       <div className="min-h-screen flex flex-col safe-area pb-8">
         <header className="card-premium h-14 flex items-center px-4 mb-5 rounded-2xl">
-          <button type="button" onClick={() => { setOpenResultId(null); onBack() }} className="text-[var(--color-glow-teal)] font-semibold min-h-[44px] min-w-[52px] flex items-center -ml-1">
+          <button type="button" onClick={() => { setOpenResultId(null); onBack() }} className="btn-ghost text-[var(--color-glow-teal)] font-semibold min-h-[44px] min-w-[52px] px-2 -ml-1 rounded-xl">
             ← Назад
           </button>
           <h1 className="font-display flex-1 text-center text-base font-semibold" style={{ color: '#2d2a26' }}>
@@ -205,7 +205,7 @@ export function Result({ onBack }: ResultProps) {
   return (
     <div className="min-h-screen flex flex-col safe-area pb-8" style={{ overflow: 'auto' }}>
       <header className="card-premium h-14 flex items-center px-4 mb-5 rounded-2xl flex-shrink-0">
-        <button type="button" onClick={handleBack} className="text-[var(--color-glow-teal)] font-semibold min-h-[44px] min-w-[52px] flex items-center -ml-1">
+        <button type="button" onClick={handleBack} className="btn-ghost text-[var(--color-glow-teal)] font-semibold min-h-[44px] min-w-[52px] px-2 -ml-1 rounded-xl">
           ← Назад
         </button>
         <h1 className="font-display flex-1 text-center text-base font-semibold" style={{ color: '#2d2a26' }}>
@@ -371,12 +371,7 @@ export function Result({ onBack }: ResultProps) {
                   </motion.div>
                 )}
               </motion.div>
-              <button
-                type="button"
-                onClick={openBot}
-                className="w-full py-3.5 px-4 rounded-xl font-semibold border-0 shadow-md hover:opacity-95 active:scale-[0.98] transition-all"
-                style={{ background: 'var(--color-sunset-rose)', color: 'var(--color-text-primary)' }}
-              >
+              <button type="button" onClick={openBot} className="w-full py-3.5 px-4 rounded-xl btn-primary font-semibold">
                 Вернуться в бота
               </button>
             </div>
@@ -387,12 +382,7 @@ export function Result({ onBack }: ResultProps) {
               <p className="text-center text-sm py-2" style={{ color: '#b91c1c' }}>
                 {error}
               </p>
-              <button
-                type="button"
-                onClick={handleRetrySave}
-                className="w-full py-2.5 px-4 rounded-xl font-medium border-2"
-                style={{ borderColor: 'var(--color-lavender)', color: '#2d2a26' }}
-              >
+              <button type="button" onClick={handleRetrySave} className="w-full py-2.5 px-4 rounded-xl btn-secondary font-medium">
                 Повторить сохранение
               </button>
             </div>
@@ -475,12 +465,7 @@ export function Result({ onBack }: ResultProps) {
               <p className="text-center text-sm text-[var(--color-text-secondary)]">
                 Продолжить путь и получить поддержку — в боте.
               </p>
-              <button
-                type="button"
-                onClick={openBot}
-                className="w-full py-3.5 px-4 rounded-xl font-semibold border-0 shadow-md hover:opacity-95 active:scale-[0.98] transition-all"
-                style={{ background: 'var(--color-sunset-rose)', color: 'var(--color-text-primary)' }}
-              >
+              <button type="button" onClick={openBot} className="w-full py-3.5 px-4 rounded-xl btn-primary font-semibold">
                 Вернуться в бота
               </button>
             </div>

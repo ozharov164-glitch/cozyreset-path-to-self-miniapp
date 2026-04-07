@@ -46,7 +46,7 @@ export function TestFlow({ onBack }: TestFlowProps) {
   return (
     <div className="min-h-screen flex flex-col safe-area pb-6" style={{ overflow: 'visible' }}>
       <header className="card-premium h-14 flex items-center px-4 mb-5 rounded-2xl">
-        <button type="button" onClick={onBack} className="text-[var(--color-glow-teal)] font-semibold min-h-[44px] min-w-[52px] flex items-center -ml-1" style={{ WebkitTapHighlightColor: 'transparent' }}>
+        <button type="button" onClick={onBack} className="btn-ghost text-[var(--color-glow-teal)] font-semibold min-h-[44px] min-w-[52px] px-2 -ml-1 rounded-xl" style={{ WebkitTapHighlightColor: 'transparent' }}>
           ← Назад
         </button>
         <h1 className="font-display flex-1 text-center text-base font-bold text-[var(--color-text-primary)] truncate">
@@ -106,7 +106,7 @@ export function TestFlow({ onBack }: TestFlowProps) {
                 key={num}
                 type="button"
                 onClick={() => handleAnswer(num)}
-                className="flex-1 min-w-[52px] py-3.5 px-3 rounded-xl font-bold text-[var(--color-text-primary)] transition-colors"
+                className="pts-btn-shimmer flex-1 min-w-[52px] py-3.5 px-3 rounded-xl font-bold text-[var(--color-text-primary)] transition-colors"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: idx * 0.02, duration: 0.2 }}
