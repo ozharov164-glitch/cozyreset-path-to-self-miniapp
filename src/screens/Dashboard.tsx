@@ -160,7 +160,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
           <button
             type="button"
             onClick={onOpenCatalog}
-            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px]"
+            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
             style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
             Каталог тестов
@@ -244,7 +244,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
           <button
             type="button"
             onClick={() => useAppStore.getState().setScreen('voiceSupport')}
-            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px]"
+            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
             style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
             Ответ голосом
@@ -264,7 +264,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
               const gameUrl = `${backend}/heart-rhythm/${token ? `?token=${encodeURIComponent(token)}` : ''}`
               window.location.href = gameUrl
             }}
-            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px]"
+            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
             style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
             Открыть
@@ -379,7 +379,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
             <button
               type="button"
               onClick={() => goBackToBot()}
-              className="block w-full py-3 px-4 rounded-xl btn-primary min-h-[48px]"
+              className="block w-full py-3 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
               style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
               Вернуться в бота
