@@ -15,10 +15,8 @@ import { goBackToBot, copyQuestionToClipboard } from '../utils/telegram'
 import { PremiumCard } from '../components/PremiumCard'
 import {
   IconChart,
-  IconHeartLine,
   IconLayers,
   IconMic,
-  IconMapPin,
   IconPulse,
   IconSparkle,
   IconSprout,
@@ -169,48 +167,32 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
 
         {authReady && appSaveToken && (
           <PremiumCard accent="lavender" delay={0.03}>
-            <CardHeading icon={IconChart} title="К специалисту" iconClassName="text-[#6b7eb8]" />
+            <CardHeading icon={IconChart} title="Документы к специалисту" iconClassName="text-[#6b7eb8]" />
             <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
-              Ответь на короткую анкету — ИИ поможет собрать связный текст и скачать PDF для психолога или коуча. 💛
+              Два PDF к визиту: анкета «К специалисту» и «Карта терапии» — как тебе спокойнее в процессе, темп и границы 💛
             </p>
             {isPremium === true ? (
-              <button
-                type="button"
-                onClick={() => useAppStore.getState().setScreen('specialistBrief')}
-                className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
-                style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-              >
-                Заполнить анкету
-              </button>
+              <div className="flex flex-col gap-3">
+                <button
+                  type="button"
+                  onClick={() => useAppStore.getState().setScreen('specialistBrief')}
+                  className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
+                  style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                >
+                  Заполнить анкету «К специалисту»
+                </button>
+                <button
+                  type="button"
+                  onClick={() => useAppStore.getState().setScreen('therapyMap')}
+                  className="w-full py-3.5 px-4 rounded-xl btn-secondary min-h-[48px] font-semibold border border-white/55"
+                  style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                >
+                  Собрать «Карту терапии»
+                </button>
+              </div>
             ) : isPremium === false ? (
               <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-                Доступно с премиум-подпиской — оформи её в боте через «Тарифы» или кнопку в меню 💛
-              </p>
-            ) : (
-              <p className="text-sm text-[var(--color-text-secondary)]">Проверяем доступ…</p>
-            )}
-          </PremiumCard>
-        )}
-
-        {authReady && appSaveToken && (
-          <PremiumCard accent="mint" delay={0.04}>
-            <CardHeading icon={IconMapPin} title="Карта терапии" iconClassName="text-[#3d9e8f]" />
-            <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
-              Темп, границы, опоры и пожелания к формату — связный PDF для специалиста. Не про симптомы, а про то, как
-              тебе спокойнее в процессе.
-            </p>
-            {isPremium === true ? (
-              <button
-                type="button"
-                onClick={() => useAppStore.getState().setScreen('therapyMap')}
-                className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
-                style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-              >
-                Собрать карту
-              </button>
-            ) : isPremium === false ? (
-              <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-                Доступно с премиум-подпиской — оформи её в боте 💛
+                Доступно с Премиум-подпиской — оформи в боте: «Тарифы» или кнопка мини-приложения в меню 💛
               </p>
             ) : (
               <p className="text-sm text-[var(--color-text-secondary)]">Проверяем доступ…</p>
@@ -219,59 +201,121 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
         )}
 
         <PremiumCard accent="slate" delay={0.05}>
-          <CardHeading icon={IconPulse} title="Моя статистика" iconClassName="text-[#5c7caf]" />
+          <CardHeading icon={IconPulse} title="Прогресс" iconClassName="text-[#5c7caf]" />
           <p className="font-display text-[15px] font-semibold text-[var(--color-forest-dark)] mb-1.5 leading-snug">
             Оцени свой прогресс
           </p>
-          <p className="text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
+          <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
             Настроение, тесты, ритуалы и диалоги с ИИ — наглядно и с анимацией.
           </p>
           <button
             type="button"
             onClick={() => useAppStore.getState().setScreen('statistics')}
-            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
+            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold mb-6"
             style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
             Открыть статистику
           </button>
+
+          <div className="border-t border-white/35 pt-5">
+            <CardHeading icon={IconLayers} title="Твои тесты" iconClassName="text-[#9b8bc9]" />
+            <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
+              Регулярные замеры помогают видеть динамику и бережнее относиться к себе.
+            </p>
+
+            {showHistoryLoading ? (
+              <p className="text-sm text-[var(--color-text-secondary)] py-2">Загрузка…</p>
+            ) : items.length === 0 ? (
+              <p className="text-sm text-[var(--color-text-secondary)] py-2">
+                Пока нет сохранённых результатов. Пройди первый тест из каталога — он станет началом твоей карты.
+              </p>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 mb-4">
+                  <motion.span
+                    className="text-2xl font-bold font-display"
+                    style={{ color: 'var(--color-glow-teal)' }}
+                    initial={reduceMotion ? false : { scale: 0.82 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 220, damping: 18 }}
+                  >
+                    {items.length}
+                  </motion.span>
+                  <span className="text-sm text-[var(--color-text-secondary)]">
+                    {items.length === 1 ? 'тест пройден' : items.length < 5 ? 'теста пройдено' : 'тестов пройдено'}
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--color-text-secondary)] mb-3 font-medium tracking-wide uppercase opacity-80">
+                  Последние результаты
+                </p>
+                <ul className="space-y-2">
+                  {recentItems.map((item, i) => (
+                    <motion.li
+                      key={item.id}
+                      initial={reduceMotion ? false : { opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.32, delay: 0.2 + i * 0.045, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => openResult(item.id)}
+                        className="pts-btn-shimmer w-full text-left min-h-[44px] py-2.5 px-3 rounded-xl transition-all hover:bg-white/35 active:scale-[0.99] select-none border border-white/50 text-[var(--color-text-primary)] shadow-sm"
+                        style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                      >
+                        <span className="block text-sm font-medium truncate">{item.testTitle}</span>
+                        <span className="block text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
+                          {formatDateWithTime(item.completedAt)}
+                        </span>
+                      </button>
+                    </motion.li>
+                  ))}
+                </ul>
+                {items.length > 5 && (
+                  <button
+                    type="button"
+                    onClick={onOpenHistory}
+                    className="mt-3 text-sm font-semibold w-full py-2.5 rounded-xl btn-secondary"
+                    style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                  >
+                    Вся история
+                  </button>
+                )}
+              </>
+            )}
+          </div>
         </PremiumCard>
 
-        <PremiumCard accent="lavender" delay={0.1}>
-          <CardHeading icon={IconMic} title="Голосовая поддержка" iconClassName="text-[var(--color-glow-teal-dim)]" />
-          <p className="text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
-            Напиши, что на душе — ИИ ответит тёплым голосом, в стиле психологической поддержки.
+        <PremiumCard accent="rose" delay={0.08}>
+          <CardHeading icon={IconMic} title="Практики" iconClassName="text-[var(--color-glow-teal-dim)]" />
+          <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
+            Голос ИИ и игра «Ритм сердца» — короткие практики: выговориться и слегка замедлиться в теле.
           </p>
-          <button
-            type="button"
-            onClick={() => useAppStore.getState().setScreen('voiceSupport')}
-            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
-            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-          >
-            Ответ голосом
-          </button>
+          <div className="flex flex-col gap-3">
+            <button
+              type="button"
+              onClick={() => useAppStore.getState().setScreen('voiceSupport')}
+              className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            >
+              Голосовая поддержка
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const backend = getBackendUrl()
+                const token = useAuthStore.getState().appSaveToken
+                const gameUrl = `${backend}/heart-rhythm/${token ? `?token=${encodeURIComponent(token)}` : ''}`
+                window.location.href = gameUrl
+              }}
+              className="w-full py-3.5 px-4 rounded-xl btn-secondary min-h-[48px] font-semibold border border-white/55"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            >
+              Ритм сердца — играть
+            </button>
+          </div>
         </PremiumCard>
 
-        <PremiumCard accent="rose" delay={0.13}>
-          <CardHeading icon={IconHeartLine} title="Ритм Сердца" iconClassName="text-[#c97a8a]" />
-          <p className="text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
-            Тап в такт дыханию — 90 секунд, затем комментарий от ИИ и короткая мелодия.
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              const backend = getBackendUrl()
-              const token = useAuthStore.getState().appSaveToken
-              const gameUrl = `${backend}/heart-rhythm/${token ? `?token=${encodeURIComponent(token)}` : ''}`
-              window.location.href = gameUrl
-            }}
-            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
-            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-          >
-            Открыть
-          </button>
-        </PremiumCard>
-
-        <PremiumCard accent="mint" delay={0.16}>
+        <PremiumCard accent="mint" delay={0.11}>
           <CardHeading icon={IconSprout} title="Самореализация" iconClassName="text-[#4aab9c]" />
           <p className="text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
             Уверенность, учёба, цели, анти‑прокрастинация — опиши трудности и работай над ними в тандеме с ИИ.
@@ -284,73 +328,6 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
           >
             Открыть «Самореализацию»
           </button>
-        </PremiumCard>
-
-        <PremiumCard accent="lavender" delay={0.19}>
-          <CardHeading icon={IconLayers} title="Твоё состояние" iconClassName="text-[#9b8bc9]" />
-          <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
-            Регулярные замеры помогают видеть прогресс и бережнее относиться к себе. Здесь — твой срез.
-          </p>
-
-          {showHistoryLoading ? (
-            <p className="text-sm text-[var(--color-text-secondary)] py-2">Загрузка…</p>
-          ) : items.length === 0 ? (
-            <p className="text-sm text-[var(--color-text-secondary)] py-2">
-              Пока нет сохранённых результатов. Пройди первый тест из каталога — он станет началом твоей карты.
-            </p>
-          ) : (
-            <>
-              <div className="flex items-center gap-2 mb-4">
-                <motion.span
-                  className="text-2xl font-bold font-display"
-                  style={{ color: 'var(--color-glow-teal)' }}
-                  initial={reduceMotion ? false : { scale: 0.82 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 220, damping: 18 }}
-                >
-                  {items.length}
-                </motion.span>
-                <span className="text-sm text-[var(--color-text-secondary)]">
-                  {items.length === 1 ? 'тест пройден' : items.length < 5 ? 'теста пройдено' : 'тестов пройдено'}
-                </span>
-              </div>
-              <p className="text-xs text-[var(--color-text-secondary)] mb-3 font-medium tracking-wide uppercase opacity-80">
-                Последние результаты
-              </p>
-              <ul className="space-y-2">
-                {recentItems.map((item, i) => (
-                  <motion.li
-                    key={item.id}
-                    initial={reduceMotion ? false : { opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.32, delay: 0.2 + i * 0.045, ease: [0.22, 1, 0.36, 1] }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => openResult(item.id)}
-                      className="pts-btn-shimmer w-full text-left min-h-[44px] py-2.5 px-3 rounded-xl transition-all hover:bg-white/35 active:scale-[0.99] select-none border border-white/50 text-[var(--color-text-primary)] shadow-sm"
-                      style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-                    >
-                      <span className="block text-sm font-medium truncate">{item.testTitle}</span>
-                      <span className="block text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
-                        {formatDateWithTime(item.completedAt)}
-                      </span>
-                    </button>
-                  </motion.li>
-                ))}
-              </ul>
-              {items.length > 5 && (
-                <button
-                  type="button"
-                  onClick={onOpenHistory}
-                  className="mt-3 text-sm font-semibold w-full py-2.5 rounded-xl btn-secondary"
-                  style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-                >
-                  Вся история
-                </button>
-              )}
-            </>
-          )}
         </PremiumCard>
 
         {items.length > 0 && suggestions.length > 0 && (
