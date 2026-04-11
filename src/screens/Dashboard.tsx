@@ -396,10 +396,10 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
           <PremiumCard accent="coral" delay={0.22}>
             <CardHeading icon={IconSparkle} title="Проработать с ИИ в боте" iconClassName="text-[#c98a90]" />
             <p className="text-sm text-[var(--color-text-secondary)] mb-1 leading-relaxed">
-              На основе твоих тестов — темы, которые стоит обсудить с поддержкой в боте:
+              На основе твоих тестов — готовые фразы для первого сообщения в чате с поддержкой в боте:
             </p>
             <p className="text-xs mb-3 text-[var(--color-glow-teal)] font-semibold tracking-wide">
-              Нажми на вопрос — скопируется
+              Нажми на фразу — скопируется
             </p>
             <ul className="space-y-2 mb-4">
               {suggestions.slice(0, 4).map((s, i) => (

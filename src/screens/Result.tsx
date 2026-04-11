@@ -309,7 +309,7 @@ export function Result({ onBack }: ResultProps) {
                       Проработать с ИИ в боте:
                     </h5>
                     <p className="text-xs mb-1.5" style={{ color: 'var(--color-glow-teal)' }}>
-                      Нажми на вопрос — скопируется
+                      Нажми на фразу — скопируется
                     </p>
                     <ul className="space-y-1 text-sm" style={{ color: 'var(--color-text-primary)' }}>
                       {aiSuggestions.slice(0, 4).map((s, idx) => (
@@ -402,7 +402,7 @@ export function Result({ onBack }: ResultProps) {
                     Проработать с ИИ в боте:
                   </h5>
                   <p className="text-xs mb-1.5" style={{ color: 'var(--color-glow-teal)' }}>
-                    Нажми на вопрос — скопируется
+                    Нажми на фразу — скопируется
                   </p>
                   <ul className="space-y-1 text-sm mb-2" style={{ color: 'var(--color-text-primary)' }}>
                     {aiSuggestions.slice(0, 4).map((s, idx) => (
