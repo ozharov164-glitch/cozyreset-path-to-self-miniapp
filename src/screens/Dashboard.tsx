@@ -1,4 +1,4 @@
-import { useEffect, type ComponentType } from 'react'
+import { useEffect, useState, type ComponentType } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../store/authStore'
@@ -93,6 +93,9 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
   const openResult = (id: string) => {
     openResultFromHistory(id)
   }
+
+  /** Блок «Твоё состояние» — по умолчанию свёрнут, если есть результаты (экономия места). */
+  const [isStateSectionExpanded, setIsStateSectionExpanded] = useState(false)
 
   useEffect(() => {
     if (!appAuthReady || !appSaveToken) return
@@ -234,19 +237,57 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
           </button>
 
           <div className="border-t border-white/35 pt-5 mt-6">
-            <CardHeading icon={IconLayers} title="Твоё состояние" iconClassName="text-[#9b8bc9]" />
-            <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
-              Регулярные замеры помогают видеть прогресс и бережнее относиться к себе. Здесь — твой срез.
-            </p>
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <CardHeading icon={IconLayers} title="Твоё состояние" iconClassName="text-[#9b8bc9]" />
+              {items.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setIsStateSectionExpanded((v) => !v)}
+                  className="shrink-0 mt-0.5 py-2 px-3 rounded-xl text-sm font-semibold text-[var(--color-glow-teal)] btn-ghost min-h-[40px]"
+                  style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                  aria-expanded={isStateSectionExpanded}
+                >
+                  {isStateSectionExpanded ? 'Свернуть' : 'Развернуть'}
+                </button>
+              )}
+            </div>
 
             {showHistoryLoading ? (
               <p className="text-sm text-[var(--color-text-secondary)] py-2">Загрузка…</p>
             ) : items.length === 0 ? (
-              <p className="text-sm text-[var(--color-text-secondary)] py-2">
-                Пока нет сохранённых результатов. Пройди первый тест из каталога — он станет началом твоей карты.
-              </p>
+              <>
+                <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
+                  Регулярные замеры помогают видеть прогресс и бережнее относиться к себе. Здесь — твой срез.
+                </p>
+                <p className="text-sm text-[var(--color-text-secondary)] py-2">
+                  Пока нет сохранённых результатов. Пройди первый тест из каталога — он станет началом твоей карты.
+                </p>
+              </>
+            ) : !isStateSectionExpanded ? (
+              <button
+                type="button"
+                onClick={() => setIsStateSectionExpanded(true)}
+                className="w-full text-left rounded-xl py-3 px-3 -mx-1 border border-white/40 bg-white/20 hover:bg-white/30 transition-colors"
+                style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+              >
+                <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
+                  <span className="font-semibold text-[var(--color-text-primary)]">{items.length}</span>{' '}
+                  {items.length === 1 ? 'тест пройден' : items.length < 5 ? 'теста пройдено' : 'тестов пройдено'}
+                  {recentItems[0] && (
+                    <>
+                      {' '}
+                      · последний:{' '}
+                      <span className="text-[var(--color-text-primary)]">{recentItems[0].testTitle}</span>
+                    </>
+                  )}
+                </p>
+                <p className="text-xs mt-1.5 text-[var(--color-glow-teal)] font-semibold">Нажми, чтобы открыть список</p>
+              </button>
             ) : (
               <>
+                <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
+                  Регулярные замеры помогают видеть прогресс и бережнее относиться к себе. Здесь — твой срез.
+                </p>
                 <div className="flex items-center gap-2 mb-4">
                   <motion.span
                     className="text-2xl font-bold font-display"
