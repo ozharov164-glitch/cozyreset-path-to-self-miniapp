@@ -685,6 +685,8 @@ html.tg-mini-app .btn-ghost:active {
 
 /* Экран результата теста: премиум-загрузка фраз для ИИ */
 .pts-result-ai-premium {
+  /* Явная видимость в WebView: не даём блоку схлопнуться */
+  min-height: 11rem;
   isolation: isolate;
   background: linear-gradient(
     155deg,

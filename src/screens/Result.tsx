@@ -126,20 +126,12 @@ export function Result({ onBack }: ResultProps) {
   // Точный resultId нужен, чтобы темы ИИ не генерировались повторно при повторном заходе.
   const suggestionsResultId = openResultId ?? lastSavedResultId
 
-  const { data: suggestionsData, isPending: aiSuggestionsPending } = useQuery({
+  const { data: suggestionsData, isLoading: aiSuggestionsLoading } = useQuery({
     queryKey: ['ai-suggestions-result', displayTest?.title ?? '', avgRounded, suggestionsResultId ?? ''],
     queryFn: () => apiAiSuggestions(displayTest?.title ?? '', avgRounded, suggestionsResultId),
     enabled: !!(displayTest?.title && displayAnswers.length > 0 && authReady && appSaveToken && suggestionsResultId),
   })
   const aiSuggestions = suggestionsData?.suggestions ?? []
-  const aiSuggestionsQueryEnabled = !!(
-    displayTest?.title &&
-    displayAnswers.length > 0 &&
-    authReady &&
-    appSaveToken &&
-    suggestionsResultId
-  )
-  const aiSuggestionsLoading = aiSuggestionsQueryEnabled && aiSuggestionsPending
   const aiMovies = suggestionsData?.movies ?? []
 
   const openBot = () => {
@@ -227,8 +219,9 @@ export function Result({ onBack }: ResultProps) {
         {/* Карточка результата: балл, шкала, описание — в тематике бота */}
         <motion.div
           className="rounded-2xl p-5 mb-4 flex-shrink-0"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
+          /* Без opacity:0 — в Telegram WebView framer иногда не доанимирует, экран остаётся пустым */
+          initial={{ y: 10 }}
+          animate={{ y: 0 }}
           transition={{ duration: 0.35 }}
           style={{
             background: 'linear-gradient(145deg, rgba(255,255,255,0.85) 0%, rgba(249,245,255,0.9) 100%)',
@@ -287,9 +280,9 @@ export function Result({ onBack }: ResultProps) {
               </p>
               <motion.div
                 className="rounded-2xl p-4"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
+                initial={{ y: 8 }}
+                animate={{ y: 0 }}
+                transition={{ duration: 0.4, delay: 0.12 }}
                 style={{
                   background: 'linear-gradient(145deg, rgba(125,211,192,0.15) 0%, rgba(201,184,232,0.12) 100%)',
                   border: '1px solid rgba(125,211,192,0.35)',
@@ -342,9 +335,9 @@ export function Result({ onBack }: ResultProps) {
                 {aiMovies.length > 0 && (
                   <motion.div
                     className="mt-4 pt-4"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.15 }}
+                    initial={{ y: 6 }}
+                    animate={{ y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.1 }}
                     style={{ borderTop: '1px solid rgba(125,211,192,0.3)' }}
                   >
                     <h5 className="text-sm font-semibold mb-3" style={{ color: 'var(--color-forest-dark)' }}>

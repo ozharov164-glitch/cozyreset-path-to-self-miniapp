@@ -65,24 +65,23 @@ export function ResultPremiumAiLoading({ withTopDivider = false }: Props) {
   )
 
   return (
-    <motion.div
+    <div
       role="status"
       aria-live="polite"
       aria-busy="true"
       aria-label="Готовим персональные фразы для чата с поддержкой"
-      className={
-        withTopDivider
-          ? 'mt-4 pt-5 border-t border-[rgba(125,211,192,0.32)]'
-          : ''
-      }
-      initial={reduceMotion ? false : { opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      className={withTopDivider ? 'mt-4 pt-5 border-t border-[rgba(125,211,192,0.32)]' : ''}
     >
-      <div className="pts-result-ai-premium relative overflow-hidden rounded-2xl px-4 py-5 sm:px-5">
+      <motion.div
+        className="pts-result-ai-premium relative overflow-hidden rounded-2xl px-4 py-5 sm:px-5"
+        style={{ opacity: 1 }}
+        initial={reduceMotion ? false : { y: 8 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      >
         {!reduceMotion && <div className="pts-result-ai-premium-shimmer" aria-hidden />}
         {inner}
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   )
 }
