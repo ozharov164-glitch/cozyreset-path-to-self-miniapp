@@ -15,8 +15,10 @@ import { goBackToBot, copyQuestionToClipboard } from '../utils/telegram'
 import { PremiumCard } from '../components/PremiumCard'
 import {
   IconChart,
+  IconHeartLine,
   IconLayers,
   IconMic,
+  IconMapPin,
   IconPulse,
   IconSparkle,
   IconSprout,
@@ -167,60 +169,74 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
 
         {authReady && appSaveToken && (
           <PremiumCard accent="lavender" delay={0.03}>
-            <CardHeading icon={IconChart} title="Документы к специалисту" iconClassName="text-[#6b7eb8]" />
+            <CardHeading icon={IconChart} title="К специалисту" iconClassName="text-[#6b7eb8]" />
             <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
-              Два PDF к визиту: анкета «К специалисту» и «Карта терапии» — как тебе спокойнее в процессе, темп и границы 💛
+              Ответь на короткую анкету — ИИ поможет собрать связный текст и скачать PDF для психолога или коуча. 💛
             </p>
             {isPremium === true ? (
-              <div className="flex flex-col gap-3">
-                <button
-                  type="button"
-                  onClick={() => useAppStore.getState().setScreen('specialistBrief')}
-                  className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
-                  style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-                >
-                  Заполнить анкету «К специалисту»
-                </button>
-                <button
-                  type="button"
-                  onClick={() => useAppStore.getState().setScreen('therapyMap')}
-                  className="w-full py-3.5 px-4 rounded-xl btn-secondary min-h-[48px] font-semibold border border-white/55"
-                  style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-                >
-                  Собрать «Карту терапии»
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => useAppStore.getState().setScreen('specialistBrief')}
+                className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
+                style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+              >
+                Заполнить анкету
+              </button>
             ) : isPremium === false ? (
               <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-                Доступно с Премиум-подпиской — оформи в боте: «Тарифы» или кнопка мини-приложения в меню 💛
+                Доступно с премиум-подпиской — оформи её в боте через «Тарифы» или кнопку в меню 💛
               </p>
             ) : (
               <p className="text-sm text-[var(--color-text-secondary)]">Проверяем доступ…</p>
             )}
+
+            <div className="border-t border-white/35 pt-5 mt-5">
+              <CardHeading icon={IconMapPin} title="Карта терапии" iconClassName="text-[#3d9e8f]" />
+              <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
+                Темп, границы, опоры и пожелания к формату — связный PDF для специалиста. Не про симптомы, а про то, как
+                тебе спокойнее в процессе.
+              </p>
+              {isPremium === true ? (
+                <button
+                  type="button"
+                  onClick={() => useAppStore.getState().setScreen('therapyMap')}
+                  className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
+                  style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                >
+                  Собрать карту
+                </button>
+              ) : isPremium === false ? (
+                <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
+                  Доступно с премиум-подпиской — оформи её в боте 💛
+                </p>
+              ) : (
+                <p className="text-sm text-[var(--color-text-secondary)]">Проверяем доступ…</p>
+              )}
+            </div>
           </PremiumCard>
         )}
 
         <PremiumCard accent="slate" delay={0.05}>
-          <CardHeading icon={IconPulse} title="Прогресс" iconClassName="text-[#5c7caf]" />
+          <CardHeading icon={IconPulse} title="Моя статистика" iconClassName="text-[#5c7caf]" />
           <p className="font-display text-[15px] font-semibold text-[var(--color-forest-dark)] mb-1.5 leading-snug">
             Оцени свой прогресс
           </p>
-          <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
+          <p className="text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
             Настроение, тесты, ритуалы и диалоги с ИИ — наглядно и с анимацией.
           </p>
           <button
             type="button"
             onClick={() => useAppStore.getState().setScreen('statistics')}
-            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold mb-6"
+            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
             style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
             Открыть статистику
           </button>
 
-          <div className="border-t border-white/35 pt-5">
-            <CardHeading icon={IconLayers} title="Твои тесты" iconClassName="text-[#9b8bc9]" />
+          <div className="border-t border-white/35 pt-5 mt-6">
+            <CardHeading icon={IconLayers} title="Твоё состояние" iconClassName="text-[#9b8bc9]" />
             <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
-              Регулярные замеры помогают видеть динамику и бережнее относиться к себе.
+              Регулярные замеры помогают видеть прогресс и бережнее относиться к себе. Здесь — твой срез.
             </p>
 
             {showHistoryLoading ? (
@@ -285,20 +301,25 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
           </div>
         </PremiumCard>
 
-        <PremiumCard accent="rose" delay={0.08}>
-          <CardHeading icon={IconMic} title="Практики" iconClassName="text-[var(--color-glow-teal-dim)]" />
-          <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
-            Голос ИИ и игра «Ритм сердца» — короткие практики: выговориться и слегка замедлиться в теле.
+        <PremiumCard accent="lavender" delay={0.1}>
+          <CardHeading icon={IconMic} title="Голосовая поддержка" iconClassName="text-[var(--color-glow-teal-dim)]" />
+          <p className="text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
+            Напиши, что на душе — ИИ ответит тёплым голосом, в стиле психологической поддержки.
           </p>
-          <div className="flex flex-col gap-3">
-            <button
-              type="button"
-              onClick={() => useAppStore.getState().setScreen('voiceSupport')}
-              className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
-              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-            >
-              Голосовая поддержка
-            </button>
+          <button
+            type="button"
+            onClick={() => useAppStore.getState().setScreen('voiceSupport')}
+            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+          >
+            Ответ голосом
+          </button>
+
+          <div className="border-t border-white/35 pt-5 mt-5">
+            <CardHeading icon={IconHeartLine} title="Ритм Сердца" iconClassName="text-[#c97a8a]" />
+            <p className="text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
+              Тап в такт дыханию — 90 секунд, затем комментарий от ИИ и короткая мелодия.
+            </p>
             <button
               type="button"
               onClick={() => {
@@ -307,15 +328,15 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
                 const gameUrl = `${backend}/heart-rhythm/${token ? `?token=${encodeURIComponent(token)}` : ''}`
                 window.location.href = gameUrl
               }}
-              className="w-full py-3.5 px-4 rounded-xl btn-secondary min-h-[48px] font-semibold border border-white/55"
+              className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
               style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
-              Ритм сердца — играть
+              Открыть
             </button>
           </div>
         </PremiumCard>
 
-        <PremiumCard accent="mint" delay={0.11}>
+        <PremiumCard accent="mint" delay={0.16}>
           <CardHeading icon={IconSprout} title="Самореализация" iconClassName="text-[#4aab9c]" />
           <p className="text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
             Уверенность, учёба, цели, анти‑прокрастинация — опиши трудности и работай над ними в тандеме с ИИ.
