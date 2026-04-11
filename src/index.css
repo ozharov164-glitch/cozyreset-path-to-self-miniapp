@@ -652,3 +652,33 @@ html.tg-mini-app .btn-ghost:active {
   word-wrap: break-word;
   word-break: break-word;
 }
+
+/* Скелетон строк подсказок ИИ (мини-приложение): плавный перелив */
+@keyframes pts-ai-skeleton-shimmer {
+  0% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -120% 0;
+  }
+}
+
+.pts-ai-suggestions-skeleton-line {
+  overflow: hidden;
+  background: linear-gradient(
+    105deg,
+    rgba(125, 211, 192, 0.14) 0%,
+    rgba(201, 184, 232, 0.28) 42%,
+    rgba(125, 211, 192, 0.14) 84%
+  );
+  background-size: 220% 100%;
+  animation: pts-ai-skeleton-shimmer 2.4s ease-in-out infinite;
+  will-change: background-position;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pts-ai-suggestions-skeleton-line {
+    animation: none;
+    opacity: 0.62;
+  }
+}
