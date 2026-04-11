@@ -683,126 +683,66 @@ html.tg-mini-app .btn-ghost:active {
   }
 }
 
-/* Экран результата теста: премиум-загрузка фраз для ИИ */
-.pts-result-ai-premium {
-  /* Явная видимость в WebView: не даём блоку схлопнуться */
-  min-height: 11rem;
-  isolation: isolate;
-  background: linear-gradient(
-    155deg,
-    rgba(255, 255, 255, 0.72) 0%,
-    rgba(248, 252, 255, 0.88) 38%,
-    rgba(252, 249, 255, 0.82) 100%
-  );
-  border: 1px solid rgba(125, 211, 192, 0.38);
-  box-shadow:
-    0 4px 28px -8px rgba(107, 196, 181, 0.22),
-    0 12px 40px -18px rgba(184, 164, 224, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+/* Result: компактная премиум-подгрузка фраз ИИ */
+.pts-ai-mini-spinner {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(125, 211, 192, 0.28);
+  border-top-color: #6bc4b5;
+  border-right-color: rgba(184, 164, 224, 0.72);
+  animation: pts-ai-mini-spin 0.88s linear infinite;
 }
 
-.pts-result-ai-premium-shimmer {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  border-radius: inherit;
-}
-.pts-result-ai-premium-shimmer::before {
-  content: "";
-  position: absolute;
-  top: -50%;
-  left: -40%;
-  width: 55%;
-  height: 200%;
-  background: linear-gradient(
-    105deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.35) 45%,
-    rgba(255, 255, 255, 0) 90%
-  );
-  transform: skewX(-16deg);
-  animation: pts-result-ai-premium-sweep 3.2s ease-in-out infinite;
+.pts-ai-mini-spinner--still {
+  animation: none;
+  opacity: 0.88;
 }
 
-@keyframes pts-result-ai-premium-sweep {
+@keyframes pts-ai-mini-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pts-ai-mini-track {
+  background: rgba(125, 211, 192, 0.16);
+}
+
+.pts-ai-mini-gleam {
+  height: 100%;
+  width: 38%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #6bc4b5 0%, #b8a4e0 55%, #e8b4b8 100%);
+  box-shadow: 0 0 12px rgba(107, 196, 181, 0.35);
+  animation: pts-ai-mini-gleam 1.4s ease-in-out infinite;
+}
+
+.pts-ai-mini-gleam--still {
+  animation: none;
+  width: 34%;
+  margin-left: 33%;
+  opacity: 0.75;
+}
+
+@keyframes pts-ai-mini-gleam {
   0% {
-    transform: translateX(-30%) skewX(-16deg);
-    opacity: 0;
-  }
-  12% {
-    opacity: 1;
-  }
-  55% {
-    opacity: 1;
+    transform: translateX(-130%);
   }
   100% {
-    transform: translateX(220%) skewX(-16deg);
-    opacity: 0;
+    transform: translateX(340%);
   }
-}
-
-.pts-result-ai-premium-icon-ring {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(232, 244, 250, 0.9) 100%);
-  border: 1px solid rgba(201, 184, 232, 0.35);
-  box-shadow:
-    0 6px 20px rgba(107, 196, 181, 0.18),
-    0 2px 8px rgba(184, 164, 224, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95);
-}
-
-.pts-result-ai-premium-orb {
-  position: absolute;
-  inset: -6px;
-  border-radius: 1.15rem;
-  background: radial-gradient(
-    circle at 50% 45%,
-    rgba(107, 196, 181, 0.35) 0%,
-    rgba(184, 164, 224, 0.15) 45%,
-    transparent 70%
-  );
-  animation: pts-result-ai-premium-orb-pulse 2.8s ease-in-out infinite;
-  filter: blur(10px);
-  z-index: 0;
-}
-
-@keyframes pts-result-ai-premium-orb-pulse {
-  0%,
-  100% {
-    opacity: 0.65;
-    transform: scale(0.96);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.05);
-  }
-}
-
-.pts-result-ai-premium-line {
-  overflow: hidden;
-  background: linear-gradient(
-    105deg,
-    rgba(125, 211, 192, 0.12) 0%,
-    rgba(201, 184, 232, 0.26) 38%,
-    rgba(232, 180, 184, 0.14) 72%,
-    rgba(125, 211, 192, 0.1) 100%
-  );
-  background-size: 240% 100%;
-  animation: pts-ai-skeleton-shimmer 2.1s ease-in-out infinite;
-  will-change: background-position;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pts-result-ai-premium-shimmer::before {
+  .pts-ai-mini-spinner {
     animation: none;
-    opacity: 0;
+    opacity: 0.88;
   }
-  .pts-result-ai-premium-orb {
+  .pts-ai-mini-gleam {
     animation: none;
-    opacity: 0.5;
-  }
-  .pts-result-ai-premium-line {
-    animation: none;
-    opacity: 0.58;
+    width: 34%;
+    margin-left: 33%;
+    opacity: 0.72;
   }
 }

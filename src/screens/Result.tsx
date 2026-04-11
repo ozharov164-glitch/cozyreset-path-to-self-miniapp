@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { TESTS } from '../data/tests'
 import { useAppStore } from '../store/appStore'
 import { useAuthStore } from '../store/authStore'
@@ -305,33 +305,49 @@ export function Result({ onBack }: ResultProps) {
                     <span>Твоя дорога к себе продолжается в боте — открой его и сделай следующий шаг.</span>
                   </li>
                 </ul>
-                {(aiSuggestionsLoading || aiSuggestions.length > 0) &&
-                  (aiSuggestionsLoading ? (
-                    <ResultPremiumAiLoading withTopDivider />
-                  ) : (
-                    <>
-                      <h5 className="text-xs font-semibold mb-2" style={{ color: 'var(--color-forest-dark)' }}>
-                        Проработать с ИИ в боте:
-                      </h5>
-                      <p className="text-xs mb-1.5" style={{ color: 'var(--color-glow-teal)' }}>
-                        Нажми на фразу — скопируется
-                      </p>
-                      <ul className="space-y-1 text-sm" style={{ color: 'var(--color-text-primary)' }}>
-                        {aiSuggestions.slice(0, 4).map((s, idx) => (
-                          <li key={idx} className="flex gap-2">
-                            <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
-                            <button
-                              type="button"
-                              onClick={() => copyQuestionToClipboard(s)}
-                              className="copyable-question text-left flex-1 min-h-[44px] py-1.5 px-2 -mx-2 rounded-lg"
-                            >
-                              {s}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  ))}
+                {(aiSuggestionsLoading || aiSuggestions.length > 0) && (
+                  <AnimatePresence mode="wait" initial={false}>
+                    {aiSuggestionsLoading ? (
+                      <motion.div
+                        key="ai-suggestions-loading"
+                        initial={{ opacity: 1 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2, ease: 'easeOut' }}
+                      >
+                        <ResultPremiumAiLoading withTopDivider />
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="ai-suggestions-ready"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.32, ease: 'easeOut' }}
+                      >
+                        <h5 className="text-xs font-semibold mb-2" style={{ color: 'var(--color-forest-dark)' }}>
+                          Проработать с ИИ в боте:
+                        </h5>
+                        <p className="text-xs mb-1.5" style={{ color: 'var(--color-glow-teal)' }}>
+                          Нажми на фразу — скопируется
+                        </p>
+                        <ul className="space-y-1 text-sm" style={{ color: 'var(--color-text-primary)' }}>
+                          {aiSuggestions.slice(0, 4).map((s, idx) => (
+                            <li key={idx} className="flex gap-2">
+                              <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
+                              <button
+                                type="button"
+                                onClick={() => copyQuestionToClipboard(s)}
+                                className="copyable-question text-left flex-1 min-h-[44px] py-1.5 px-2 -mx-2 rounded-lg"
+                              >
+                                {s}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                )}
                 {aiMovies.length > 0 && (
                   <motion.div
                     className="mt-4 pt-4"
@@ -395,39 +411,57 @@ export function Result({ onBack }: ResultProps) {
 
           {!saving && !saved && !error && isViewingHistory && (
             <div className="space-y-3">
-              {(aiSuggestionsLoading || aiSuggestions.length > 0) &&
-                (aiSuggestionsLoading ? (
-                  <ResultPremiumAiLoading />
-                ) : (
-                  <div
-                    className="rounded-2xl p-4"
-                    style={{
-                      background: 'linear-gradient(145deg, rgba(125,211,192,0.12) 0%, rgba(201,184,232,0.1) 100%)',
-                      border: '1px solid rgba(125,211,192,0.3)',
-                    }}
-                  >
-                    <h5 className="text-xs font-semibold mb-2" style={{ color: 'var(--color-forest-dark)' }}>
-                      Проработать с ИИ в боте:
-                    </h5>
-                    <p className="text-xs mb-1.5" style={{ color: 'var(--color-glow-teal)' }}>
-                      Нажми на фразу — скопируется
-                    </p>
-                    <ul className="space-y-1 text-sm mb-2" style={{ color: 'var(--color-text-primary)' }}>
-                      {aiSuggestions.slice(0, 4).map((s, idx) => (
-                        <li key={idx} className="flex gap-2">
-                          <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
-                          <button
-                            type="button"
-                            onClick={() => copyQuestionToClipboard(s)}
-                            className="copyable-question text-left flex-1 min-h-[44px] py-1.5 px-2 -mx-2 rounded-lg"
-                          >
-                            {s}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+              {(aiSuggestionsLoading || aiSuggestions.length > 0) && (
+                <div
+                  className="rounded-2xl p-4"
+                  style={{
+                    background: 'linear-gradient(145deg, rgba(125,211,192,0.12) 0%, rgba(201,184,232,0.1) 100%)',
+                    border: '1px solid rgba(125,211,192,0.3)',
+                  }}
+                >
+                  <AnimatePresence mode="wait" initial={false}>
+                    {aiSuggestionsLoading ? (
+                      <motion.div
+                        key="ai-suggestions-loading-history"
+                        initial={{ opacity: 1 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2, ease: 'easeOut' }}
+                      >
+                        <ResultPremiumAiLoading />
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="ai-suggestions-ready-history"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.32, ease: 'easeOut' }}
+                      >
+                        <h5 className="text-xs font-semibold mb-2" style={{ color: 'var(--color-forest-dark)' }}>
+                          Проработать с ИИ в боте:
+                        </h5>
+                        <p className="text-xs mb-1.5" style={{ color: 'var(--color-glow-teal)' }}>
+                          Нажми на фразу — скопируется
+                        </p>
+                        <ul className="space-y-1 text-sm mb-2" style={{ color: 'var(--color-text-primary)' }}>
+                          {aiSuggestions.slice(0, 4).map((s, idx) => (
+                            <li key={idx} className="flex gap-2">
+                              <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
+                              <button
+                                type="button"
+                                onClick={() => copyQuestionToClipboard(s)}
+                                className="copyable-question text-left flex-1 min-h-[44px] py-1.5 px-2 -mx-2 rounded-lg"
+                              >
+                                {s}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
               {aiMovies.length > 0 && (
                 <div
                   className="rounded-2xl p-4"
