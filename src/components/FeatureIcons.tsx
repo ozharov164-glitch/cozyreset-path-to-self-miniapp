@@ -153,3 +153,25 @@ export function IconSparkle({ className = '' }: { className?: string }) {
     </svg>
   )
 }
+
+/** Нейро-Арена — тренажёр внимания */
+export function IconNeuroArena({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width={22}
+      height={22}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.35}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M12 5a7 7 0 100 14 7 7 0 000-14z" />
+      <path d="M8.5 12.5c.8 1.2 2.2 2 3.5 2s2.7-.8 3.5-2" />
+      <path d="M9 9h.01M15 9h.01" />
+    </svg>
+  )
+}

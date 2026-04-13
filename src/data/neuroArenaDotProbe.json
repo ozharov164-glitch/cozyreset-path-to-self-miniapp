@@ -1,0 +1,28 @@
+{
+  "stimuli": [
+    {"id": "dp_01", "category": "social", "threat": "😠", "neutral": "😊"},
+    {"id": "dp_02", "category": "social", "threat": "😡", "neutral": "🙂"},
+    {"id": "dp_03", "category": "social", "threat": "😤", "neutral": "😌"},
+    {"id": "dp_04", "category": "social", "threat": "💢", "neutral": "💛"},
+    {"id": "dp_05", "category": "general", "threat": "⚠️", "neutral": "🌿"},
+    {"id": "dp_06", "category": "general", "threat": "⛈️", "neutral": "🌤️"},
+    {"id": "dp_07", "category": "general", "threat": "🔴", "neutral": "🟢"},
+    {"id": "dp_08", "category": "general", "threat": "❗", "neutral": "✓"},
+    {"id": "dp_09", "category": "uncertainty", "threat": "❓", "neutral": "📌"},
+    {"id": "dp_10", "category": "uncertainty", "threat": "⌛", "neutral": "☕"},
+    {"id": "dp_11", "category": "uncertainty", "threat": "🌫️", "neutral": "🕯️"},
+    {"id": "dp_12", "category": "uncertainty", "threat": "📉", "neutral": "📈"},
+    {"id": "dp_13", "category": "social", "threat": "👎", "neutral": "👍"},
+    {"id": "dp_14", "category": "social", "threat": "🙅", "neutral": "🙅‍♀️"},
+    {"id": "dp_15", "category": "social", "threat": "💔", "neutral": "💚"},
+    {"id": "dp_16", "category": "general", "threat": "🌑", "neutral": "🌕"},
+    {"id": "dp_17", "category": "general", "threat": "⚡", "neutral": "🌊"},
+    {"id": "dp_18", "category": "general", "threat": "🚫", "neutral": "✨"},
+    {"id": "dp_19", "category": "uncertainty", "threat": "🎲", "neutral": "📋"},
+    {"id": "dp_20", "category": "uncertainty", "threat": "❔", "neutral": "💭"},
+    {"id": "dp_21", "category": "social", "threat": "😰", "neutral": "😇"},
+    {"id": "dp_22", "category": "social", "threat": "😒", "neutral": "🥰"},
+    {"id": "dp_23", "category": "general", "threat": "🌧️", "neutral": "🌈"},
+    {"id": "dp_24", "category": "general", "threat": "⚓", "neutral": "🦋"}
+  ]
+}

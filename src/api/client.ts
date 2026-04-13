@@ -501,6 +501,91 @@ export async function apiStatistics(period: StatsPeriod): Promise<ApiStatisticsR
   return { error: 'Некорректный ответ', status: res.status }
 }
 
+export type NeuroArenaLimits = {
+  dotprobeRemaining: number
+  scenariosRemaining: number
+  freePerDayDotprobe: number
+  freePerDayScenarios: number
+}
+
+export type NeuroArenaProgressApi = {
+  dotprobeBest: number
+  dotprobeSessions: number
+  scenariosBest: number
+  scenariosSessions: number
+  streakDays: number
+  lastPlayedDate: string | null
+  totalMinutes: number
+}
+
+export type NeuroArenaSessionRow = {
+  game_type: string
+  score: number
+  accuracy: number | null
+  avg_reaction_ms: number | null
+  stimuli_count: number
+  completed_at: string
+}
+
+export async function apiNeuroArenaStatus(): Promise<
+  | {
+      status: 'ok'
+      premium: boolean
+      limits: NeuroArenaLimits
+      progress: NeuroArenaProgressApi
+      recentSessions: NeuroArenaSessionRow[]
+    }
+  | { error: string }
+> {
+  const res = await fetchWithAuth('/mini-app/neuro-arena/status', { method: 'POST', body: '{}' })
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>
+  if (!res.ok) {
+    return { error: typeof data.error === 'string' ? data.error : 'Ошибка загрузки' }
+  }
+  if (data.status === 'ok' && data.limits && data.progress) {
+    return {
+      status: 'ok',
+      premium: !!data.premium,
+      limits: data.limits as NeuroArenaLimits,
+      progress: data.progress as NeuroArenaProgressApi,
+      recentSessions: Array.isArray(data.recentSessions) ? (data.recentSessions as NeuroArenaSessionRow[]) : [],
+    }
+  }
+  return { error: 'Некорректный ответ' }
+}
+
+export async function apiNeuroArenaSessionEnd(payload: {
+  gameType: 'dotprobe' | 'scenarios'
+  score: number
+  accuracy?: number | null
+  avgReactionMs?: number | null
+  stimuliCount: number
+  playtimeSec?: number
+  moodNote?: string
+}): Promise<{ ok: true } | { error: string; premium_required?: boolean; limit?: boolean }> {
+  const res = await fetchWithAuth('/mini-app/neuro-arena/session-end', {
+    method: 'POST',
+    body: JSON.stringify({
+      gameType: payload.gameType,
+      score: payload.score,
+      accuracy: payload.accuracy ?? null,
+      avgReactionMs: payload.avgReactionMs ?? null,
+      stimuliCount: payload.stimuliCount,
+      playtimeSec: payload.playtimeSec ?? 0,
+      moodNote: payload.moodNote ?? '',
+    }),
+  })
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>
+  if (res.status === 403 && data.premium_required) {
+    return { error: typeof data.message === 'string' ? data.message : 'Лимит', premium_required: true, limit: true }
+  }
+  if (!res.ok) {
+    return { error: typeof data.error === 'string' ? data.error : 'Ошибка сохранения' }
+  }
+  if (data.status === 'ok') return { ok: true }
+  return { error: 'Некорректный ответ' }
+}
+
 export async function apiClearTestHistory(): Promise<{ ok: boolean; deleted: number } | { error: string }> {
   const res = await fetchWithAuth('/mini-app/clear-test-history', { method: 'POST', body: '{}' })
   const data = await res.json().catch(() => ({})) as { ok?: boolean; deleted?: number; error?: string }

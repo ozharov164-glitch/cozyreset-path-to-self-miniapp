@@ -20,6 +20,7 @@ import {
   IconLayers,
   IconMic,
   IconMapPin,
+  IconNeuroArena,
   IconPulse,
   IconSparkle,
   IconSprout,
@@ -221,6 +222,22 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
             </div>
           </PremiumCard>
         )}
+
+        <PremiumCard accent="lavender" delay={0.045}>
+          <CardHeading icon={IconNeuroArena} title="Нейро-Арена" iconClassName="text-[#6b5b9c]" />
+          <p className="text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
+            Короткие тренажёры внимания и интерпретации (dot-probe и сценарии) — играючи, 2–5 минут. Не заменяет
+            терапию.
+          </p>
+          <button
+            type="button"
+            onClick={() => useAppStore.getState().setScreen('neuroArena')}
+            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+          >
+            Открыть Нейро-Арену
+          </button>
+        </PremiumCard>
 
         <PremiumCard accent="slate" delay={0.05}>
           <CardHeading icon={IconPulse} title="Моя статистика" iconClassName="text-[#5c7caf]" />

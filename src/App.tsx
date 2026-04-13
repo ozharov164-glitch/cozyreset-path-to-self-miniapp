@@ -19,6 +19,7 @@ import { SelfRealization } from './screens/SelfRealization'
 import { StatisticsPage } from './screens/StatisticsPage'
 import { SpecialistBrief } from './screens/SpecialistBrief'
 import { TherapyMap } from './screens/TherapyMap'
+import { NeuroArenaScreen } from './components/NeuroArena/NeuroArenaScreen'
 import { useAppStore } from './store/appStore'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
 
@@ -110,6 +111,7 @@ function AppContent() {
         {screen === 'statistics' && <StatisticsPage onBack={() => setScreen('dashboard')} />}
         {screen === 'specialistBrief' && <SpecialistBrief onBack={() => setScreen('dashboard')} />}
         {screen === 'therapyMap' && <TherapyMap onBack={() => setScreen('dashboard')} />}
+        {screen === 'neuroArena' && <NeuroArenaScreen onBack={() => setScreen('dashboard')} />}
         {screen === 'dashboard' && (
           <Dashboard onOpenCatalog={() => setScreen('catalog')} onOpenHistory={() => setScreen('history')} />
         )}

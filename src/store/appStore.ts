@@ -11,6 +11,7 @@ export type Screen =
   | 'statistics'
   | 'specialistBrief'
   | 'therapyMap'
+  | 'neuroArena'
 
 interface AppState {
   screen: Screen
