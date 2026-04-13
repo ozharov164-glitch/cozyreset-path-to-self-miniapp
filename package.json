@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "generate:neuro-assets": "node scripts/generate-neuro-arena-svgs.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

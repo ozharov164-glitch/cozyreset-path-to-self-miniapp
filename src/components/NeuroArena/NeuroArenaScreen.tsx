@@ -7,6 +7,7 @@ import { apiNeuroArenaSessionEnd, apiNeuroArenaStatus } from '../../api/client'
 import { useAuthStore } from '../../store/authStore'
 import { GameDotProbe, type DotProbeResult } from './GameDotProbe'
 import { GameScenarios, type ScenariosResult } from './GameScenarios'
+import { NeuroArenaInfoPanel } from './NeuroArenaInfoPanel'
 
 type View = 'lobby' | 'dotprobe' | 'scenarios' | 'result'
 
@@ -216,6 +217,8 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
             </p>
           )}
         </PremiumCard>
+
+        <NeuroArenaInfoPanel />
 
         {!authReady ? (
           <p className="text-center text-sm text-[var(--color-text-secondary)] py-6">Подключаемся к боту…</p>

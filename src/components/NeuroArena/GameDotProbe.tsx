@@ -1,12 +1,34 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import dotProbeData from '../../data/neuroArenaDotProbe.json'
+import { publicUrl } from '../../utils/publicUrl'
 
 export type DotProbeStimulus = {
   id: string
   category: string
   threat: string
   neutral: string
+}
+
+function isAssetStimulus(s: string): boolean {
+  return s.startsWith('/neuro-arena/') || /\.(svg|webp|png|jpe?g)$/i.test(s)
+}
+
+function StimulusCue({ value }: { value: string }) {
+  if (isAssetStimulus(value)) {
+    return (
+      <img
+        src={publicUrl(value)}
+        alt=""
+        width={96}
+        height={96}
+        className="w-[4.5rem] h-[4.5rem] sm:w-[5.25rem] sm:h-[5.25rem] object-contain select-none pointer-events-none"
+        decoding="async"
+        draggable={false}
+      />
+    )
+  }
+  return <span className="text-5xl sm:text-6xl leading-none">{value}</span>
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -43,7 +65,9 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
   const reduce = useReducedMotion()
   const startedAt = useRef(0)
   const [phase, setPhase] = useState<'intro' | 'playing'>('intro')
-  const [trials] = useState(() => shuffle(dotProbeData.stimuli as DotProbeStimulus[]).slice(0, TRIALS))
+  const [trials] = useState(() =>
+    shuffle((dotProbeData as { stimuli: DotProbeStimulus[] }).stimuli).slice(0, TRIALS),
+  )
   const [trialIndex, setTrialIndex] = useState(0)
   const trialIdxRef = useRef(0)
   const [sub, setSub] = useState<'fix' | 'cue' | 'blank' | 'probe'>('fix')
@@ -129,6 +153,18 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
 
   useEffect(() => {
     if (phase !== 'playing') return
+    const next = trials[trialIndex + 1]
+    if (!next) return
+    for (const s of [next.neutral, next.threat]) {
+      if (isAssetStimulus(s)) {
+        const img = new Image()
+        img.src = publicUrl(s)
+      }
+    }
+  }, [trialIndex, phase, trials])
+
+  useEffect(() => {
+    if (phase !== 'playing') return
     if (sub !== 'probe') return
     probeStartRef.current = performance.now()
     const t = window.setTimeout(() => {
@@ -155,8 +191,8 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
     )
   }
 
-  const leftEmoji = neutralLeft ? pair.neutral : pair.threat
-  const rightEmoji = neutralLeft ? pair.threat : pair.neutral
+  const leftStimulus = neutralLeft ? pair.neutral : pair.threat
+  const rightStimulus = neutralLeft ? pair.threat : pair.neutral
 
   if (phase === 'intro') {
     return (
@@ -230,10 +266,10 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
           {(sub === 'fix' || sub === 'cue' || sub === 'blank') && (
             <div className="flex h-[220px]">
               <div className="flex-1 flex items-center justify-center text-5xl sm:text-6xl border-r border-white/30 bg-white/10">
-                {sub === 'cue' ? leftEmoji : sub === 'fix' ? '+' : ''}
+                {sub === 'cue' ? <StimulusCue value={leftStimulus} /> : sub === 'fix' ? '+' : ''}
               </div>
               <div className="flex-1 flex items-center justify-center text-5xl sm:text-6xl bg-white/10">
-                {sub === 'cue' ? rightEmoji : sub === 'fix' ? '+' : ''}
+                {sub === 'cue' ? <StimulusCue value={rightStimulus} /> : sub === 'fix' ? '+' : ''}
               </div>
             </div>
           )}
