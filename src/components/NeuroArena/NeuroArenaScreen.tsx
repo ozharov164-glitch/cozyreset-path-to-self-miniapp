@@ -28,11 +28,17 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
   const [result, setResult] = useState<ResultState | null>(null)
   const gamesThisVisit = useRef(0)
 
-  const { data: status, isLoading } = useQuery({
+  const {
+    data: status,
+    isLoading,
+    isFetching,
+    refetch,
+  } = useQuery({
     queryKey: ['neuro-arena-status'],
     queryFn: apiNeuroArenaStatus,
     enabled: authReady,
     staleTime: 30_000,
+    retry: 1,
   })
 
   const refresh = useCallback(() => {
@@ -40,6 +46,7 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
   }, [queryClient])
 
   const stOk = status && 'status' in status && status.status === 'ok' ? status : null
+  const statusErr = status && 'error' in status ? status.error : null
   const canPlayDot =
     !!stOk && (isPremium === true || (stOk.limits.dotprobeRemaining ?? 0) > 0)
   const canPlaySc =
@@ -200,8 +207,8 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
             <span>Тренажёры внимания и интерпретации</span>
           </h3>
           <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
-            Короткие сессии в духе исследовательских парадигм (dot-probe, CBM-I): без давления, с мгновенной обратной
-            связью. Не медицинская диагностика.
+            Здесь две мини-тренировки: на скорость переключения внимания и на выбор более мягкого объяснения в неясной
+            ситуации. Без спешки, с понятной обратной связью. Это не диагностика и не лечение.
           </p>
           {gamesThisVisit.current >= MAX_GAMES_PER_VISIT && (
             <p className="text-sm rounded-xl bg-amber-100/45 border border-amber-200/60 px-3 py-2 mb-1 text-amber-950/90">
@@ -210,9 +217,26 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
           )}
         </PremiumCard>
 
-        {isLoading || !stOk ? (
+        {!authReady ? (
+          <p className="text-center text-sm text-[var(--color-text-secondary)] py-6">Подключаемся к боту…</p>
+        ) : isLoading && !status ? (
           <p className="text-center text-sm text-[var(--color-text-secondary)] py-6">Загрузка…</p>
-        ) : (
+        ) : statusErr || (!stOk && status) ? (
+          <PremiumCard accent="rose" delay={0.02}>
+            <p className="text-sm text-[var(--color-text-primary)] leading-relaxed mb-4">
+              {statusErr ||
+                'Не удалось загрузить данные Нейро-Арены. Если вы только что обновили приложение, подождите несколько минут и обновите страницу.'}
+            </p>
+            <button
+              type="button"
+              onClick={() => void refetch()}
+              disabled={isFetching}
+              className="w-full py-3 rounded-xl btn-primary font-semibold disabled:opacity-50"
+            >
+              {isFetching ? 'Повтор…' : 'Повторить'}
+            </button>
+          </PremiumCard>
+        ) : stOk ? (
           <>
             <PremiumCard accent="coral" delay={0.04}>
               <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] mb-3">
@@ -279,6 +303,8 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
               </button>
             </PremiumCard>
           </>
+        ) : (
+          <p className="text-center text-sm text-[var(--color-text-secondary)] py-6">Загрузка…</p>
         )}
       </div>
     </div>

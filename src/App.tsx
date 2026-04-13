@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
   ensureAuth,
@@ -19,8 +19,12 @@ import { SelfRealization } from './screens/SelfRealization'
 import { StatisticsPage } from './screens/StatisticsPage'
 import { SpecialistBrief } from './screens/SpecialistBrief'
 import { TherapyMap } from './screens/TherapyMap'
-import { NeuroArenaScreen } from './components/NeuroArena/NeuroArenaScreen'
 import { useAppStore } from './store/appStore'
+
+const NeuroArenaScreen = lazy(async () => {
+  const m = await import('./components/NeuroArena/NeuroArenaScreen')
+  return { default: m.NeuroArenaScreen }
+})
 import { AppErrorBoundary } from './components/AppErrorBoundary'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 0 } } })
@@ -111,7 +115,17 @@ function AppContent() {
         {screen === 'statistics' && <StatisticsPage onBack={() => setScreen('dashboard')} />}
         {screen === 'specialistBrief' && <SpecialistBrief onBack={() => setScreen('dashboard')} />}
         {screen === 'therapyMap' && <TherapyMap onBack={() => setScreen('dashboard')} />}
-        {screen === 'neuroArena' && <NeuroArenaScreen onBack={() => setScreen('dashboard')} />}
+        {screen === 'neuroArena' && (
+          <Suspense
+            fallback={
+              <div className="min-h-[50vh] flex items-center justify-center px-4 text-sm text-[var(--color-text-secondary)]">
+                Загрузка…
+              </div>
+            }
+          >
+            <NeuroArenaScreen onBack={() => setScreen('dashboard')} />
+          </Suspense>
+        )}
         {screen === 'dashboard' && (
           <Dashboard onOpenCatalog={() => setScreen('catalog')} onOpenHistory={() => setScreen('history')} />
         )}

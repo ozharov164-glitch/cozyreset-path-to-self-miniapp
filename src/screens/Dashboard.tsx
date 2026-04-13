@@ -226,8 +226,9 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
         <PremiumCard accent="lavender" delay={0.045}>
           <CardHeading icon={IconNeuroArena} title="Нейро-Арена" iconClassName="text-[#6b5b9c]" />
           <p className="text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
-            Короткие тренажёры внимания и интерпретации (dot-probe и сценарии) — играючи, 2–5 минут. Не заменяет
-            терапию.
+            Короткие игровые упражнения для внимания и для более спокойного прочтения неоднозначных ситуаций — обычно
+            несколько минут за раз. Это не медицинская и не психотерапевтическая помощь и не заменяет приём
+            специалиста.
           </p>
           <button
             type="button"

@@ -537,21 +537,31 @@ export async function apiNeuroArenaStatus(): Promise<
     }
   | { error: string }
 > {
-  const res = await fetchWithAuth('/mini-app/neuro-arena/status', { method: 'POST', body: '{}' })
-  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>
-  if (!res.ok) {
-    return { error: typeof data.error === 'string' ? data.error : 'Ошибка загрузки' }
-  }
-  if (data.status === 'ok' && data.limits && data.progress) {
-    return {
-      status: 'ok',
-      premium: !!data.premium,
-      limits: data.limits as NeuroArenaLimits,
-      progress: data.progress as NeuroArenaProgressApi,
-      recentSessions: Array.isArray(data.recentSessions) ? (data.recentSessions as NeuroArenaSessionRow[]) : [],
+  try {
+    const res = await fetchWithAuth('/mini-app/neuro-arena/status', { method: 'POST', body: '{}' })
+    if (res.status === 404) {
+      return {
+        error:
+          'Сервер ещё не обновлён: эндпоинт Нейро-Арены недоступен. Открой приложение позже или напиши в поддержку.',
+      }
     }
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>
+    if (!res.ok) {
+      return { error: typeof data.error === 'string' ? data.error : 'Ошибка загрузки' }
+    }
+    if (data.status === 'ok' && data.limits && data.progress) {
+      return {
+        status: 'ok',
+        premium: !!data.premium,
+        limits: data.limits as NeuroArenaLimits,
+        progress: data.progress as NeuroArenaProgressApi,
+        recentSessions: Array.isArray(data.recentSessions) ? (data.recentSessions as NeuroArenaSessionRow[]) : [],
+      }
+    }
+    return { error: 'Некорректный ответ сервера' }
+  } catch {
+    return { error: 'Нет соединения с сервером. Проверьте сеть и попробуйте снова.' }
   }
-  return { error: 'Некорректный ответ' }
 }
 
 export async function apiNeuroArenaSessionEnd(payload: {
