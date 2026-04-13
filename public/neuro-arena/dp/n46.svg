@@ -1,25 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true">
-  <defs>
-    <linearGradient id="bg46" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#e8f5f2"/>
-      <stop offset="55%" stop-color="#e8dff8"/>
-      <stop offset="100%" stop-color="#f0e8fb"/>
-    </linearGradient>
-    <linearGradient id="c46" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#6bc4b5"/>
-      <stop offset="100%" stop-color="#8fd4c8"/>
-    </linearGradient>
-    <linearGradient id="d46" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#b8a4e0"/>
-      <stop offset="100%" stop-color="#d4c8f0"/>
+<g transform="translate(6 3) rotate(5 60 60) scale(0.950)"><defs>
+    <linearGradient id="bgN-p46" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#eef8f6"/>
+      <stop offset="50%" stop-color="#f3eefb"/>
+      <stop offset="100%" stop-color="#f7f2fc"/>
     </linearGradient>
   </defs>
-  <rect width="120" height="120" rx="28" fill="url(#bg46)"/>
-  <g transform="rotate(-14.4 60 60)">
-    <circle cx="33.4" cy="49.3" r="19.8" fill="url(#c46)" opacity="0.88"/>
-    <circle cx="78.9" cy="53.9" r="14.7" fill="url(#d46)" opacity="0.72"/>
-    <circle cx="52.6" cy="72.2" r="6.5" fill="#6bc4b5" opacity="0.45"/>
-  </g>
-  <path d="M20 95 Q60 88 100 95" fill="none" stroke="#6bc4b5" stroke-width="2" stroke-opacity="0.35" stroke-linecap="round"/>
+  <rect width="120" height="120" rx="26" fill="url(#bgN-p46)"/>
+  <rect x="1" y="1" width="118" height="118" rx="25" fill="none" stroke="rgba(107,196,181,0.2)" stroke-width="1"/>
+  <path d="M30 78 C30 52 90 52 90 78" fill="none" stroke="#6bc4b5" stroke-width="3" stroke-linecap="round"/>
+  <path d="M38 56 Q60 44 82 56" fill="none" stroke="#4aab9c" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/></g>
 </svg>

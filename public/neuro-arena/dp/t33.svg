@@ -1,17 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true">
-  <defs>
-    <linearGradient id="tb33" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#fdeaea"/>
-      <stop offset="100%" stop-color="#f5e0e8"/>
-    </linearGradient>
-    <linearGradient id="ts33" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#e8a0a8"/>
-      <stop offset="100%" stop-color="#d89a9f"/>
+<defs>
+    <linearGradient id="bgT-p33" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff8f7"/>
+      <stop offset="45%" stop-color="#fdeff0"/>
+      <stop offset="100%" stop-color="#f8e4e8"/>
     </linearGradient>
   </defs>
-  <rect width="120" height="120" rx="14" fill="url(#tb33)"/>
-  <path d="M32 29 L70 52 L82 62 L58 48 L42 44 L56 71 L71 56 Z" fill="none" stroke="url(#ts33)" stroke-width="4.5" stroke-linejoin="miter" stroke-linecap="square"/>
-  <rect x="23" y="79" width="42" height="24" rx="4" fill="none" stroke="#c07078" stroke-width="3" transform="rotate(-3.3 60 60)"/>
-  <path d="M25 38 L40 52 L25 66 M75 38 L95 55 L75 72" fill="none" stroke="#d89a9f" stroke-width="3.2" stroke-linecap="square"/>
+  <rect width="120" height="120" rx="22" fill="url(#bgT-p33)"/>
+  <rect x="1" y="1" width="118" height="118" rx="21" fill="none" stroke="rgba(216,154,159,0.35)" stroke-width="1"/>
+  <path d="M56 32 L64 44 L56 56 L48 44 Z" fill="#e8a0a8" opacity="0.85"/>
+  <path d="M52 60 Q60 54 68 60 L68 80 H52 Z" fill="none" stroke="#c07078" stroke-width="2.5"/>
 </svg>
