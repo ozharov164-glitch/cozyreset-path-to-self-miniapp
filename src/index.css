@@ -45,6 +45,37 @@
   letter-spacing: -0.02em;
 }
 
+/* Нейро-Арена: акцентная полоса у карточек режимов */
+.neuro-arena-mode {
+  position: relative;
+  padding-left: 0.65rem;
+}
+.neuro-arena-mode::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.2rem;
+  bottom: 0.2rem;
+  width: 4px;
+  border-radius: 999px;
+  opacity: 0.95;
+}
+.neuro-arena-mode--detector::before {
+  background: linear-gradient(180deg, var(--color-glow-teal) 0%, #3d8f82 100%);
+}
+.neuro-arena-mode--scenarios::before {
+  background: linear-gradient(180deg, #c9a8b8 0%, #8b6f8c 100%);
+}
+.neuro-arena-mode__kicker {
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(26, 25, 23, 0.45);
+  margin-bottom: 0.35rem;
+}
+
 * {
   box-sizing: border-box;
 }

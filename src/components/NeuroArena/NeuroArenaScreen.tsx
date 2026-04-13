@@ -207,8 +207,8 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
             <span>Тренажёры внимания и интерпретации</span>
           </h3>
           <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
-            Здесь две мини-тренировки: на скорость переключения внимания и на выбор более мягкого объяснения в неясной
-            ситуации. Без спешки, с понятной обратной связью. Это не диагностика и не лечение.
+            Два разных формата: быстрый «детектор» на переключение внимания и неспешные сценарии — выбор менее тяжёлого
+            прочтения неоднозначной ситуации. Обратная связь после каждой сессии. Не диагностика и не лечение.
           </p>
           {gamesThisVisit.current >= MAX_GAMES_PER_VISIT && (
             <p className="text-sm rounded-xl bg-amber-100/45 border border-amber-200/60 px-3 py-2 mb-1 text-amber-950/90">
@@ -273,33 +273,44 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
             </PremiumCard>
 
             <PremiumCard accent="mint" delay={0.07}>
-              <h4 className="font-display font-bold text-[var(--color-text-primary)] mb-2">Детектор внимания</h4>
-              <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
-                Два стимула, затем мишень на стороне нейтрального — тренирует переключение внимания с «угрозы» на
-                спокойствие.
-              </p>
+              <div className="neuro-arena-mode neuro-arena-mode--detector">
+                <p className="neuro-arena-mode__kicker">Скорость · dot-probe</p>
+                <h4 className="font-display text-lg font-bold text-[var(--color-text-primary)] mb-2 tracking-tight">
+                  Детектор внимания
+                </h4>
+                <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
+                  Пара картинок и мишень: нужно быстро нажать там, где была нейтральная картинка — тренируется увод
+                  внимания с отрицательного стимула.
+                </p>
+              </div>
               <button
                 type="button"
                 disabled={!canPlayDot || gamesThisVisit.current >= MAX_GAMES_PER_VISIT}
                 onClick={() => setView('dotprobe')}
                 className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold disabled:opacity-45"
               >
-                {canPlayDot ? 'Начать' : 'Лимит на сегодня'}
+                {canPlayDot ? 'Открыть' : 'Лимит на сегодня'}
               </button>
             </PremiumCard>
 
             <PremiumCard accent="rose" delay={0.1}>
-              <h4 className="font-display font-bold text-[var(--color-text-primary)] mb-2">Сценарии</h4>
-              <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
-                Неоднозначная ситуация — два завершения. Выбери более мягкое: тренировка интерпретации.
-              </p>
+              <div className="neuro-arena-mode neuro-arena-mode--scenarios">
+                <p className="neuro-arena-mode__kicker">Смысл · CBM-I</p>
+                <h4 className="font-display text-lg font-bold text-[var(--color-text-primary)] mb-2 tracking-tight">
+                  Сценарии
+                </h4>
+                <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
+                  Короткий текст и два завершения: выбери то, что сейчас кажется мягче — тренируется гибкость
+                  интерпретации, не «правильный ответ из учебника».
+                </p>
+              </div>
               <button
                 type="button"
                 disabled={!canPlaySc || gamesThisVisit.current >= MAX_GAMES_PER_VISIT}
                 onClick={() => setView('scenarios')}
                 className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold disabled:opacity-45"
               >
-                {canPlaySc ? 'Начать' : 'Лимит на сегодня'}
+                {canPlaySc ? 'Открыть' : 'Лимит на сегодня'}
               </button>
             </PremiumCard>
           </>

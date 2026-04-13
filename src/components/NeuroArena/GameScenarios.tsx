@@ -38,7 +38,8 @@ type Props = {
 
 export function GameScenarios({ onComplete, onBack }: Props) {
   const reduce = useReducedMotion()
-  const startedAt = useRef(performance.now())
+  const startedAt = useRef(0)
+  const [phase, setPhase] = useState<'intro' | 'playing'>('intro')
   const [rounds] = useState(() => shuffle(scenariosData.scenarios as ScenarioItem[]).slice(0, ROUND_COUNT))
   const [idx, setIdx] = useState(0)
   const [feedback, setFeedback] = useState<string | null>(null)
@@ -94,6 +95,51 @@ export function GameScenarios({ onComplete, onBack }: Props) {
     return <div className="px-4 py-8 text-center text-sm text-[var(--color-text-secondary)]">Загрузка…</div>
   }
 
+  if (phase === 'intro') {
+    return (
+      <div className="flex flex-col min-h-[60vh] px-3 pb-8 max-w-[420px] mx-auto w-full">
+        <div className="flex items-center justify-between mb-5">
+          <button
+            type="button"
+            onClick={onBack}
+            className="btn-ghost min-h-[44px] px-3 rounded-xl text-sm font-semibold text-[var(--color-forest-dark)]"
+          >
+            ← Выход
+          </button>
+        </div>
+
+        <div className="rounded-[1.35rem] border border-white/50 bg-white/35 px-5 py-6 shadow-[0_12px_40px_rgba(45,62,46,0.11)] mb-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-text-secondary)] mb-2">
+            Интерпретации
+          </p>
+          <h2 className="font-display text-xl font-bold text-[var(--color-text-primary)] tracking-tight mb-4 leading-snug">
+            Сценарии
+          </h2>
+          <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed mb-4">
+            Прочитай ситуацию и выбери одно из двух завершений — то, которое сейчас кажется тебе мягче и менее
+            тяжёлым. Оба варианта оформлены одинаково; ориентируйся на собственное ощущение, а не на «красивость»
+            формулировки.
+          </p>
+          <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed opacity-90">
+            Упражнение в духе CBM-I: тренировка гибкости толкования, не диагностика.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            startedAt.current = performance.now()
+            setPhase('playing')
+          }}
+          className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[52px] font-semibold text-[15px]"
+          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+        >
+          Начать сценарии
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col min-h-[60vh] px-3 pb-8 max-w-[420px] mx-auto w-full">
       <div className="flex items-center justify-between mb-4">
@@ -110,8 +156,7 @@ export function GameScenarios({ onComplete, onBack }: Props) {
       </div>
 
       <p className="text-center text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
-        Выбери завершение, которое <span className="font-semibold text-[var(--color-glow-teal-dim)]">мягче</span> и
-        полезнее для тебя сейчас.
+        Выбери завершение, которое сейчас кажется тебе мягче и менее бременем.
       </p>
 
       <motion.div
@@ -121,25 +166,25 @@ export function GameScenarios({ onComplete, onBack }: Props) {
         key={item.id}
         transition={{ duration: 0.35 }}
       >
-        <p className="text-[16px] font-semibold text-[var(--color-text-primary)] leading-relaxed">{item.text}</p>
+        <p className="text-[16px] font-medium text-[var(--color-text-primary)] leading-relaxed">{item.text}</p>
       </motion.div>
 
       <div className="flex flex-col gap-3">
         {buttons.map((b, i) => (
-          <button
-            type="button"
-            key={`${item.id}-${i}`}
-            disabled={!!feedback}
-            onClick={() => pick(b.positive)}
-            className={`w-full text-left py-4 px-4 rounded-2xl border border-white/50 active:scale-[0.99] transition-all text-[15px] leading-snug text-[var(--color-text-primary)] min-h-[72px] disabled:opacity-60 ${
-              b.positive
-                ? 'bg-white/40 font-semibold hover:bg-white/48'
-                : 'bg-white/22 font-normal hover:bg-white/30'
-            }`}
-            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-          >
-            {b.text}
-          </button>
+          <div key={`${item.id}-${i}`}>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--color-text-secondary)] mb-1.5 px-0.5">
+              Вариант {i === 0 ? 'А' : 'Б'}
+            </p>
+            <button
+              type="button"
+              disabled={!!feedback}
+              onClick={() => pick(b.positive)}
+              className="w-full text-left py-4 px-4 rounded-2xl border border-white/50 bg-white/32 hover:bg-white/40 active:scale-[0.99] transition-all text-[15px] font-medium leading-snug text-[var(--color-text-primary)] min-h-[72px] disabled:opacity-60"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            >
+              {b.text}
+            </button>
+          </div>
         ))}
       </div>
 
@@ -154,7 +199,8 @@ export function GameScenarios({ onComplete, onBack }: Props) {
       )}
 
       <p className="text-xs text-center text-[var(--color-text-secondary)] mt-8 leading-relaxed opacity-85">
-        Задания в духе CBM-I: тренировка интерпретации неоднозначных ситуаций. Не медицинская диагностика.
+        Неоднозначные ситуации можно читать по-разному; здесь ты тренируешь выбор менее тяжёлого прочтения. Не
+        диагностика.
       </p>
     </div>
   )

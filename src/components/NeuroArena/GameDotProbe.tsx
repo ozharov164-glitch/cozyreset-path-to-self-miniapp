@@ -41,7 +41,8 @@ type Props = {
 
 export function GameDotProbe({ onComplete, onBack }: Props) {
   const reduce = useReducedMotion()
-  const startedAt = useRef<number>(performance.now())
+  const startedAt = useRef(0)
+  const [phase, setPhase] = useState<'intro' | 'playing'>('intro')
   const [trials] = useState(() => shuffle(dotProbeData.stimuli as DotProbeStimulus[]).slice(0, TRIALS))
   const [trialIndex, setTrialIndex] = useState(0)
   const trialIdxRef = useRef(0)
@@ -104,10 +105,12 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
   }, [finishTrial])
 
   useEffect(() => {
+    if (phase !== 'playing') return
     setNeutralLeft(Math.random() < 0.5)
-  }, [trialIndex])
+  }, [trialIndex, phase])
 
   useEffect(() => {
+    if (phase !== 'playing') return
     if (!pair) return
     clearTimers()
     answeredRef.current = false
@@ -122,9 +125,10 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
       timeoutsRef.current.push(t)
     }
     return clearTimers
-  }, [sub, trialIndex, pair, clearTimers])
+  }, [sub, trialIndex, pair, clearTimers, phase])
 
   useEffect(() => {
+    if (phase !== 'playing') return
     if (sub !== 'probe') return
     probeStartRef.current = performance.now()
     const t = window.setTimeout(() => {
@@ -135,7 +139,7 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
     }, PROBE_MS)
     timeoutsRef.current.push(t)
     return () => clearTimeout(t)
-  }, [sub, trialIndex])
+  }, [sub, trialIndex, phase])
 
   const onTap = (side: 'left' | 'right') => {
     if (sub !== 'probe' || answeredRef.current || !pair) return
@@ -154,6 +158,54 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
   const leftEmoji = neutralLeft ? pair.neutral : pair.threat
   const rightEmoji = neutralLeft ? pair.threat : pair.neutral
 
+  if (phase === 'intro') {
+    return (
+      <div className="flex flex-col min-h-[60vh] px-3 pb-8 max-w-[420px] mx-auto w-full">
+        <div className="flex items-center justify-between mb-5">
+          <button
+            type="button"
+            onClick={onBack}
+            className="btn-ghost min-h-[44px] px-3 rounded-xl text-sm font-semibold text-[var(--color-forest-dark)]"
+          >
+            ← Выход
+          </button>
+        </div>
+
+        <div className="rounded-[1.35rem] border border-white/50 bg-white/35 px-5 py-6 shadow-[0_12px_40px_rgba(45,62,46,0.11)] mb-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-text-secondary)] mb-2">
+            Детектор внимания
+          </p>
+          <h2 className="font-display text-xl font-bold text-[var(--color-text-primary)] tracking-tight mb-4 leading-snug">
+            Как проходит раунд
+          </h2>
+          <ol className="text-sm text-[var(--color-text-secondary)] space-y-3 leading-relaxed list-decimal list-inside marker:text-[var(--color-glow-teal-dim)] marker:font-semibold">
+            <li>Сначала короткая фиксация, затем две картинки по бокам и пауза.</li>
+            <li>Появится круг-«мишень» слева или справа.</li>
+            <li>
+              Нажми на ту сторону, где была нейтральная картинка — более спокойная; не ту, где изображение
+              «тревожнее».
+            </li>
+          </ol>
+          <p className="text-xs text-[var(--color-text-secondary)] mt-5 leading-relaxed opacity-90">
+            Ответ нужно дать быстро: это тренировка переключения внимания (парадигма dot-probe).
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            startedAt.current = performance.now()
+            setPhase('playing')
+          }}
+          className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[52px] font-semibold text-[15px]"
+          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+        >
+          Начать тренировку
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col min-h-[60vh] px-3 pb-8 max-w-[420px] mx-auto w-full">
       <div className="flex items-center justify-between mb-4">
@@ -170,8 +222,7 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
       </div>
 
       <p className="text-center text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
-        Нажми на мишень там, где было <span className="text-[var(--color-glow-teal-dim)] font-semibold">спокойное</span>{' '}
-        изображение.
+        Мишень — на стороне нейтральной картинки (более спокойной), не «тревожной».
       </p>
 
       <div className="flex-1 flex flex-col justify-center">
@@ -220,7 +271,7 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
       </div>
 
       <p className="text-xs text-center text-[var(--color-text-secondary)] mt-6 leading-relaxed opacity-85">
-        Парадигма dot-probe: мишень на стороне нейтрального стимула — тренируется переключение внимания.
+        Задача — ускорить перенаправление внимания с отрицательного стимула на нейтральный.
       </p>
     </div>
   )
