@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true">
+<defs>
+    <linearGradient id="bgN-p81" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#eef8f6"/>
+      <stop offset="50%" stop-color="#f3eefb"/>
+      <stop offset="100%" stop-color="#f7f2fc"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="26" fill="url(#bgN-p81)"/>
+  <rect x="1" y="1" width="118" height="118" rx="25" fill="none" stroke="rgba(107,196,181,0.2)" stroke-width="1"/>
+  <ellipse cx="50" cy="60" rx="8" ry="10" fill="#ffb3c8" stroke="#6bc4b5" stroke-width="1.5"/>
+  <ellipse cx="70" cy="60" rx="8" ry="10" fill="#ffb3c8" stroke="#6bc4b5" stroke-width="1.5"/>
+  <path d="M60 42 Q60 38 60 42" stroke="#6b8c5c" stroke-width="3" stroke-linecap="round"/>
+</svg>

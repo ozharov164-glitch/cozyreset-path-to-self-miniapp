@@ -6,13 +6,15 @@
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { buildEmojiMotifs } from './neuroArenaEmojiMotifs.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.join(__dirname, '..')
 const OUT_DIR = path.join(ROOT, 'public/neuro-arena/dp')
 const JSON_OUT = path.join(ROOT, 'src/data/neuroArenaDotProbe.json')
 
-const PAIRS = 56
+/** Пул файлов n01…nXX (дублирование мотивов с alt-трансформом только при i > числа мотивов). */
+const PAIRS = 96
 
 /** Общая карточка-фон */
 function cardBgN(uid) {
@@ -55,7 +57,7 @@ const ST = {
  * Библиотека мотивов: спокойная и напряжённая версия одной идеи.
  * idx 0..27 — уникальные; для 28..55 используется зеркало + смещение id.
  */
-const MOTIFS = [
+const MOTIFS_CORE = [
   {
     category: 'weather',
     neutral: (u) => `${cardBgN(u)}
@@ -449,7 +451,9 @@ const MOTIFS = [
   },
 ]
 
-/** Второй проход: разный лёгкий сдвиг/поворот по индексу, чтобы пары 30–56 не казались клонами. */
+const MOTIFS = [...MOTIFS_CORE, ...buildEmojiMotifs({ cardBgN, cardBgT, ST })]
+
+/** Второй проход: разный лёгкий сдвиг/поворот по индексу, чтобы повторы мотивов отличались. */
 function wrapSvg(inner, altPass, pairIndex) {
   if (!altPass) {
     return `<?xml version="1.0" encoding="UTF-8"?>
@@ -499,11 +503,11 @@ for (let i = 1; i <= PAIRS; i++) {
 
 const doc = {
   meta: {
-    version: 3,
+    version: 4,
     assetKind: 'svg',
     pairCount: PAIRS,
     motifLibrarySize: nMotifs,
-    note: 'Иллюстративные пары в едином стиле (mint/lavender vs coral). 28 мотивов; пары 29–56 — тот же мотив с лёгким сдвигом/масштабом.',
+    note: 'CORE: абстрактные и смысловые иконки; EMOJI: нарисованные «эмодзи»-пары. При повторе индекса — alt-трансформ.',
   },
   stimuli,
 }

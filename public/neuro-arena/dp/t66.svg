@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true">
+<defs>
+    <linearGradient id="bgT-p66" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff8f7"/>
+      <stop offset="45%" stop-color="#fdeff0"/>
+      <stop offset="100%" stop-color="#f8e4e8"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="22" fill="url(#bgT-p66)"/>
+  <rect x="1" y="1" width="118" height="118" rx="21" fill="none" stroke="rgba(216,154,159,0.35)" stroke-width="1"/>
+  <ellipse cx="60" cy="64" rx="34" ry="12" fill="#f0d4d8" stroke="#c07078" stroke-width="2.5"/>
+  <path d="M48 48 L56 40 L60 48 L64 40 L72 48" fill="none" stroke="#d89a9f" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true">
-<g transform="translate(-4 3) rotate(5 60 60) scale(0.940)"><defs>
+<defs>
     <linearGradient id="bgN-p50" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#eef8f6"/>
       <stop offset="50%" stop-color="#f3eefb"/>
@@ -9,6 +9,8 @@
   </defs>
   <rect width="120" height="120" rx="26" fill="url(#bgN-p50)"/>
   <rect x="1" y="1" width="118" height="118" rx="25" fill="none" stroke="rgba(107,196,181,0.2)" stroke-width="1"/>
-  <circle cx="68" cy="44" r="8" fill="#ffd88a" opacity="0.85"/>
-  <path d="M32 76 Q52 60 72 64 T104 76" fill="none" stroke="#9b86c9" stroke-width="2.8" stroke-linecap="round" opacity="0.55"/></g>
+  <ellipse cx="56" cy="62" rx="14" ry="18" fill="#ffb8c6" stroke="#6bc4b5" stroke-width="2" transform="rotate(-8 56 62)"/>
+  <ellipse cx="74" cy="62" rx="14" ry="18" fill="#ffb8c6" stroke="#6bc4b5" stroke-width="2" transform="rotate(8 74 62)"/>
+  <circle cx="60" cy="52" r="8" fill="#ffecc8" stroke="#4aab9c" stroke-width="1.8"/>
+  <path d="M56 54 H64" stroke="#4aab9c" stroke-width="1.5"/>
 </svg>

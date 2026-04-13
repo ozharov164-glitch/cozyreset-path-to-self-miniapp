@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true">
-<g transform="translate(2 -4) rotate(5 60 60) scale(0.970)"><defs>
+<defs>
     <linearGradient id="bgT-p48" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#fff8f7"/>
       <stop offset="45%" stop-color="#fdeff0"/>
@@ -9,7 +9,6 @@
   </defs>
   <rect width="120" height="120" rx="22" fill="url(#bgT-p48)"/>
   <rect x="1" y="1" width="118" height="118" rx="21" fill="none" stroke="rgba(216,154,159,0.35)" stroke-width="1"/>
-  <rect x="36" y="40" width="20" height="36" rx="4" fill="none" stroke="#c07078" stroke-width="2.5"/>
-  <rect x="64" y="40" width="20" height="36" rx="4" fill="none" stroke="#d89a9f" stroke-width="2.5"/>
-  <path d="M56 58 H64" stroke="#c07078" stroke-width="4" stroke-linecap="round"/></g>
+  <ellipse cx="60" cy="60" rx="22" ry="18" fill="#ffd0c8" stroke="#c07078" stroke-width="2.5"/>
+  <path d="M52 58 H68 M60 52 V66" stroke="#c07078" stroke-width="3" stroke-linecap="round"/>
 </svg>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true">
+<defs>
+    <linearGradient id="bgT-p64" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff8f7"/>
+      <stop offset="45%" stop-color="#fdeff0"/>
+      <stop offset="100%" stop-color="#f8e4e8"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="22" fill="url(#bgT-p64)"/>
+  <rect x="1" y="1" width="118" height="118" rx="21" fill="none" stroke="rgba(216,154,159,0.35)" stroke-width="1"/>
+  <circle cx="60" cy="58" r="24" fill="#ffe4dc" stroke="#c07078" stroke-width="2.5"/>
+  <path d="M48 52 Q52 48 56 52 M64 52 Q68 48 72 52" fill="none" stroke="#c07078" stroke-width="2"/>
+  <circle cx="52" cy="58" r="3" fill="#c07078"/><circle cx="68" cy="58" r="3" fill="#c07078"/>
+  <path d="M52 72 H68" stroke="#d89a9f" stroke-width="2"/>
+</svg>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true">
+<g transform="translate(6 3) rotate(-5 60 60) scale(0.950)"><defs>
+    <linearGradient id="bgT-p91" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff8f7"/>
+      <stop offset="45%" stop-color="#fdeff0"/>
+      <stop offset="100%" stop-color="#f8e4e8"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="22" fill="url(#bgT-p91)"/>
+  <rect x="1" y="1" width="118" height="118" rx="21" fill="none" stroke="rgba(216,154,159,0.35)" stroke-width="1"/>
+  <path d="M35 52 L55 38 L75 52 L95 38" fill="none" stroke="#c07078" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M48 58 L58 48 L68 58 L78 48 L88 58" fill="none" stroke="#d89a9f" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M62 42 L62 28 M52 34 L72 34" stroke="#c49a6c" stroke-width="2.8" stroke-linecap="round"/>
+  <ellipse cx="60" cy="78" rx="32" ry="16" fill="rgba(216,154,159,0.25)"/></g>
+</svg>
