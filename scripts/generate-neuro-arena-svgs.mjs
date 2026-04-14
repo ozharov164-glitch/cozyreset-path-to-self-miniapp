@@ -12,7 +12,7 @@ const ROOT = path.join(__dirname, '..')
 const OUT_DIR = path.join(ROOT, 'public/neuro-arena/dp')
 const JSON_OUT = path.join(ROOT, 'src/data/neuroArenaDotProbe.json')
 
-/** Пул файлов n01…nXX (дублирование мотивов с alt-трансформом только при i > числа мотивов). */
+/** Пул n01…n200 / t01…t200; мотивы 1…100 повторяются для пар 101…200 без геометрических трансформов. */
 const PAIRS = 200
 
 const MOTIFS = [...buildDailyMotifs({ motifIndexStart: 0 })]
