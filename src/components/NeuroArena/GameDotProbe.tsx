@@ -223,7 +223,8 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
             </li>
           </ol>
           <p className="text-xs text-[var(--color-text-secondary)] mt-5 leading-relaxed opacity-90">
-            Ответ нужно дать быстро: это тренировка переключения внимания (парадигма dot-probe).
+            Цвет картинок не подсказывает ответ — ориентируйся на форму и смысл. Ответ нужно дать быстро (парадигма
+            dot-probe).
           </p>
         </div>
 

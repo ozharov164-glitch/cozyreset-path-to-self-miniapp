@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true">
 <defs>
-    <linearGradient id="bgT-p23" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#fff8f7"/>
-      <stop offset="45%" stop-color="#fdeff0"/>
-      <stop offset="100%" stop-color="#f8e4e8"/>
+    <linearGradient id="bg-p23" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#efedf1"/>
+      <stop offset="50%" stop-color="#ebe9ee"/>
+      <stop offset="100%" stop-color="#e8e6eb"/>
     </linearGradient>
   </defs>
-  <rect width="120" height="120" rx="22" fill="url(#bgT-p23)"/>
-  <rect x="1" y="1" width="118" height="118" rx="21" fill="none" stroke="rgba(216,154,159,0.35)" stroke-width="1"/>
-  <rect x="34" y="38" width="52" height="40" rx="8" fill="white" stroke="#c07078" stroke-width="2.5"/>
-  <path d="M44 52 L56 64 L76 46" fill="none" stroke="#d89a9f" stroke-width="3" stroke-linecap="round"/>
+  <rect width="120" height="120" rx="24" fill="url(#bg-p23)"/>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(45,52,64,0.11)" stroke-width="1"/>
+  <rect x="34" y="38" width="52" height="40" rx="8" fill="white" stroke="#2a303c" stroke-width="2.5"/>
+  <path d="M44 52 L56 64 L76 46" fill="none" stroke="#3a4250" stroke-width="3" stroke-linecap="round"/>
 </svg>

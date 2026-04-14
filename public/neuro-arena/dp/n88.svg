@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true">
 <defs>
-    <linearGradient id="bgN-p88" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#eef8f6"/>
-      <stop offset="50%" stop-color="#f3eefb"/>
-      <stop offset="100%" stop-color="#f7f2fc"/>
+    <linearGradient id="bg-p88" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#efedf1"/>
+      <stop offset="50%" stop-color="#ebe9ee"/>
+      <stop offset="100%" stop-color="#e8e6eb"/>
     </linearGradient>
   </defs>
-  <rect width="120" height="120" rx="26" fill="url(#bgN-p88)"/>
-  <rect x="1" y="1" width="118" height="118" rx="25" fill="none" stroke="rgba(107,196,181,0.2)" stroke-width="1"/>
-  <circle cx="60" cy="58" r="24" fill="#ffecc8" stroke="#6bc4b5" stroke-width="2"/>
-  <path d="M46 52 Q50 48 54 52 M66 52 Q70 48 74 52" fill="none" stroke="#4aab9c" stroke-width="2"/>
-  <path d="M48 68 Q60 76 72 68" fill="none" stroke="#4aab9c" stroke-width="2.5"/>
+  <rect width="120" height="120" rx="24" fill="url(#bg-p88)"/>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(45,52,64,0.11)" stroke-width="1"/>
+  <circle cx="60" cy="58" r="24" fill="#e2dfe8" stroke="#5c6573" stroke-width="2"/>
+  <path d="M46 52 Q50 48 54 52 M66 52 Q70 48 74 52" fill="none" stroke="#4d5664" stroke-width="2"/>
+  <path d="M48 68 Q60 76 72 68" fill="none" stroke="#4d5664" stroke-width="2.5"/>
 </svg>

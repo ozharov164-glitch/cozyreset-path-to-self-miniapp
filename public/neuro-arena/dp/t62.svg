@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true">
 <defs>
-    <linearGradient id="bgT-p62" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#fff8f7"/>
-      <stop offset="45%" stop-color="#fdeff0"/>
-      <stop offset="100%" stop-color="#f8e4e8"/>
+    <linearGradient id="bg-p62" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#efedf1"/>
+      <stop offset="50%" stop-color="#ebe9ee"/>
+      <stop offset="100%" stop-color="#e8e6eb"/>
     </linearGradient>
   </defs>
-  <rect width="120" height="120" rx="22" fill="url(#bgT-p62)"/>
-  <rect x="1" y="1" width="118" height="118" rx="21" fill="none" stroke="rgba(216,154,159,0.35)" stroke-width="1"/>
-  <circle cx="50" cy="58" r="8" fill="none" stroke="#c07078" stroke-width="3"/>
-  <circle cx="70" cy="58" r="8" fill="none" stroke="#c07078" stroke-width="3"/>
-  <path d="M42 74 H78" stroke="#d89a9f" stroke-width="2.5"/>
+  <rect width="120" height="120" rx="24" fill="url(#bg-p62)"/>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(45,52,64,0.11)" stroke-width="1"/>
+  <circle cx="50" cy="58" r="8" fill="none" stroke="#2a303c" stroke-width="3"/>
+  <circle cx="70" cy="58" r="8" fill="none" stroke="#2a303c" stroke-width="3"/>
+  <path d="M42 74 H78" stroke="#3a4250" stroke-width="2.5"/>
 </svg>
