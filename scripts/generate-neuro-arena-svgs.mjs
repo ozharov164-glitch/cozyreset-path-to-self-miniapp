@@ -8,6 +8,7 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { buildEmojiMotifs } from './neuroArenaEmojiMotifs.mjs'
+import { buildPremiumMotifs } from './neuroArenaPremiumMotifs.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.join(__dirname, '..')
@@ -15,19 +16,24 @@ const OUT_DIR = path.join(ROOT, 'public/neuro-arena/dp')
 const JSON_OUT = path.join(ROOT, 'src/data/neuroArenaDotProbe.json')
 
 /** Пул файлов n01…nXX (дублирование мотивов с alt-трансформом только при i > числа мотивов). */
-const PAIRS = 96
+const PAIRS = 200
 
-/** Один фон для обеих картинок пары — без сдвига в «холодный» vs «тёплый». */
+/** Один фон для обеих картинок пары; лёгкий свет снизу для «премиум»-глубины. */
 function cardBg(uid) {
   return `<defs>
     <linearGradient id="bg-${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#efedf1"/>
-      <stop offset="50%" stop-color="#ebe9ee"/>
-      <stop offset="100%" stop-color="#e8e6eb"/>
+      <stop offset="0%" stop-color="#f0eef3"/>
+      <stop offset="45%" stop-color="#ebe9ef"/>
+      <stop offset="100%" stop-color="#e6e4ea"/>
     </linearGradient>
+    <radialGradient id="vin-${uid}" cx="50%" cy="92%" r="55%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.5)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </radialGradient>
   </defs>
   <rect width="120" height="120" rx="24" fill="url(#bg-${uid})"/>
-  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(45,52,64,0.11)" stroke-width="1"/>`
+  <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-${uid})" opacity="0.45"/>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(45,52,64,0.1)" stroke-width="1"/>`
 }
 
 /** Общая монохромная палитра; «напряжённость» — через ink (темнее), не через красный. */
@@ -443,7 +449,7 @@ const MOTIFS_CORE = [
   },
 ]
 
-const MOTIFS = [...MOTIFS_CORE, ...buildEmojiMotifs({ cardBg, ST })]
+const MOTIFS = [...MOTIFS_CORE, ...buildEmojiMotifs({ cardBg, ST }), ...buildPremiumMotifs({ cardBg, ST })]
 
 /** Второй проход: разный лёгкий сдвиг/поворот по индексу, чтобы повторы мотивов отличались. */
 function wrapSvg(inner, altPass, pairIndex) {
@@ -495,11 +501,11 @@ for (let i = 1; i <= PAIRS; i++) {
 
 const doc = {
   meta: {
-    version: 5,
+    version: 7,
     assetKind: 'svg',
     pairCount: PAIRS,
     motifLibrarySize: nMotifs,
-    note: 'CORE: абстрактные и смысловые иконки; EMOJI: нарисованные «эмодзи»-пары. При повторе индекса — alt-трансформ.',
+    note: 'CORE + EMOJI + PREMIUM: расширенная библиотека пар; без цветового кода; при повторе индекса — alt-трансформ.',
   },
   stimuli,
 }

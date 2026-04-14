@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true">
+<g transform="translate(2 3) rotate(5 60 60) scale(0.940)"><defs>
+    <linearGradient id="bg-p150" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f0eef3"/>
+      <stop offset="45%" stop-color="#ebe9ef"/>
+      <stop offset="100%" stop-color="#e6e4ea"/>
+    </linearGradient>
+    <radialGradient id="vin-p150" cx="50%" cy="92%" r="55%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.5)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </radialGradient>
+  </defs>
+  <rect width="120" height="120" rx="24" fill="url(#bg-p150)"/>
+  <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p150)" opacity="0.45"/>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(45,52,64,0.1)" stroke-width="1"/>
+  <rect x="36" y="40" width="20" height="36" rx="4" fill="none" stroke="#2a303c" stroke-width="2.5"/>
+  <rect x="64" y="40" width="20" height="36" rx="4" fill="none" stroke="#3a4250" stroke-width="2.5"/>
+  <path d="M56 58 H64" stroke="#2a303c" stroke-width="4" stroke-linecap="round"/></g>
+</svg>
