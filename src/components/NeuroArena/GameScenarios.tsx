@@ -84,15 +84,18 @@ export function GameScenarios({ onComplete, onBack }: Props) {
       )
       window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('medium')
     }
-    window.setTimeout(() => {
-      setFeedback(null)
-      if (idx + 1 >= rounds.length) {
-        finish()
-      } else {
-        setIdx((i) => i + 1)
-      }
-    }, ok ? 900 : 1400)
   }
+
+  const goNext = useCallback(() => {
+    if (feedback === null) return
+    const last = idx + 1 >= rounds.length
+    setFeedback(null)
+    if (last) {
+      finish()
+    } else {
+      setIdx((i) => i + 1)
+    }
+  }, [feedback, idx, rounds.length, finish])
 
   if (phase === 'intro') {
     return (
@@ -196,13 +199,23 @@ export function GameScenarios({ onComplete, onBack }: Props) {
       </div>
 
       {feedback && (
-        <motion.p
-          className="mt-5 text-sm text-[var(--color-text-secondary)] leading-relaxed text-center px-1"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
-          {feedback}
-        </motion.p>
+        <div className="mt-5 space-y-4">
+          <motion.p
+            className="text-sm text-[var(--color-text-secondary)] leading-relaxed text-center px-1"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            {feedback}
+          </motion.p>
+          <button
+            type="button"
+            onClick={goNext}
+            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[52px] font-semibold text-[15px]"
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+          >
+            {idx + 1 >= rounds.length ? 'Завершить' : 'Дальше'}
+          </button>
+        </div>
       )}
 
       <p className="text-xs text-center text-[var(--color-text-secondary)] mt-8 leading-relaxed opacity-85">
