@@ -13,7 +13,8 @@
   </defs>
   <rect width="120" height="120" rx="24" fill="url(#bg-p90)"/>
   <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p90)" opacity="0.45"/>
-  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(45,52,64,0.1)" stroke-width="1"/>
-  <path d="M50 72 C50 48 70 48 70 72 Z" fill="#b4bcc8" stroke="#4d5664" stroke-width="2"/>
-  <ellipse cx="56" cy="58" rx="3" ry="4" fill="#4d5664"/><ellipse cx="64" cy="58" rx="3" ry="4" fill="#4d5664"/>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(45,52,64,0.1)" stroke-width="1"/><defs><linearGradient id="p2-p90-x1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#f5f3f7"/><stop offset="100%" stop-color="#dad8e0"/></linearGradient></defs>
+  <path d="M52 78 V56 Q60 44 68 56 V78" fill="none" stroke="#4d5664" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M48 56 Q60 48 72 56" fill="none" stroke="#5c6573" stroke-width="2" stroke-linecap="round"/>
+  <ellipse cx="60" cy="52" rx="14" ry="6" fill="url(#p2-p90-x1)" stroke="#4d5664" stroke-width="1.8"/>
 </svg>

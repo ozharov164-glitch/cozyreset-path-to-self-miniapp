@@ -13,7 +13,8 @@
   </defs>
   <rect width="120" height="120" rx="24" fill="url(#bg-p181)"/>
   <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p181)" opacity="0.45"/>
-  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(45,52,64,0.1)" stroke-width="1"/>
-  <ellipse cx="60" cy="62" rx="28" ry="18" fill="rgba(95,100,112,0.1)" stroke="#6d7684" stroke-width="2"/>
-  <path d="M44 62 H76" stroke="#4d5664" stroke-width="2" stroke-linecap="round" opacity="0.45"/></g>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(45,52,64,0.1)" stroke-width="1"/><defs><linearGradient id="v-p181-c" x1="0%" y1="0%" x2="0%" y2="100%">
+<stop offset="0%" stop-color="#f4f2f6"/><stop offset="100%" stop-color="#d8d6de"/></linearGradient></defs>
+  <rect x="38" y="50" width="44" height="36" rx="5" fill="url(#v-p181-c)" stroke="#4d5664" stroke-width="2"/>
+  <path d="M44 58 H76 M44 66 H72 M44 74 H68" stroke="#6d7684" stroke-width="1.8" stroke-linecap="round" opacity="0.55"/></g>
 </svg>

@@ -1,6 +1,6 @@
 /**
+ * @deprecated Не подключается к генератору: библиотека dot-probe переведена на премиум-силуэты (см. neuroArenaPremiumMotifs*.mjs).
  * Пары в стиле эмодзи. Один фон и серая палитра — нельзя отличить «хорошую» картинку по цвету (не голубой vs красный).
- * Подключается к generate-neuro-arena-svgs.mjs
  */
 export function buildEmojiMotifs({ cardBg, ST }) {
   const F = {

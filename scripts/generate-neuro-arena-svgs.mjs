@@ -7,8 +7,8 @@
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { buildEmojiMotifs } from './neuroArenaEmojiMotifs.mjs'
 import { buildPremiumMotifs } from './neuroArenaPremiumMotifs.mjs'
+import { buildPremiumMotifsBatch2 } from './neuroArenaPremiumMotifsBatch2.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.join(__dirname, '..')
@@ -119,17 +119,6 @@ const MOTIFS_CORE = [
   <circle cx="88" cy="42" r="6" fill="none" stroke="${ST.inkM}" stroke-width="2"/>`,
   },
   {
-    category: 'general',
-    neutral: (u) => `${cardBg(u)}
-  <circle cx="48" cy="52" r="14" fill="${ST.lineM}" opacity="0.35"/>
-  <circle cx="72" cy="52" r="14" fill="${ST.fill}" opacity="0.4"/>
-  <path d="M42 72 Q60 82 78 72" fill="none" stroke="${ST.line}" stroke-width="2.5" stroke-linecap="round"/>`,
-    threat: (u) => `${cardBg(u)}
-  <rect x="36" y="40" width="20" height="36" rx="4" fill="none" stroke="${ST.ink}" stroke-width="2.5"/>
-  <rect x="64" y="40" width="20" height="36" rx="4" fill="none" stroke="${ST.inkM}" stroke-width="2.5"/>
-  <path d="M56 58 H64" stroke="${ST.ink}" stroke-width="4" stroke-linecap="round"/>`,
-  },
-  {
     category: 'uncertainty',
     neutral: (u) => `${cardBg(u)}
   <circle cx="60" cy="54" r="20" fill="none" stroke="${ST.lineM}" stroke-width="2.5"/>
@@ -158,15 +147,6 @@ const MOTIFS_CORE = [
   <rect x="34" y="44" width="20" height="28" rx="6" fill="none" stroke="${ST.ink}" stroke-width="2.5"/>
   <rect x="66" y="44" width="20" height="28" rx="6" fill="none" stroke="${ST.inkM}" stroke-width="2.5"/>
   <path d="M54 56 H66" stroke="${ST.ink}" stroke-width="3" stroke-linecap="round"/>`,
-  },
-  {
-    category: 'general',
-    neutral: (u) => `${cardBg(u)}
-  <ellipse cx="60" cy="58" rx="36" ry="20" fill="none" stroke="${ST.lineM}" stroke-width="2.2" opacity="0.6"/>
-  <circle cx="60" cy="58" r="6" fill="${ST.line}"/>`,
-    threat: (u) => `${cardBg(u)}
-  <ellipse cx="52" cy="58" rx="14" ry="22" fill="none" stroke="${ST.inkM}" stroke-width="2.5" transform="rotate(-8 52 58)"/>
-  <ellipse cx="68" cy="58" rx="14" ry="22" fill="none" stroke="${ST.ink}" stroke-width="2.5" transform="rotate(8 68 58)"/>`,
   },
   {
     category: 'work',
@@ -206,13 +186,6 @@ const MOTIFS_CORE = [
   <rect x="30" y="42" width="60" height="40" rx="8" fill="white" stroke="${ST.ink}" stroke-width="2.5"/>
   <path d="M44 58 H76" stroke="${ST.inkM}" stroke-width="3" stroke-linecap="round"/>
   <path d="M48 66 H72" stroke="${ST.inkM}" stroke-width="2" stroke-linecap="round" opacity="0.6"/>`,
-  },
-  {
-    category: 'general',
-    neutral: (u) => `${cardBg(u)}
-  <path d="M38 78 L52 48 L68 62 L82 42 L88 78 Z" fill="rgba(78,86,98,0.1)" stroke="${ST.line}" stroke-width="2.2" stroke-linejoin="round"/>`,
-    threat: (u) => `${cardBg(u)}
-  <path d="M32 82 L48 38 L64 58 L80 32 L96 82 Z" fill="rgba(72,78,90,0.1)" stroke="${ST.ink}" stroke-width="2.5" stroke-linejoin="round"/>`,
   },
   {
     category: 'work',
@@ -346,16 +319,6 @@ const MOTIFS_CORE = [
   <path d="M48 62 L60 74 L72 62" fill="none" stroke="${ST.inkM}" stroke-width="2.8" stroke-linecap="round"/>`,
   },
   {
-    category: 'general',
-    neutral: (u) => `${cardBg(u)}
-  <path d="M60 36 C48 36 40 46 40 56 C40 70 60 82 60 82 C60 82 80 70 80 56 C80 46 72 36 60 36" fill="none" stroke="${ST.lineM}" stroke-width="2.5"/>
-  <circle cx="52" cy="52" r="3" fill="${ST.line}"/><circle cx="68" cy="52" r="3" fill="${ST.line}"/>
-  <path d="M50 64 Q60 70 70 64" fill="none" stroke="${ST.line}" stroke-width="2" stroke-linecap="round"/>`,
-    threat: (u) => `${cardBg(u)}
-  <circle cx="60" cy="56" r="28" fill="none" stroke="${ST.ink}" stroke-width="2.5"/>
-  <path d="M48 50 L56 58 L48 66 M72 50 L64 58 L72 66" stroke="${ST.inkM}" stroke-width="2.5" stroke-linecap="round"/>`,
-  },
-  {
     category: 'uncertainty',
     neutral: (u) => `${cardBg(u)}
   <ellipse cx="60" cy="58" rx="22" ry="14" fill="white" stroke="${ST.lineM}" stroke-width="2"/>
@@ -364,15 +327,6 @@ const MOTIFS_CORE = [
   <rect x="38" y="46" width="44" height="28" rx="6" fill="white" stroke="${ST.ink}" stroke-width="2.5"/>
   <path d="M46 60 H74" stroke="${ST.inkM}" stroke-width="3" stroke-linecap="round"/>
   <path d="M52 54 L68 66 M68 54 L52 66" stroke="${ST.inkM}" stroke-width="2" stroke-linecap="round"/>`,
-  },
-  {
-    category: 'general',
-    neutral: (u) => `${cardBg(u)}
-  <path d="M58 34 v8 M52 42 h12" stroke="${ST.lineM}" stroke-width="2.5" stroke-linecap="round"/>
-  <path d="M44 52 Q60 46 76 52 L76 78 H44 Z" fill="rgba(78,86,98,0.09)" stroke="${ST.line}" stroke-width="2" stroke-linejoin="round"/>`,
-    threat: (u) => `${cardBg(u)}
-  <path d="M56 32 L64 44 L56 56 L48 44 Z" fill="${ST.fillD}" opacity="0.85"/>
-  <path d="M52 60 Q60 54 68 60 L68 80 H52 Z" fill="none" stroke="${ST.ink}" stroke-width="2.5"/>`,
   },
   {
     category: 'work',
@@ -449,7 +403,11 @@ const MOTIFS_CORE = [
   },
 ]
 
-const MOTIFS = [...MOTIFS_CORE, ...buildEmojiMotifs({ cardBg, ST }), ...buildPremiumMotifs({ cardBg, ST })]
+const MOTIFS = [
+  ...MOTIFS_CORE,
+  ...buildPremiumMotifs({ cardBg, ST }),
+  ...buildPremiumMotifsBatch2({ cardBg, ST }),
+]
 
 /** Второй проход: разный лёгкий сдвиг/поворот по индексу, чтобы повторы мотивов отличались. */
 function wrapSvg(inner, altPass, pairIndex) {
@@ -501,11 +459,11 @@ for (let i = 1; i <= PAIRS; i++) {
 
 const doc = {
   meta: {
-    version: 7,
+    version: 9,
     assetKind: 'svg',
     pairCount: PAIRS,
     motifLibrarySize: nMotifs,
-    note: 'CORE + EMOJI + PREMIUM: расширенная библиотека пар; без цветового кода; при повторе индекса — alt-трансформ.',
+    note: 'CORE + PREMIUM + PREMIUM2: без эмодзи; слабые CORE убраны; только премиум-силуэты; без цветового кода; при повторе — alt-трансформ.',
   },
   stimuli,
 }

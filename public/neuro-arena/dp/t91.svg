@@ -13,10 +13,8 @@
   </defs>
   <rect width="120" height="120" rx="24" fill="url(#bg-p91)"/>
   <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p91)" opacity="0.45"/>
-  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(45,52,64,0.1)" stroke-width="1"/><defs><linearGradient id="v-p91-b" x1="0%" y1="0%" x2="0%" y2="100%">
-<stop offset="0%" stop-color="#f4f2f6"/><stop offset="100%" stop-color="#d8d6de"/></linearGradient></defs>
-  <path d="M42 54 h36 a4 4 0 0 1 4 4 v16 a4 4 0 0 1 -4 4 H42 a4 4 0 0 1 -4 -4V58a4 4 0 0 1 4 -4z" fill="url(#v-p91-b)" stroke="#2a303c" stroke-width="2.5" stroke-linejoin="round"/>
-  <path d="M40 52 h40" stroke="#3a4250" stroke-width="2.5"/>
-  <path d="M48 44 L52 38 L56 44 M64 44 L68 38 L72 44" fill="none" stroke="#3a4250" stroke-width="1.8" stroke-linecap="round"/>
-  <circle cx="72" cy="68" r="3" fill="#3a4250" opacity="0.5"/>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(45,52,64,0.1)" stroke-width="1"/>
+  <path d="M42 54 H78 Q82 54 82 58 V70 Q82 74 78 74 H42 Q38 74 38 70 V58 Q38 54 42 54" fill="#a0aab6" stroke="#2a303c" stroke-width="2.5"/>
+  <path d="M54 48 L60 40 L66 48" fill="none" stroke="#3a4250" stroke-width="2"/>
+  <path d="M50 60 H70" stroke="#2a303c" stroke-width="2"/>
 </svg>

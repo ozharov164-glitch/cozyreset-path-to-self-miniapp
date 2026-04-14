@@ -14,5 +14,7 @@
   <rect width="120" height="120" rx="24" fill="url(#bg-p13)"/>
   <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p13)" opacity="0.45"/>
   <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(45,52,64,0.1)" stroke-width="1"/>
-  <path d="M28 82 L42 50 L54 68 L66 44 L78 64 L92 82" fill="none" stroke="#2a303c" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="30" y="42" width="60" height="40" rx="8" fill="white" stroke="#2a303c" stroke-width="2.5"/>
+  <path d="M44 58 H76" stroke="#3a4250" stroke-width="3" stroke-linecap="round"/>
+  <path d="M48 66 H72" stroke="#3a4250" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
 </svg>

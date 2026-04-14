@@ -13,8 +13,7 @@
   </defs>
   <rect width="120" height="120" rx="24" fill="url(#bg-p92)"/>
   <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p92)" opacity="0.45"/>
-  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(45,52,64,0.1)" stroke-width="1"/><defs><linearGradient id="v-p92-c" x1="0%" y1="0%" x2="0%" y2="100%">
-<stop offset="0%" stop-color="#f4f2f6"/><stop offset="100%" stop-color="#d8d6de"/></linearGradient></defs>
-  <rect x="38" y="50" width="44" height="36" rx="5" fill="url(#v-p92-c)" stroke="#4d5664" stroke-width="2"/>
-  <path d="M44 58 H76 M44 66 H72 M44 74 H68" stroke="#6d7684" stroke-width="1.8" stroke-linecap="round" opacity="0.55"/>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(45,52,64,0.1)" stroke-width="1"/><defs><linearGradient id="p2-p92-x3" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#f5f3f7"/><stop offset="100%" stop-color="#dad8e0"/></linearGradient></defs>
+  <path d="M52 42 Q60 36 68 42 Q72 52 68 68 Q60 78 52 68 Q44 78 36 68 Q32 52 36 42 Q44 36 52 42" fill="url(#p2-p92-x3)" stroke="#4d5664" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M60 36 V32" stroke="#5c6573" stroke-width="2" stroke-linecap="round"/>
 </svg>

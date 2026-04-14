@@ -13,10 +13,7 @@
   </defs>
   <rect width="120" height="120" rx="24" fill="url(#bg-p95)"/>
   <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p95)" opacity="0.45"/>
-  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(45,52,64,0.1)" stroke-width="1"/><defs><linearGradient id="v-p95-g" x1="0%" y1="0%" x2="0%" y2="100%">
-<stop offset="0%" stop-color="#f4f2f6"/><stop offset="100%" stop-color="#d8d6de"/></linearGradient></defs>
-  <circle cx="60" cy="58" r="22" fill="url(#v-p95-g)" stroke="#4d5664" stroke-width="2"/>
-  <circle cx="52" cy="56" r="4" fill="#f7f7f9" stroke="#5c6573" stroke-width="1.2"/>
-  <circle cx="68" cy="56" r="4" fill="#f7f7f9" stroke="#5c6573" stroke-width="1.2"/>
-  <path d="M48 68 Q60 76 72 68" fill="none" stroke="#4d5664" stroke-width="2" stroke-linecap="round"/>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(45,52,64,0.1)" stroke-width="1"/>
+  <path d="M44 58 Q60 48 76 58 Q60 72 44 58" fill="#d8d5de" stroke="#4d5664" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M52 56 Q60 52 68 56" fill="none" stroke="#5c6573" stroke-width="1.5" opacity="0.6"/>
 </svg>
