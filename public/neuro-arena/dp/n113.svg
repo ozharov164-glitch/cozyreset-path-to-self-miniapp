@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true">
-<g transform="translate(-4 3) rotate(-5 60 60) scale(0.970)"><defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true" shape-rendering="geometricPrecision">
+<defs>
     <linearGradient id="bg-p113" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#f3eef8"/>
       <stop offset="45%" stop-color="#ebe4f2"/>
@@ -13,5 +13,5 @@
   </defs>
   <rect width="120" height="120" rx="24" fill="url(#bg-p113)"/>
   <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p113)" opacity="0.42"/>
-  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(72,64,88,0.12)" stroke-width="1"/><g stroke-linecap="round" stroke-linejoin="round"><path d="M34 68h52v-8l-8-12H42l-8 12z" fill="#ebe2f2" stroke="#5c5470" stroke-width="2"/><circle cx="44" cy="68" r="6" fill="#5c5470" stroke="none"/><circle cx="76" cy="68" r="6" fill="#5c5470" stroke="none"/><rect x="48" y="54" width="24" height="10" rx="2" fill="#fffafd" stroke="#6a6280" stroke-width="1.3"/></g></g>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(72,64,88,0.12)" stroke-width="1"/><g stroke-linecap="round" stroke-linejoin="round"><path d="M34 68h52v-8l-8-12H42l-8 12z" fill="#ebe2f2" stroke="#5c5470" stroke-width="2"/><circle cx="44" cy="68" r="6" fill="#5c5470" stroke="none"/><circle cx="76" cy="68" r="6" fill="#5c5470" stroke="none"/><rect x="48" y="54" width="24" height="10" rx="2" fill="#fffafd" stroke="#6a6280" stroke-width="1.3"/></g>
 </svg>

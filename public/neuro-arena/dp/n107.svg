@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true">
-<g transform="translate(-4 3) rotate(-5 60 60) scale(0.960)"><defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true" shape-rendering="geometricPrecision">
+<defs>
     <linearGradient id="bg-p107" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#f0f2f6"/>
       <stop offset="45%" stop-color="#e8ecf2"/>
@@ -13,5 +13,5 @@
   </defs>
   <rect width="120" height="120" rx="24" fill="url(#bg-p107)"/>
   <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p107)" opacity="0.42"/>
-  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(56,64,80,0.1)" stroke-width="1"/><g stroke-linecap="round" stroke-linejoin="round"><path d="M38 62c0-10 8-16 18-16 4-8 18-10 26-2 10 0 16 6 16 14 0 8-6 14-16 14H42c-8 0-14-4-14-10z" fill="#f6f8fc" stroke="#505868" stroke-width="2"/></g></g>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(56,64,80,0.1)" stroke-width="1"/><g stroke-linecap="round" stroke-linejoin="round"><path d="M38 62c0-10 8-16 18-16 4-8 18-10 26-2 10 0 16 6 16 14 0 8-6 14-16 14H42c-8 0-14-4-14-10z" fill="#f6f8fc" stroke="#505868" stroke-width="2"/></g>
 </svg>

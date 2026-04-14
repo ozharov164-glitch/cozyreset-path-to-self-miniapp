@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true">
-<g transform="translate(6 3) rotate(5 60 60) scale(0.960)"><defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true" shape-rendering="geometricPrecision">
+<defs>
     <linearGradient id="bg-p142" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#f3f4ec"/>
       <stop offset="45%" stop-color="#eceee4"/>
@@ -13,5 +13,5 @@
   </defs>
   <rect width="120" height="120" rx="24" fill="url(#bg-p142)"/>
   <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p142)" opacity="0.42"/>
-  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(72,76,56,0.1)" stroke-width="1"/><g><rect x="48" y="48" width="24" height="18" rx="2" fill="#fafbf4" stroke="#5a5e4c" stroke-width="2"/><circle cx="60" cy="40" r="6" fill="#dee2d4" stroke="#5a5e4c" stroke-width="1.8"/></g></g>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(72,76,56,0.1)" stroke-width="1"/><g><rect x="48" y="48" width="24" height="18" rx="2" fill="#fafbf4" stroke="#5a5e4c" stroke-width="2"/><circle cx="60" cy="40" r="6" fill="#dee2d4" stroke="#5a5e4c" stroke-width="1.8"/></g>
 </svg>

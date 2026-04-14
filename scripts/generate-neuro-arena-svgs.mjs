@@ -17,22 +17,15 @@ const PAIRS = 200
 
 const MOTIFS = [...buildDailyMotifs({ motifIndexStart: 0 })]
 
-/** Второй проход: разный лёгкий сдвиг/поворот по индексу, чтобы повторы мотивов отличались. */
-function wrapSvg(inner, altPass, pairIndex) {
-  if (!altPass) {
-    return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true">
-${inner}
-</svg>`
-  }
-  const rot = pairIndex % 2 === 0 ? 5 : -5
-  const tx = pairIndex % 3 === 1 ? 6 : pairIndex % 3 === 2 ? -4 : 2
-  const ty = pairIndex % 4 === 0 ? -4 : 3
-  const sc = 0.94 + (pairIndex % 5) * 0.01
-  const g = `<g transform="translate(${tx} ${ty}) rotate(${rot} 60 60) scale(${sc.toFixed(3)})">${inner}</g>`
+/**
+ * Обёртка без поворота/масштаба: раньше для пар 101–200 добавлялись rotate(±5°) и translate —
+ * из‑за этого при первой выдаче пула (стимулы с конца списка) всё выглядело «кривым».
+ * Повторы мотивов 1…100 в парах 101…200 допустимы как те же силуэты (разные id файлов).
+ */
+function wrapSvg(inner) {
   return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true">
-${g}
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true" shape-rendering="geometricPrecision">
+${inner}
 </svg>`
 }
 
@@ -45,14 +38,13 @@ for (let i = 1; i <= PAIRS; i++) {
   const id = String(i).padStart(2, '0')
   const uid = `p${id}`
   const motifIndex = (i - 1) % nMotifs
-  const altPass = i > nMotifs
   const m = MOTIFS[motifIndex]
 
   const neutralInner = m.neutral(uid)
   const threatInner = m.threat(uid)
 
-  const neutralSvg = wrapSvg(neutralInner, altPass, i)
-  const threatSvg = wrapSvg(threatInner, altPass, i)
+  const neutralSvg = wrapSvg(neutralInner)
+  const threatSvg = wrapSvg(threatInner)
 
   fs.writeFileSync(path.join(OUT_DIR, `n${id}.svg`), neutralSvg, 'utf8')
   fs.writeFileSync(path.join(OUT_DIR, `t${id}.svg`), threatSvg, 'utf8')
@@ -67,16 +59,16 @@ for (let i = 1; i <= PAIRS; i++) {
 
 const doc = {
   meta: {
-    version: 11,
+    version: 12,
     assetKind: 'svg',
     pairCount: PAIRS,
     motifLibrarySize: nMotifs,
-    note: 'LIFE v1: 100 бытовых узнаваемых пар; без спиц на колёсах и без разметки на кругах; пастель по мотиву; без цветового кода ответа.',
+    note: 'LIFE v2: без искусственного наклона/сдвига для пар 101–200 (раньше ломало ровность); бытовые силуэты; пастель по мотиву.',
   },
   stimuli,
 }
 
 fs.writeFileSync(JSON_OUT, JSON.stringify(doc, null, 2), 'utf8')
-console.log(`Motifs: ${nMotifs}, pairs: ${PAIRS} (alt transform for i>${nMotifs})`)
+console.log(`Motifs: ${nMotifs}, pairs: ${PAIRS}`)
 console.log(`Wrote → ${OUT_DIR}`)
 console.log(`Updated ${JSON_OUT}`)

@@ -49,17 +49,23 @@ function savePool(storageKey: string, state: PoolState) {
 }
 
 export const NEURO_ARENA_POOL_KEYS = {
-  dotProbe: 'neuroArena.pool.dotProbe.v1',
+  dotProbe: 'neuroArena.pool.dotProbe.v2',
   scenarios: 'neuroArena.pool.scenarios.v1',
 } as const
 
 /**
  * Забирает до batchSize элементов по id; при пустой очереди пополняет её (конец-вперёд или shuffle).
  */
+export type TakeUniqueBatchOptions = {
+  /** Первое пополнение пустой очереди: `reverse` — как раньше (с конца списка id); `shuffle` — случайный порядок. */
+  firstRefillOrder?: 'reverse' | 'shuffle'
+}
+
 export function takeUniqueBatchById<T extends { id: string }>(
   storageKey: string,
   all: T[],
   batchSize: number,
+  opts?: TakeUniqueBatchOptions,
 ): T[] {
   if (batchSize <= 0 || all.length === 0) return []
 
@@ -69,7 +75,12 @@ export function takeUniqueBatchById<T extends { id: string }>(
   let state = loadPool(storageKey)
 
   if (state.unused.length === 0) {
-    state.unused = state.useEndFirstRefill ? [...allIds].reverse() : shuffleIds(allIds)
+    const order = opts?.firstRefillOrder ?? 'reverse'
+    state.unused = state.useEndFirstRefill
+      ? order === 'shuffle'
+        ? shuffleIds(allIds)
+        : [...allIds].reverse()
+      : shuffleIds(allIds)
   }
 
   const out: T[] = []

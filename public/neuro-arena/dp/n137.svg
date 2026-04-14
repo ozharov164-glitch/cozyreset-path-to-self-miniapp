@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true">
-<g transform="translate(-4 3) rotate(-5 60 60) scale(0.960)"><defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true" shape-rendering="geometricPrecision">
+<defs>
     <linearGradient id="bg-p137" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#f3eef8"/>
       <stop offset="45%" stop-color="#ebe4f2"/>
@@ -13,5 +13,5 @@
   </defs>
   <rect width="120" height="120" rx="24" fill="url(#bg-p137)"/>
   <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p137)" opacity="0.42"/>
-  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(72,64,88,0.12)" stroke-width="1"/><g><path d="M44 50h32a6 6 0 016 6v16a6 6 0 01-6 6H44a6 6 0 01-6-6V56a6 6 0 016-6z" fill="#fffafd" stroke="#5c5470" stroke-width="2"/><path d="M48 58h24" stroke="#6a6280" stroke-width="1.6"/></g></g>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(72,64,88,0.12)" stroke-width="1"/><g><path d="M44 50h32a6 6 0 016 6v16a6 6 0 01-6 6H44a6 6 0 01-6-6V56a6 6 0 016-6z" fill="#fffafd" stroke="#5c5470" stroke-width="2"/><path d="M48 58h24" stroke="#6a6280" stroke-width="1.6"/></g>
 </svg>

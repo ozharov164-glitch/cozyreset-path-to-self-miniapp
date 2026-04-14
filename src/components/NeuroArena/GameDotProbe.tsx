@@ -4,6 +4,14 @@ import dotProbeData from '../../data/neuroArenaDotProbe.json'
 import { publicUrl } from '../../utils/publicUrl'
 import { NEURO_ARENA_POOL_KEYS, takeUniqueBatchById } from '../../utils/neuroArenaSessionPool'
 
+/** Версия из JSON — в query для обхода кэша Telegram/WebView на старых SVG. */
+const DP_ASSET_V = Number((dotProbeData as { meta?: { version?: number } }).meta?.version ?? 1)
+
+function dotProbeImgSrc(path: string): string {
+  const base = publicUrl(path)
+  return `${base}${base.includes('?') ? '&' : '?'}v=${DP_ASSET_V}`
+}
+
 export type DotProbeStimulus = {
   id: string
   category: string
@@ -19,7 +27,7 @@ function StimulusCue({ value }: { value: string }) {
   if (isAssetStimulus(value)) {
     return (
       <img
-        src={publicUrl(value)}
+        src={dotProbeImgSrc(value)}
         alt=""
         width={96}
         height={96}
@@ -88,7 +96,9 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
   const pair = trials[trialIndex]
 
   const beginSession = useCallback(() => {
-    const batch = takeUniqueBatchById(NEURO_ARENA_POOL_KEYS.dotProbe, ALL_STIMULI, TRIALS)
+    const batch = takeUniqueBatchById(NEURO_ARENA_POOL_KEYS.dotProbe, ALL_STIMULI, TRIALS, {
+      firstRefillOrder: 'shuffle',
+    })
     setTrials(shuffle(batch))
     setTrialIndex(0)
     trialIdxRef.current = 0
@@ -172,7 +182,7 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
     for (const s of [next.neutral, next.threat]) {
       if (isAssetStimulus(s)) {
         const img = new Image()
-        img.src = publicUrl(s)
+        img.src = dotProbeImgSrc(s)
       }
     }
   }, [trialIndex, phase, trials])
