@@ -42,6 +42,8 @@ function shuffle<T>(arr: T[]): T[] {
   return a
 }
 
+const ALL_STIMULI = (dotProbeData as { stimuli: DotProbeStimulus[] }).stimuli
+
 const TRIALS = 22
 const FIX_MS = 380
 const CUE_MS = 520
@@ -65,9 +67,8 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
   const reduce = useReducedMotion()
   const startedAt = useRef(0)
   const [phase, setPhase] = useState<'intro' | 'playing'>('intro')
-  const [trials] = useState(() =>
-    shuffle((dotProbeData as { stimuli: DotProbeStimulus[] }).stimuli).slice(0, TRIALS),
-  )
+  /** Порядок пар задаётся при каждом «Начать», а не при монтировании — иначе при повторном входе без размонтирования те же пары. */
+  const [trials, setTrials] = useState<DotProbeStimulus[]>([])
   const [trialIndex, setTrialIndex] = useState(0)
   const trialIdxRef = useRef(0)
   const [sub, setSub] = useState<'fix' | 'cue' | 'blank' | 'probe'>('fix')
@@ -84,6 +85,17 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
   }, [trialIndex])
 
   const pair = trials[trialIndex]
+
+  const beginSession = useCallback(() => {
+    setTrials(shuffle(ALL_STIMULI).slice(0, TRIALS))
+    setTrialIndex(0)
+    trialIdxRef.current = 0
+    correctRef.current = 0
+    rtsRef.current = []
+    answeredRef.current = false
+    startedAt.current = performance.now()
+    setPhase('playing')
+  }, [])
 
   const clearTimers = useCallback(() => {
     timeoutsRef.current.forEach((id) => clearTimeout(id))
@@ -185,14 +197,11 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
     finishTrial(isNeutral, rt)
   }
 
-  if (!pair) {
+  if (phase === 'playing' && (!trials.length || !pair)) {
     return (
       <div className="px-4 py-8 text-center text-sm text-[var(--color-text-secondary)]">Загрузка…</div>
     )
   }
-
-  const leftStimulus = neutralLeft ? pair.neutral : pair.threat
-  const rightStimulus = neutralLeft ? pair.threat : pair.neutral
 
   if (phase === 'intro') {
     return (
@@ -230,10 +239,7 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
 
         <button
           type="button"
-          onClick={() => {
-            startedAt.current = performance.now()
-            setPhase('playing')
-          }}
+          onClick={beginSession}
           className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[52px] font-semibold text-[15px]"
           style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
         >
@@ -242,6 +248,9 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
       </div>
     )
   }
+
+  const leftStimulus = neutralLeft ? pair!.neutral : pair!.threat
+  const rightStimulus = neutralLeft ? pair!.threat : pair!.neutral
 
   return (
     <div className="flex flex-col min-h-[60vh] px-3 pb-8 max-w-[420px] mx-auto w-full">
