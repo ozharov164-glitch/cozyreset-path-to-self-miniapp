@@ -2,18 +2,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true">
 <g transform="translate(-4 3) rotate(-5 60 60) scale(0.980)"><defs>
     <linearGradient id="bg-p179" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f0eef3"/>
-      <stop offset="45%" stop-color="#ebe9ef"/>
-      <stop offset="100%" stop-color="#e6e4ea"/>
+      <stop offset="0%" stop-color="#f2eef4"/>
+      <stop offset="45%" stop-color="#ebe6ee"/>
+      <stop offset="100%" stop-color="#e4dce6"/>
     </linearGradient>
     <radialGradient id="vin-p179" cx="50%" cy="92%" r="55%">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.5)"/>
+      <stop offset="0%" stop-color="rgba(255,255,255,0.47)"/>
       <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
     </radialGradient>
   </defs>
   <rect width="120" height="120" rx="24" fill="url(#bg-p179)"/>
-  <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p179)" opacity="0.45"/>
-  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(45,52,64,0.1)" stroke-width="1"/>
-  <rect x="34" y="46" width="52" height="32" rx="10" fill="white" stroke="#4d5664" stroke-width="2"/>
-  <circle cx="48" cy="62" r="4" fill="#5c6573"/><circle cx="60" cy="62" r="4" fill="#5c6573"/><circle cx="72" cy="62" r="4" fill="#5c6573"/></g>
+  <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p179)" opacity="0.42"/>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(72,64,80,0.1)" stroke-width="1"/>
+  <path d="M52 44 L60 38 L68 44 V74 H52 Z" fill="#eae2ee" stroke="#584c64" stroke-width="2"/>
+  <circle cx="60" cy="54" r="5" fill="#fcf8fe" stroke="#665a72" stroke-width="1.2"/></g>
 </svg>

@@ -2,18 +2,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true">
 <defs>
     <linearGradient id="bg-p52" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f0eef3"/>
-      <stop offset="45%" stop-color="#ebe9ef"/>
-      <stop offset="100%" stop-color="#e6e4ea"/>
+      <stop offset="0%" stop-color="#eef1f8"/>
+      <stop offset="45%" stop-color="#e6eaf4"/>
+      <stop offset="100%" stop-color="#dfe4f0"/>
     </linearGradient>
     <radialGradient id="vin-p52" cx="50%" cy="92%" r="55%">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.5)"/>
+      <stop offset="0%" stop-color="rgba(255,255,255,0.47)"/>
       <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
     </radialGradient>
   </defs>
   <rect width="120" height="120" rx="24" fill="url(#bg-p52)"/>
-  <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p52)" opacity="0.45"/>
-  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(45,52,64,0.1)" stroke-width="1"/>
-  <path d="M50 74 V42 L60 32 L70 42 V74" fill="none" stroke="#2a303c" stroke-width="3.5" stroke-linecap="round"/>
-  <path d="M44 56 L56 48 L68 56" fill="none" stroke="#3a4250" stroke-width="2.2"/>
+  <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p52)" opacity="0.42"/>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(56,64,96,0.11)" stroke-width="1"/>
+  <path d="M46 74 C46 48 74 48 74 74" fill="none" stroke="#282c3a" stroke-width="3"/>
+  <path d="M42 58 H78" stroke="#383c4c" stroke-width="2.5"/>
 </svg>
