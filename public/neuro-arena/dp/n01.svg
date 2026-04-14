@@ -13,10 +13,5 @@
   </defs>
   <rect width="120" height="120" rx="24" fill="url(#bg-p01)"/>
   <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p01)" opacity="0.42"/>
-  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(72,64,88,0.12)" stroke-width="1"/><defs><linearGradient id="v-p01-a" x1="0%" y1="0%" x2="0%" y2="100%">
-<stop offset="0%" stop-color="#f8f4fc"/><stop offset="100%" stop-color="#ddd4ec"/></linearGradient></defs>
-  <path d="M44 52 h32 a6 6 0 0 1 6 6 v18 a6 6 0 0 1 -6 6 H44 a6 6 0 0 1 -6 -6V58a6 6 0 0 1 6 -6z" fill="url(#v-p01-a)" stroke="#5c5470" stroke-width="2" stroke-linejoin="round"/>
-  <path d="M42 50 h36" stroke="#6a6280" stroke-width="2.2" stroke-linecap="round"/>
-  <path d="M52 46 Q60 38 68 46" fill="none" stroke="#7a728e" stroke-width="1.6" stroke-linecap="round" opacity="0.55"/>
-  <path d="M54 42 Q58 36 62 40 Q66 36 70 42" fill="none" stroke="#7a728e" stroke-width="1.4" stroke-linecap="round" opacity="0.45"/>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(72,64,88,0.12)" stroke-width="1"/><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M42 72h32v-26a16 16 0 0132 0v26H42z" fill="#ebe2f2" stroke="#5c5470" stroke-width="2.2"/><path d="M76 52h10a4 4 0 014 4v14" stroke="#5c5470" stroke-width="2"/><path d="M50 38c2-6 4-8 6-4s4 4 6 0" stroke="#6a6280" stroke-width="1.8"/><path d="M58 36c2-5 4-6 6-2" stroke="#6a6280" stroke-width="1.6" opacity=".75"/></g>
 </svg>

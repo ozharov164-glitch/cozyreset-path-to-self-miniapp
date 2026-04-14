@@ -2,18 +2,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true">
 <g transform="translate(2 3) rotate(-5 60 60) scale(0.970)"><defs>
     <linearGradient id="bg-p183" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#eef1f8"/>
-      <stop offset="45%" stop-color="#e6eaf4"/>
-      <stop offset="100%" stop-color="#dfe4f0"/>
+      <stop offset="0%" stop-color="#f0f2f8"/>
+      <stop offset="45%" stop-color="#e8ecf4"/>
+      <stop offset="100%" stop-color="#e0e6f0"/>
     </linearGradient>
     <radialGradient id="vin-p183" cx="50%" cy="92%" r="55%">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.47)"/>
+      <stop offset="0%" stop-color="rgba(255,255,255,0.46)"/>
       <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
     </radialGradient>
   </defs>
   <rect width="120" height="120" rx="24" fill="url(#bg-p183)"/>
   <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p183)" opacity="0.42"/>
-  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(56,64,96,0.11)" stroke-width="1"/><defs><linearGradient id="p2-p183-x8" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#f4f6fc"/><stop offset="100%" stop-color="#d8dff0"/></linearGradient></defs>
-  <rect x="44" y="44" width="32" height="34" rx="3" fill="url(#p2-p183-x8)" stroke="#282c3a" stroke-width="2.5"/>
-  <path d="M50 54 L60 64 L70 54" fill="none" stroke="#383c4c" stroke-width="2"/></g>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(64,68,96,0.1)" stroke-width="1"/><g><circle cx="60" cy="56" r="16" fill="#8088ac" stroke="#282c3c" stroke-width="2.5"/><path d="M50 50l10 12 10-8" fill="none" stroke="#383c4c" stroke-width="2"/></g></g>
 </svg>

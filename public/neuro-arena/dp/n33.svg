@@ -13,7 +13,5 @@
   </defs>
   <rect width="120" height="120" rx="24" fill="url(#bg-p33)"/>
   <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p33)" opacity="0.42"/>
-  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(56,72,80,0.1)" stroke-width="1"/>
-  <rect x="50" y="44" width="20" height="36" rx="4" fill="#e0ecf0" stroke="#4c5c64" stroke-width="2"/>
-  <rect x="54" y="48" width="12" height="8" rx="1" fill="#f6fbfd" stroke="#5a6a74" stroke-width="1"/>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(56,72,80,0.1)" stroke-width="1"/><g><rect x="46" y="50" width="28" height="20" rx="4" fill="#f6fbfd" stroke="#4c5c64" stroke-width="2"/><circle cx="52" cy="60" r="3" fill="#5a6a74" stroke="none"/><circle cx="68" cy="60" r="3" fill="#5a6a74" stroke="none"/></g>
 </svg>

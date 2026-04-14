@@ -1,1209 +1,1209 @@
 {
   "meta": {
-    "version": 10,
+    "version": 11,
     "assetKind": "svg",
     "pairCount": 200,
-    "motifLibrarySize": 107,
-    "note": "PREMIUM + PREMIUM2: цветные пастели по мотиву; CORE убран; без цветового кода ответа; при повторе — alt-трансформ."
+    "motifLibrarySize": 100,
+    "note": "LIFE v1: 100 бытовых узнаваемых пар; без спиц на колёсах и без разметки на кругах; пастель по мотиву; без цветового кода ответа."
   },
   "stimuli": [
     {
       "id": "dp_art_01",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n01.svg",
       "threat": "/neuro-arena/dp/t01.svg"
     },
     {
       "id": "dp_art_02",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n02.svg",
       "threat": "/neuro-arena/dp/t02.svg"
     },
     {
       "id": "dp_art_03",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n03.svg",
       "threat": "/neuro-arena/dp/t03.svg"
     },
     {
       "id": "dp_art_04",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n04.svg",
       "threat": "/neuro-arena/dp/t04.svg"
     },
     {
       "id": "dp_art_05",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n05.svg",
       "threat": "/neuro-arena/dp/t05.svg"
     },
     {
       "id": "dp_art_06",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n06.svg",
       "threat": "/neuro-arena/dp/t06.svg"
     },
     {
       "id": "dp_art_07",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n07.svg",
       "threat": "/neuro-arena/dp/t07.svg"
     },
     {
       "id": "dp_art_08",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n08.svg",
       "threat": "/neuro-arena/dp/t08.svg"
     },
     {
       "id": "dp_art_09",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n09.svg",
       "threat": "/neuro-arena/dp/t09.svg"
     },
     {
       "id": "dp_art_10",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n10.svg",
       "threat": "/neuro-arena/dp/t10.svg"
     },
     {
       "id": "dp_art_11",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n11.svg",
       "threat": "/neuro-arena/dp/t11.svg"
     },
     {
       "id": "dp_art_12",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n12.svg",
       "threat": "/neuro-arena/dp/t12.svg"
     },
     {
       "id": "dp_art_13",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n13.svg",
       "threat": "/neuro-arena/dp/t13.svg"
     },
     {
       "id": "dp_art_14",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n14.svg",
       "threat": "/neuro-arena/dp/t14.svg"
     },
     {
       "id": "dp_art_15",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n15.svg",
       "threat": "/neuro-arena/dp/t15.svg"
     },
     {
       "id": "dp_art_16",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n16.svg",
       "threat": "/neuro-arena/dp/t16.svg"
     },
     {
       "id": "dp_art_17",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n17.svg",
       "threat": "/neuro-arena/dp/t17.svg"
     },
     {
       "id": "dp_art_18",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n18.svg",
       "threat": "/neuro-arena/dp/t18.svg"
     },
     {
       "id": "dp_art_19",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n19.svg",
       "threat": "/neuro-arena/dp/t19.svg"
     },
     {
       "id": "dp_art_20",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n20.svg",
       "threat": "/neuro-arena/dp/t20.svg"
     },
     {
       "id": "dp_art_21",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n21.svg",
       "threat": "/neuro-arena/dp/t21.svg"
     },
     {
       "id": "dp_art_22",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n22.svg",
       "threat": "/neuro-arena/dp/t22.svg"
     },
     {
       "id": "dp_art_23",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n23.svg",
       "threat": "/neuro-arena/dp/t23.svg"
     },
     {
       "id": "dp_art_24",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n24.svg",
       "threat": "/neuro-arena/dp/t24.svg"
     },
     {
       "id": "dp_art_25",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n25.svg",
       "threat": "/neuro-arena/dp/t25.svg"
     },
     {
       "id": "dp_art_26",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n26.svg",
       "threat": "/neuro-arena/dp/t26.svg"
     },
     {
       "id": "dp_art_27",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n27.svg",
       "threat": "/neuro-arena/dp/t27.svg"
     },
     {
       "id": "dp_art_28",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n28.svg",
       "threat": "/neuro-arena/dp/t28.svg"
     },
     {
       "id": "dp_art_29",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n29.svg",
       "threat": "/neuro-arena/dp/t29.svg"
     },
     {
       "id": "dp_art_30",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n30.svg",
       "threat": "/neuro-arena/dp/t30.svg"
     },
     {
       "id": "dp_art_31",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n31.svg",
       "threat": "/neuro-arena/dp/t31.svg"
     },
     {
       "id": "dp_art_32",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n32.svg",
       "threat": "/neuro-arena/dp/t32.svg"
     },
     {
       "id": "dp_art_33",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n33.svg",
       "threat": "/neuro-arena/dp/t33.svg"
     },
     {
       "id": "dp_art_34",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n34.svg",
       "threat": "/neuro-arena/dp/t34.svg"
     },
     {
       "id": "dp_art_35",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n35.svg",
       "threat": "/neuro-arena/dp/t35.svg"
     },
     {
       "id": "dp_art_36",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n36.svg",
       "threat": "/neuro-arena/dp/t36.svg"
     },
     {
       "id": "dp_art_37",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n37.svg",
       "threat": "/neuro-arena/dp/t37.svg"
     },
     {
       "id": "dp_art_38",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n38.svg",
       "threat": "/neuro-arena/dp/t38.svg"
     },
     {
       "id": "dp_art_39",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n39.svg",
       "threat": "/neuro-arena/dp/t39.svg"
     },
     {
       "id": "dp_art_40",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n40.svg",
       "threat": "/neuro-arena/dp/t40.svg"
     },
     {
       "id": "dp_art_41",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n41.svg",
       "threat": "/neuro-arena/dp/t41.svg"
     },
     {
       "id": "dp_art_42",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n42.svg",
       "threat": "/neuro-arena/dp/t42.svg"
     },
     {
       "id": "dp_art_43",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n43.svg",
       "threat": "/neuro-arena/dp/t43.svg"
     },
     {
       "id": "dp_art_44",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n44.svg",
       "threat": "/neuro-arena/dp/t44.svg"
     },
     {
       "id": "dp_art_45",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n45.svg",
       "threat": "/neuro-arena/dp/t45.svg"
     },
     {
       "id": "dp_art_46",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n46.svg",
       "threat": "/neuro-arena/dp/t46.svg"
     },
     {
       "id": "dp_art_47",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n47.svg",
       "threat": "/neuro-arena/dp/t47.svg"
     },
     {
       "id": "dp_art_48",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n48.svg",
       "threat": "/neuro-arena/dp/t48.svg"
     },
     {
       "id": "dp_art_49",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n49.svg",
       "threat": "/neuro-arena/dp/t49.svg"
     },
     {
       "id": "dp_art_50",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n50.svg",
       "threat": "/neuro-arena/dp/t50.svg"
     },
     {
       "id": "dp_art_51",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n51.svg",
       "threat": "/neuro-arena/dp/t51.svg"
     },
     {
       "id": "dp_art_52",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n52.svg",
       "threat": "/neuro-arena/dp/t52.svg"
     },
     {
       "id": "dp_art_53",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n53.svg",
       "threat": "/neuro-arena/dp/t53.svg"
     },
     {
       "id": "dp_art_54",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n54.svg",
       "threat": "/neuro-arena/dp/t54.svg"
     },
     {
       "id": "dp_art_55",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n55.svg",
       "threat": "/neuro-arena/dp/t55.svg"
     },
     {
       "id": "dp_art_56",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n56.svg",
       "threat": "/neuro-arena/dp/t56.svg"
     },
     {
       "id": "dp_art_57",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n57.svg",
       "threat": "/neuro-arena/dp/t57.svg"
     },
     {
       "id": "dp_art_58",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n58.svg",
       "threat": "/neuro-arena/dp/t58.svg"
     },
     {
       "id": "dp_art_59",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n59.svg",
       "threat": "/neuro-arena/dp/t59.svg"
     },
     {
       "id": "dp_art_60",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n60.svg",
       "threat": "/neuro-arena/dp/t60.svg"
     },
     {
       "id": "dp_art_61",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n61.svg",
       "threat": "/neuro-arena/dp/t61.svg"
     },
     {
       "id": "dp_art_62",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n62.svg",
       "threat": "/neuro-arena/dp/t62.svg"
     },
     {
       "id": "dp_art_63",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n63.svg",
       "threat": "/neuro-arena/dp/t63.svg"
     },
     {
       "id": "dp_art_64",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n64.svg",
       "threat": "/neuro-arena/dp/t64.svg"
     },
     {
       "id": "dp_art_65",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n65.svg",
       "threat": "/neuro-arena/dp/t65.svg"
     },
     {
       "id": "dp_art_66",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n66.svg",
       "threat": "/neuro-arena/dp/t66.svg"
     },
     {
       "id": "dp_art_67",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n67.svg",
       "threat": "/neuro-arena/dp/t67.svg"
     },
     {
       "id": "dp_art_68",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n68.svg",
       "threat": "/neuro-arena/dp/t68.svg"
     },
     {
       "id": "dp_art_69",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n69.svg",
       "threat": "/neuro-arena/dp/t69.svg"
     },
     {
       "id": "dp_art_70",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n70.svg",
       "threat": "/neuro-arena/dp/t70.svg"
     },
     {
       "id": "dp_art_71",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n71.svg",
       "threat": "/neuro-arena/dp/t71.svg"
     },
     {
       "id": "dp_art_72",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n72.svg",
       "threat": "/neuro-arena/dp/t72.svg"
     },
     {
       "id": "dp_art_73",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n73.svg",
       "threat": "/neuro-arena/dp/t73.svg"
     },
     {
       "id": "dp_art_74",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n74.svg",
       "threat": "/neuro-arena/dp/t74.svg"
     },
     {
       "id": "dp_art_75",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n75.svg",
       "threat": "/neuro-arena/dp/t75.svg"
     },
     {
       "id": "dp_art_76",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n76.svg",
       "threat": "/neuro-arena/dp/t76.svg"
     },
     {
       "id": "dp_art_77",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n77.svg",
       "threat": "/neuro-arena/dp/t77.svg"
     },
     {
       "id": "dp_art_78",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n78.svg",
       "threat": "/neuro-arena/dp/t78.svg"
     },
     {
       "id": "dp_art_79",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n79.svg",
       "threat": "/neuro-arena/dp/t79.svg"
     },
     {
       "id": "dp_art_80",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n80.svg",
       "threat": "/neuro-arena/dp/t80.svg"
     },
     {
       "id": "dp_art_81",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n81.svg",
       "threat": "/neuro-arena/dp/t81.svg"
     },
     {
       "id": "dp_art_82",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n82.svg",
       "threat": "/neuro-arena/dp/t82.svg"
     },
     {
       "id": "dp_art_83",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n83.svg",
       "threat": "/neuro-arena/dp/t83.svg"
     },
     {
       "id": "dp_art_84",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n84.svg",
       "threat": "/neuro-arena/dp/t84.svg"
     },
     {
       "id": "dp_art_85",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n85.svg",
       "threat": "/neuro-arena/dp/t85.svg"
     },
     {
       "id": "dp_art_86",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n86.svg",
       "threat": "/neuro-arena/dp/t86.svg"
     },
     {
       "id": "dp_art_87",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n87.svg",
       "threat": "/neuro-arena/dp/t87.svg"
     },
     {
       "id": "dp_art_88",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n88.svg",
       "threat": "/neuro-arena/dp/t88.svg"
     },
     {
       "id": "dp_art_89",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n89.svg",
       "threat": "/neuro-arena/dp/t89.svg"
     },
     {
       "id": "dp_art_90",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n90.svg",
       "threat": "/neuro-arena/dp/t90.svg"
     },
     {
       "id": "dp_art_91",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n91.svg",
       "threat": "/neuro-arena/dp/t91.svg"
     },
     {
       "id": "dp_art_92",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n92.svg",
       "threat": "/neuro-arena/dp/t92.svg"
     },
     {
       "id": "dp_art_93",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n93.svg",
       "threat": "/neuro-arena/dp/t93.svg"
     },
     {
       "id": "dp_art_94",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n94.svg",
       "threat": "/neuro-arena/dp/t94.svg"
     },
     {
       "id": "dp_art_95",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n95.svg",
       "threat": "/neuro-arena/dp/t95.svg"
     },
     {
       "id": "dp_art_96",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n96.svg",
       "threat": "/neuro-arena/dp/t96.svg"
     },
     {
       "id": "dp_art_97",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n97.svg",
       "threat": "/neuro-arena/dp/t97.svg"
     },
     {
       "id": "dp_art_98",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n98.svg",
       "threat": "/neuro-arena/dp/t98.svg"
     },
     {
       "id": "dp_art_99",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n99.svg",
       "threat": "/neuro-arena/dp/t99.svg"
     },
     {
       "id": "dp_art_100",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n100.svg",
       "threat": "/neuro-arena/dp/t100.svg"
     },
     {
       "id": "dp_art_101",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n101.svg",
       "threat": "/neuro-arena/dp/t101.svg"
     },
     {
       "id": "dp_art_102",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n102.svg",
       "threat": "/neuro-arena/dp/t102.svg"
     },
     {
       "id": "dp_art_103",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n103.svg",
       "threat": "/neuro-arena/dp/t103.svg"
     },
     {
       "id": "dp_art_104",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n104.svg",
       "threat": "/neuro-arena/dp/t104.svg"
     },
     {
       "id": "dp_art_105",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n105.svg",
       "threat": "/neuro-arena/dp/t105.svg"
     },
     {
       "id": "dp_art_106",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n106.svg",
       "threat": "/neuro-arena/dp/t106.svg"
     },
     {
       "id": "dp_art_107",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n107.svg",
       "threat": "/neuro-arena/dp/t107.svg"
     },
     {
       "id": "dp_art_108",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n108.svg",
       "threat": "/neuro-arena/dp/t108.svg"
     },
     {
       "id": "dp_art_109",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n109.svg",
       "threat": "/neuro-arena/dp/t109.svg"
     },
     {
       "id": "dp_art_110",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n110.svg",
       "threat": "/neuro-arena/dp/t110.svg"
     },
     {
       "id": "dp_art_111",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n111.svg",
       "threat": "/neuro-arena/dp/t111.svg"
     },
     {
       "id": "dp_art_112",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n112.svg",
       "threat": "/neuro-arena/dp/t112.svg"
     },
     {
       "id": "dp_art_113",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n113.svg",
       "threat": "/neuro-arena/dp/t113.svg"
     },
     {
       "id": "dp_art_114",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n114.svg",
       "threat": "/neuro-arena/dp/t114.svg"
     },
     {
       "id": "dp_art_115",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n115.svg",
       "threat": "/neuro-arena/dp/t115.svg"
     },
     {
       "id": "dp_art_116",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n116.svg",
       "threat": "/neuro-arena/dp/t116.svg"
     },
     {
       "id": "dp_art_117",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n117.svg",
       "threat": "/neuro-arena/dp/t117.svg"
     },
     {
       "id": "dp_art_118",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n118.svg",
       "threat": "/neuro-arena/dp/t118.svg"
     },
     {
       "id": "dp_art_119",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n119.svg",
       "threat": "/neuro-arena/dp/t119.svg"
     },
     {
       "id": "dp_art_120",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n120.svg",
       "threat": "/neuro-arena/dp/t120.svg"
     },
     {
       "id": "dp_art_121",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n121.svg",
       "threat": "/neuro-arena/dp/t121.svg"
     },
     {
       "id": "dp_art_122",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n122.svg",
       "threat": "/neuro-arena/dp/t122.svg"
     },
     {
       "id": "dp_art_123",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n123.svg",
       "threat": "/neuro-arena/dp/t123.svg"
     },
     {
       "id": "dp_art_124",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n124.svg",
       "threat": "/neuro-arena/dp/t124.svg"
     },
     {
       "id": "dp_art_125",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n125.svg",
       "threat": "/neuro-arena/dp/t125.svg"
     },
     {
       "id": "dp_art_126",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n126.svg",
       "threat": "/neuro-arena/dp/t126.svg"
     },
     {
       "id": "dp_art_127",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n127.svg",
       "threat": "/neuro-arena/dp/t127.svg"
     },
     {
       "id": "dp_art_128",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n128.svg",
       "threat": "/neuro-arena/dp/t128.svg"
     },
     {
       "id": "dp_art_129",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n129.svg",
       "threat": "/neuro-arena/dp/t129.svg"
     },
     {
       "id": "dp_art_130",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n130.svg",
       "threat": "/neuro-arena/dp/t130.svg"
     },
     {
       "id": "dp_art_131",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n131.svg",
       "threat": "/neuro-arena/dp/t131.svg"
     },
     {
       "id": "dp_art_132",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n132.svg",
       "threat": "/neuro-arena/dp/t132.svg"
     },
     {
       "id": "dp_art_133",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n133.svg",
       "threat": "/neuro-arena/dp/t133.svg"
     },
     {
       "id": "dp_art_134",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n134.svg",
       "threat": "/neuro-arena/dp/t134.svg"
     },
     {
       "id": "dp_art_135",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n135.svg",
       "threat": "/neuro-arena/dp/t135.svg"
     },
     {
       "id": "dp_art_136",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n136.svg",
       "threat": "/neuro-arena/dp/t136.svg"
     },
     {
       "id": "dp_art_137",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n137.svg",
       "threat": "/neuro-arena/dp/t137.svg"
     },
     {
       "id": "dp_art_138",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n138.svg",
       "threat": "/neuro-arena/dp/t138.svg"
     },
     {
       "id": "dp_art_139",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n139.svg",
       "threat": "/neuro-arena/dp/t139.svg"
     },
     {
       "id": "dp_art_140",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n140.svg",
       "threat": "/neuro-arena/dp/t140.svg"
     },
     {
       "id": "dp_art_141",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n141.svg",
       "threat": "/neuro-arena/dp/t141.svg"
     },
     {
       "id": "dp_art_142",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n142.svg",
       "threat": "/neuro-arena/dp/t142.svg"
     },
     {
       "id": "dp_art_143",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n143.svg",
       "threat": "/neuro-arena/dp/t143.svg"
     },
     {
       "id": "dp_art_144",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n144.svg",
       "threat": "/neuro-arena/dp/t144.svg"
     },
     {
       "id": "dp_art_145",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n145.svg",
       "threat": "/neuro-arena/dp/t145.svg"
     },
     {
       "id": "dp_art_146",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n146.svg",
       "threat": "/neuro-arena/dp/t146.svg"
     },
     {
       "id": "dp_art_147",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n147.svg",
       "threat": "/neuro-arena/dp/t147.svg"
     },
     {
       "id": "dp_art_148",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n148.svg",
       "threat": "/neuro-arena/dp/t148.svg"
     },
     {
       "id": "dp_art_149",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n149.svg",
       "threat": "/neuro-arena/dp/t149.svg"
     },
     {
       "id": "dp_art_150",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n150.svg",
       "threat": "/neuro-arena/dp/t150.svg"
     },
     {
       "id": "dp_art_151",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n151.svg",
       "threat": "/neuro-arena/dp/t151.svg"
     },
     {
       "id": "dp_art_152",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n152.svg",
       "threat": "/neuro-arena/dp/t152.svg"
     },
     {
       "id": "dp_art_153",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n153.svg",
       "threat": "/neuro-arena/dp/t153.svg"
     },
     {
       "id": "dp_art_154",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n154.svg",
       "threat": "/neuro-arena/dp/t154.svg"
     },
     {
       "id": "dp_art_155",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n155.svg",
       "threat": "/neuro-arena/dp/t155.svg"
     },
     {
       "id": "dp_art_156",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n156.svg",
       "threat": "/neuro-arena/dp/t156.svg"
     },
     {
       "id": "dp_art_157",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n157.svg",
       "threat": "/neuro-arena/dp/t157.svg"
     },
     {
       "id": "dp_art_158",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n158.svg",
       "threat": "/neuro-arena/dp/t158.svg"
     },
     {
       "id": "dp_art_159",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n159.svg",
       "threat": "/neuro-arena/dp/t159.svg"
     },
     {
       "id": "dp_art_160",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n160.svg",
       "threat": "/neuro-arena/dp/t160.svg"
     },
     {
       "id": "dp_art_161",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n161.svg",
       "threat": "/neuro-arena/dp/t161.svg"
     },
     {
       "id": "dp_art_162",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n162.svg",
       "threat": "/neuro-arena/dp/t162.svg"
     },
     {
       "id": "dp_art_163",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n163.svg",
       "threat": "/neuro-arena/dp/t163.svg"
     },
     {
       "id": "dp_art_164",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n164.svg",
       "threat": "/neuro-arena/dp/t164.svg"
     },
     {
       "id": "dp_art_165",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n165.svg",
       "threat": "/neuro-arena/dp/t165.svg"
     },
     {
       "id": "dp_art_166",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n166.svg",
       "threat": "/neuro-arena/dp/t166.svg"
     },
     {
       "id": "dp_art_167",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n167.svg",
       "threat": "/neuro-arena/dp/t167.svg"
     },
     {
       "id": "dp_art_168",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n168.svg",
       "threat": "/neuro-arena/dp/t168.svg"
     },
     {
       "id": "dp_art_169",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n169.svg",
       "threat": "/neuro-arena/dp/t169.svg"
     },
     {
       "id": "dp_art_170",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n170.svg",
       "threat": "/neuro-arena/dp/t170.svg"
     },
     {
       "id": "dp_art_171",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n171.svg",
       "threat": "/neuro-arena/dp/t171.svg"
     },
     {
       "id": "dp_art_172",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n172.svg",
       "threat": "/neuro-arena/dp/t172.svg"
     },
     {
       "id": "dp_art_173",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n173.svg",
       "threat": "/neuro-arena/dp/t173.svg"
     },
     {
       "id": "dp_art_174",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n174.svg",
       "threat": "/neuro-arena/dp/t174.svg"
     },
     {
       "id": "dp_art_175",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n175.svg",
       "threat": "/neuro-arena/dp/t175.svg"
     },
     {
       "id": "dp_art_176",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n176.svg",
       "threat": "/neuro-arena/dp/t176.svg"
     },
     {
       "id": "dp_art_177",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n177.svg",
       "threat": "/neuro-arena/dp/t177.svg"
     },
     {
       "id": "dp_art_178",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n178.svg",
       "threat": "/neuro-arena/dp/t178.svg"
     },
     {
       "id": "dp_art_179",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n179.svg",
       "threat": "/neuro-arena/dp/t179.svg"
     },
     {
       "id": "dp_art_180",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n180.svg",
       "threat": "/neuro-arena/dp/t180.svg"
     },
     {
       "id": "dp_art_181",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n181.svg",
       "threat": "/neuro-arena/dp/t181.svg"
     },
     {
       "id": "dp_art_182",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n182.svg",
       "threat": "/neuro-arena/dp/t182.svg"
     },
     {
       "id": "dp_art_183",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n183.svg",
       "threat": "/neuro-arena/dp/t183.svg"
     },
     {
       "id": "dp_art_184",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n184.svg",
       "threat": "/neuro-arena/dp/t184.svg"
     },
     {
       "id": "dp_art_185",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n185.svg",
       "threat": "/neuro-arena/dp/t185.svg"
     },
     {
       "id": "dp_art_186",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n186.svg",
       "threat": "/neuro-arena/dp/t186.svg"
     },
     {
       "id": "dp_art_187",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n187.svg",
       "threat": "/neuro-arena/dp/t187.svg"
     },
     {
       "id": "dp_art_188",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n188.svg",
       "threat": "/neuro-arena/dp/t188.svg"
     },
     {
       "id": "dp_art_189",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n189.svg",
       "threat": "/neuro-arena/dp/t189.svg"
     },
     {
       "id": "dp_art_190",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n190.svg",
       "threat": "/neuro-arena/dp/t190.svg"
     },
     {
       "id": "dp_art_191",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n191.svg",
       "threat": "/neuro-arena/dp/t191.svg"
     },
     {
       "id": "dp_art_192",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n192.svg",
       "threat": "/neuro-arena/dp/t192.svg"
     },
     {
       "id": "dp_art_193",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n193.svg",
       "threat": "/neuro-arena/dp/t193.svg"
     },
     {
       "id": "dp_art_194",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n194.svg",
       "threat": "/neuro-arena/dp/t194.svg"
     },
     {
       "id": "dp_art_195",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n195.svg",
       "threat": "/neuro-arena/dp/t195.svg"
     },
     {
       "id": "dp_art_196",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n196.svg",
       "threat": "/neuro-arena/dp/t196.svg"
     },
     {
       "id": "dp_art_197",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n197.svg",
       "threat": "/neuro-arena/dp/t197.svg"
     },
     {
       "id": "dp_art_198",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n198.svg",
       "threat": "/neuro-arena/dp/t198.svg"
     },
     {
       "id": "dp_art_199",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n199.svg",
       "threat": "/neuro-arena/dp/t199.svg"
     },
     {
       "id": "dp_art_200",
-      "category": "premium",
+      "category": "life",
       "neutral": "/neuro-arena/dp/n200.svg",
       "threat": "/neuro-arena/dp/t200.svg"
     }

@@ -13,9 +13,5 @@
   </defs>
   <rect width="120" height="120" rx="24" fill="url(#bg-p02)"/>
   <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p02)" opacity="0.42"/>
-  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(56,72,64,0.11)" stroke-width="1"/><defs><linearGradient id="v-p02-d" x1="0%" y1="0%" x2="0%" y2="100%">
-<stop offset="0%" stop-color="#f2faf6"/><stop offset="100%" stop-color="#d4e8de"/></linearGradient></defs>
-  <path d="M36 48 h48 v40 H36 Z" fill="url(#v-p02-d)" stroke="#26332e" stroke-width="2.5" stroke-linejoin="round"/>
-  <path d="M42 58 L50 66 L70 52" fill="none" stroke="#364540" stroke-width="2.2" stroke-linecap="round"/>
-  <path d="M44 72 H74" stroke="#364540" stroke-width="2"/>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(56,72,64,0.11)" stroke-width="1"/><g stroke-linecap="round" stroke-linejoin="round"><rect x="42" y="36" width="36" height="52" rx="5" fill="#f7fcfa" stroke="#26332e" stroke-width="2.6"/><path d="M50 48l8 10 8-10M50 62l8 10 8-10" stroke="#364540" stroke-width="2.2" fill="none"/><rect x="48" y="46" width="24" height="30" rx="2" fill="#92ab9e" stroke="#364540" stroke-width="1.6"/><circle cx="60" cy="86" r="3" fill="#26332e"/></g>
 </svg>

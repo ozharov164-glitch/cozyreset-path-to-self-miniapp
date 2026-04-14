@@ -1,5 +1,5 @@
 /**
- * @deprecated Не подключается к генератору: библиотека dot-probe переведена на премиум-силуэты (см. neuroArenaPremiumMotifs*.mjs).
+ * @deprecated Не подключается к генератору: dot-probe использует бытовые мотивы (neuroArenaDailyMotifs / dailyMotifRenderers*).
  * Пары в стиле эмодзи. Один фон и серая палитра — нельзя отличить «хорошую» картинку по цвету (не голубой vs красный).
  */
 export function buildEmojiMotifs({ cardBg, ST }) {

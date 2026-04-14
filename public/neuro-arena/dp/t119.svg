@@ -2,19 +2,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true">
 <g transform="translate(-4 3) rotate(-5 60 60) scale(0.980)"><defs>
     <linearGradient id="bg-p119" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f2eef4"/>
-      <stop offset="45%" stop-color="#ebe6ee"/>
-      <stop offset="100%" stop-color="#e4dce6"/>
+      <stop offset="0%" stop-color="#f0f2f6"/>
+      <stop offset="45%" stop-color="#e8ecf2"/>
+      <stop offset="100%" stop-color="#e0e6ee"/>
     </linearGradient>
     <radialGradient id="vin-p119" cx="50%" cy="92%" r="55%">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.47)"/>
+      <stop offset="0%" stop-color="rgba(255,255,255,0.46)"/>
       <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
     </radialGradient>
   </defs>
   <rect width="120" height="120" rx="24" fill="url(#bg-p119)"/>
   <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p119)" opacity="0.42"/>
-  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(72,64,80,0.1)" stroke-width="1"/>
-  <circle cx="60" cy="58" r="26" fill="none" stroke="#2c2834" stroke-width="2.5" stroke-dasharray="6 5"/>
-  <path d="M52 50 L68 66 M68 50 L52 66" stroke="#3c3848" stroke-width="2.8" stroke-linecap="round"/>
-  <circle cx="60" cy="58" r="6" fill="#3c3848" opacity="0.35"/></g>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(56,64,80,0.1)" stroke-width="1"/><g stroke-linecap="round" stroke-linejoin="round"><path d="M34 50h48a4 4 0 014 4v12H86l-6 10-6-6H38a4 4 0 01-4-4v-8a4 4 0 014-4z" fill="#949eac" stroke="#282c34" stroke-width="2.3"/><circle cx="44" cy="42" r="8" fill="#f6f8fc" stroke="#383c48" stroke-width="1.8"/><circle cx="60" cy="38" r="6" fill="#f6f8fc" stroke="#383c48" stroke-width="1.6"/><circle cx="74" cy="42" r="7" fill="#f6f8fc" stroke="#383c48" stroke-width="1.8"/></g></g>
 </svg>

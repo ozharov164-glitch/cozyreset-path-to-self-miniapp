@@ -1,13 +1,11 @@
 /**
- * Генерирует пары SVG для dot-probe. Цветные пастели по мотиву; без «зелёный=хорошо / красный=плохо» —
- * нейтраль и угроза в одной гамме; отличие в форме и плотности линий (ink).
+ * Генерирует пары SVG для dot-probe: бытовые узнаваемые иконки, пастель по мотиву.
  * Запуск: node scripts/generate-neuro-arena-svgs.mjs
  */
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { buildPremiumMotifs } from './neuroArenaPremiumMotifs.mjs'
-import { buildPremiumMotifsBatch2 } from './neuroArenaPremiumMotifsBatch2.mjs'
+import { buildDailyMotifs } from './neuroArenaDailyMotifs.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.join(__dirname, '..')
@@ -17,13 +15,7 @@ const JSON_OUT = path.join(ROOT, 'src/data/neuroArenaDotProbe.json')
 /** Пул файлов n01…nXX (дублирование мотивов с alt-трансформом только при i > числа мотивов). */
 const PAIRS = 200
 
-/** Первая премиум-библиотека задаёт индексы палитры 0..N-1; вторая продолжает с N. */
-const PREMIUM_BATCH1_SIZE = 53
-
-const MOTIFS = [
-  ...buildPremiumMotifs({ motifIndexStart: 0 }),
-  ...buildPremiumMotifsBatch2({ motifIndexStart: PREMIUM_BATCH1_SIZE }),
-]
+const MOTIFS = [...buildDailyMotifs({ motifIndexStart: 0 })]
 
 /** Второй проход: разный лёгкий сдвиг/поворот по индексу, чтобы повторы мотивов отличались. */
 function wrapSvg(inner, altPass, pairIndex) {
@@ -75,11 +67,11 @@ for (let i = 1; i <= PAIRS; i++) {
 
 const doc = {
   meta: {
-    version: 10,
+    version: 11,
     assetKind: 'svg',
     pairCount: PAIRS,
     motifLibrarySize: nMotifs,
-    note: 'PREMIUM + PREMIUM2: цветные пастели по мотиву; CORE убран; без цветового кода ответа; при повторе — alt-трансформ.',
+    note: 'LIFE v1: 100 бытовых узнаваемых пар; без спиц на колёсах и без разметки на кругах; пастель по мотиву; без цветового кода ответа.',
   },
   stimuli,
 }

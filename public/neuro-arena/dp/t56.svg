@@ -13,7 +13,5 @@
   </defs>
   <rect width="120" height="120" rx="24" fill="url(#bg-p56)"/>
   <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p56)" opacity="0.42"/>
-  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(80,64,72,0.1)" stroke-width="1"/><defs><linearGradient id="p2-p56-x4" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#faf4f8"/><stop offset="100%" stop-color="#e8d8e2"/></linearGradient></defs>
-  <path d="M50 40 Q60 34 70 40 Q74 54 70 70 Q60 80 50 70 Q40 80 30 70 Q26 54 30 40 Q40 34 50 40" fill="url(#p2-p56-x4)" stroke="#342830" stroke-width="2.5"/>
-  <path d="M48 52 L56 60 L64 52" fill="none" stroke="#443840" stroke-width="2"/>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(80,64,72,0.1)" stroke-width="1"/><g><path d="M48 70h24v-26a12 12 0 00-24 0z" fill="#e4d4de" stroke="#342830" stroke-width="2.4"/><path d="M52 46h16v10H52z" fill="#443840" stroke="none"/><path d="M56 52h8M56 56h8" stroke="#fff8fc" stroke-width="1.5"/></g>
 </svg>
