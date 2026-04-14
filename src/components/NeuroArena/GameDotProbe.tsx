@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import dotProbeData from '../../data/neuroArenaDotProbe.json'
 import { publicUrl } from '../../utils/publicUrl'
+import { NEURO_ARENA_POOL_KEYS, takeUniqueBatchById } from '../../utils/neuroArenaSessionPool'
 
 export type DotProbeStimulus = {
   id: string
@@ -87,7 +88,8 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
   const pair = trials[trialIndex]
 
   const beginSession = useCallback(() => {
-    setTrials(shuffle(ALL_STIMULI).slice(0, TRIALS))
+    const batch = takeUniqueBatchById(NEURO_ARENA_POOL_KEYS.dotProbe, ALL_STIMULI, TRIALS)
+    setTrials(shuffle(batch))
     setTrialIndex(0)
     trialIdxRef.current = 0
     correctRef.current = 0

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import scenariosData from '../../data/neuroArenaScenarios.json'
+import { NEURO_ARENA_POOL_KEYS, takeUniqueBatchById } from '../../utils/neuroArenaSessionPool'
 
 export type ScenarioItem = {
   id: string
@@ -23,6 +24,8 @@ function shuffle<T>(arr: T[]): T[] {
 
 const ROUND_COUNT = 14
 
+const ALL_SCENARIOS = scenariosData.scenarios as ScenarioItem[]
+
 export type ScenariosResult = {
   score: number
   accuracy: number
@@ -40,7 +43,7 @@ export function GameScenarios({ onComplete, onBack }: Props) {
   const reduce = useReducedMotion()
   const startedAt = useRef(0)
   const [phase, setPhase] = useState<'intro' | 'playing'>('intro')
-  const [rounds] = useState(() => shuffle(scenariosData.scenarios as ScenarioItem[]).slice(0, ROUND_COUNT))
+  const [rounds, setRounds] = useState<ScenarioItem[]>([])
   const [idx, setIdx] = useState(0)
   const [feedback, setFeedback] = useState<string | null>(null)
   const correctRef = useRef(0)
@@ -91,10 +94,6 @@ export function GameScenarios({ onComplete, onBack }: Props) {
     }, ok ? 900 : 1400)
   }
 
-  if (!item) {
-    return <div className="px-4 py-8 text-center text-sm text-[var(--color-text-secondary)]">Загрузка…</div>
-  }
-
   if (phase === 'intro') {
     return (
       <div className="flex flex-col min-h-[60vh] px-3 pb-8 max-w-[420px] mx-auto w-full">
@@ -128,6 +127,10 @@ export function GameScenarios({ onComplete, onBack }: Props) {
         <button
           type="button"
           onClick={() => {
+            const batch = takeUniqueBatchById(NEURO_ARENA_POOL_KEYS.scenarios, ALL_SCENARIOS, ROUND_COUNT)
+            setRounds(shuffle(batch))
+            setIdx(0)
+            correctRef.current = 0
             startedAt.current = performance.now()
             setPhase('playing')
           }}
@@ -138,6 +141,10 @@ export function GameScenarios({ onComplete, onBack }: Props) {
         </button>
       </div>
     )
+  }
+
+  if (!item || rounds.length === 0) {
+    return <div className="px-4 py-8 text-center text-sm text-[var(--color-text-secondary)]">Загрузка…</div>
   }
 
   return (
