@@ -59,11 +59,11 @@ for (let i = 1; i <= PAIRS; i++) {
 
 const doc = {
   meta: {
-    version: 12,
+    version: 13,
     assetKind: 'svg',
     pairCount: PAIRS,
     motifLibrarySize: nMotifs,
-    note: 'LIFE v2: без искусственного наклона/сдвига для пар 101–200 (раньше ломало ровность); бытовые силуэты; пастель по мотиву.',
+    note: 'LIFE v3: 48 гамм фона без подсказки n/t; упрощённый фон SVG; без rotate на очках; только форма отличает n/t.',
   },
   stimuli,
 }

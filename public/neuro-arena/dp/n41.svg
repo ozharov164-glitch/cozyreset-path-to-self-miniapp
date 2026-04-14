@@ -2,16 +2,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true" shape-rendering="geometricPrecision">
 <defs>
     <linearGradient id="bg-p41" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f2f0f5"/>
-      <stop offset="45%" stop-color="#ebe8f0"/>
-      <stop offset="100%" stop-color="#e4e0ea"/>
+      <stop offset="0%" stop-color="#ecf2fc"/>
+      <stop offset="50%" stop-color="#e0e8f8"/>
+      <stop offset="100%" stop-color="#d4e0f4"/>
     </linearGradient>
-    <radialGradient id="vin-p41" cx="50%" cy="92%" r="55%">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.45)"/>
-      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-    </radialGradient>
   </defs>
   <rect width="120" height="120" rx="24" fill="url(#bg-p41)"/>
-  <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p41)" opacity="0.42"/>
-  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(64,60,80,0.11)" stroke-width="1"/><g stroke-linecap="round"><rect x="46" y="50" width="28" height="20" rx="3" fill="#e8e4f0" stroke="#585468" stroke-width="2"/><circle cx="54" cy="60" r="3" fill="#66627a" stroke="none"/><circle cx="66" cy="60" r="3" fill="#66627a" stroke="none"/></g>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(72,88,128,0.1)" stroke-width="1"/><g stroke-linecap="round"><rect x="46" y="50" width="28" height="20" rx="3" fill="#e6eefc" stroke="#506088" stroke-width="2"/><circle cx="54" cy="60" r="3" fill="#5e7098" stroke="none"/><circle cx="66" cy="60" r="3" fill="#5e7098" stroke="none"/></g>
 </svg>

@@ -49,7 +49,7 @@ function savePool(storageKey: string, state: PoolState) {
 }
 
 export const NEURO_ARENA_POOL_KEYS = {
-  dotProbe: 'neuroArena.pool.dotProbe.v2',
+  dotProbe: 'neuroArena.pool.dotProbe.v3',
   scenarios: 'neuroArena.pool.scenarios.v1',
 } as const
 

@@ -73,7 +73,7 @@ export const MOTIF_RENDERERS_BASE = [
   (s, P) =>
     s === 'n'
       ? `<g stroke-linecap="round" stroke-linejoin="round"><circle cx="48" cy="56" r="10" fill="${P.cream}" stroke="${P.line}" stroke-width="2"/><circle cx="72" cy="56" r="10" fill="${P.cream}" stroke="${P.line}" stroke-width="2"/><path d="M58 56h4" stroke="${P.line}" stroke-width="2"/><path d="M38 54h-6M88 54h6" stroke="${P.lineM}" stroke-width="1.8"/></g>`
-      : `<g stroke-linecap="round" stroke-linejoin="round"><circle cx="46" cy="58" r="10" fill="${P.fillM}" stroke="${P.ink}" stroke-width="2.3" transform="rotate(-8 46 58)"/><circle cx="74" cy="58" r="10" fill="${P.fillM}" stroke="${P.ink}" stroke-width="2.3" transform="rotate(6 74 58)"/><path d="M56 58h8" stroke="${P.inkM}" stroke-width="2.4"/></g>`,
+      : `<g stroke-linecap="round" stroke-linejoin="round"><circle cx="45" cy="57" r="10" fill="${P.fillM}" stroke="${P.ink}" stroke-width="2.3"/><circle cx="75" cy="59" r="10" fill="${P.fillM}" stroke="${P.ink}" stroke-width="2.3"/><path d="M55 58h10" stroke="${P.inkM}" stroke-width="2.4"/></g>`,
   // 15 наушники / спутанный провод
   (s, P) =>
     s === 'n'

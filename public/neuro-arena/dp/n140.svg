@@ -2,16 +2,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-hidden="true" shape-rendering="geometricPrecision">
 <defs>
     <linearGradient id="bg-p140" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#eef1f8"/>
-      <stop offset="45%" stop-color="#e6eaf4"/>
-      <stop offset="100%" stop-color="#dfe4f0"/>
+      <stop offset="0%" stop-color="#f4f0e8"/>
+      <stop offset="50%" stop-color="#ece6dc"/>
+      <stop offset="100%" stop-color="#e4dcd0"/>
     </linearGradient>
-    <radialGradient id="vin-p140" cx="50%" cy="92%" r="55%">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.47)"/>
-      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-    </radialGradient>
   </defs>
   <rect width="120" height="120" rx="24" fill="url(#bg-p140)"/>
-  <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p140)" opacity="0.42"/>
-  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(56,64,96,0.11)" stroke-width="1"/><g stroke-linecap="round"><path d="M38 62h44v12H38z" fill="#f8f9fe" stroke="#505a72" stroke-width="2"/><path d="M42 58h36v4H42z" fill="#e4e8f2" stroke="#5e6880" stroke-width="1.5"/><circle cx="48" cy="68" r="2" fill="#505a72" stroke="none"/><circle cx="60" cy="68" r="2" fill="#505a72" stroke="none"/><circle cx="72" cy="68" r="2" fill="#505a72" stroke="none"/></g>
+  <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(96,88,72,0.1)" stroke-width="1"/><g stroke-linecap="round"><path d="M38 62h44v12H38z" fill="#faf8f4" stroke="#605848" stroke-width="2"/><path d="M42 58h36v4H42z" fill="#eee8dc" stroke="#6e6858" stroke-width="1.5"/><circle cx="48" cy="68" r="2" fill="#605848" stroke="none"/><circle cx="60" cy="68" r="2" fill="#605848" stroke="none"/><circle cx="72" cy="68" r="2" fill="#605848" stroke="none"/></g>
 </svg>

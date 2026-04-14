@@ -3,15 +3,10 @@
 <defs>
     <linearGradient id="bg-p198" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#eef5f2"/>
-      <stop offset="45%" stop-color="#e6f0ec"/>
+      <stop offset="50%" stop-color="#e6f0ec"/>
       <stop offset="100%" stop-color="#dfeae4"/>
     </linearGradient>
-    <radialGradient id="vin-p198" cx="50%" cy="92%" r="55%">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.5)"/>
-      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-    </radialGradient>
   </defs>
   <rect width="120" height="120" rx="24" fill="url(#bg-p198)"/>
-  <ellipse cx="60" cy="108" rx="52" ry="14" fill="url(#vin-p198)" opacity="0.42"/>
   <rect x="1" y="1" width="118" height="118" rx="23" fill="none" stroke="rgba(56,72,64,0.11)" stroke-width="1"/><g stroke-linecap="round"><path d="M34 64c0-10 14-14 26-14s26 4 26 14-14 14-26 14-26-4-26-14z" fill="#92ab9e" stroke="#26332e" stroke-width="2.3"/><path d="M48 56l6 12 6-8 6 10" fill="none" stroke="#364540" stroke-width="1.8"/></g>
 </svg>
