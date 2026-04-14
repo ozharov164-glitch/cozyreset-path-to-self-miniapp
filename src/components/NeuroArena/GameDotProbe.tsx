@@ -54,10 +54,45 @@ function shuffle<T>(arr: T[]): T[] {
 const ALL_STIMULI = (dotProbeData as { stimuli: DotProbeStimulus[] }).stimuli
 
 const TRIALS = 22
-const FIX_MS = 380
-const CUE_MS = 520
-const BLANK_MS = 100
-const PROBE_MS = 2400
+
+export type DotProbeDifficulty = 'easy' | 'medium' | 'hard'
+
+/** Тайминги фаз (мс): чем выше уровень — тем «быстрее конвейер» и короче окно ответа. */
+export const DOT_PROBE_LEVELS: Record<
+  DotProbeDifficulty,
+  { fix: number; cue: number; blank: number; probe: number; label: string; hint: string }
+> = {
+  easy: {
+    fix: 520,
+    cue: 700,
+    blank: 130,
+    probe: 3200,
+    label: 'Лёгкий',
+    hint: 'Дольше показ пар и больше времени на ответ',
+  },
+  medium: {
+    fix: 400,
+    cue: 560,
+    blank: 100,
+    probe: 2400,
+    label: 'Средний',
+    hint: 'Умеренный темп — как в классической парадигме',
+  },
+  hard: {
+    fix: 280,
+    cue: 400,
+    blank: 75,
+    probe: 1600,
+    label: 'Сложный',
+    hint: 'Быстрее смена картинок и жёстче лимит на ответ',
+  },
+}
+
+const SCORE_MULT: Record<DotProbeDifficulty, number> = {
+  easy: 0.9,
+  medium: 1,
+  hard: 1.08,
+}
 
 export type DotProbeResult = {
   score: number
@@ -65,6 +100,8 @@ export type DotProbeResult = {
   avgReactionMs: number
   stimuliCount: number
   playtimeSec: number
+  difficulty: DotProbeDifficulty
+  difficultyLabel: string
 }
 
 type Props = {
@@ -75,7 +112,10 @@ type Props = {
 export function GameDotProbe({ onComplete, onBack }: Props) {
   const reduce = useReducedMotion()
   const startedAt = useRef(0)
+  const sessionLevelRef = useRef(DOT_PROBE_LEVELS.medium)
+  const sessionDifficultyRef = useRef<DotProbeDifficulty>('medium')
   const [phase, setPhase] = useState<'intro' | 'playing'>('intro')
+  const [difficulty, setDifficulty] = useState<DotProbeDifficulty>('medium')
   /** Порядок пар задаётся при каждом «Начать», а не при монтировании — иначе при повторном входе без размонтирования те же пары. */
   const [trials, setTrials] = useState<DotProbeStimulus[]>([])
   const [trialIndex, setTrialIndex] = useState(0)
@@ -96,6 +136,8 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
   const pair = trials[trialIndex]
 
   const beginSession = useCallback(() => {
+    sessionDifficultyRef.current = difficulty
+    sessionLevelRef.current = DOT_PROBE_LEVELS[difficulty]
     const batch = takeUniqueBatchById(NEURO_ARENA_POOL_KEYS.dotProbe, ALL_STIMULI, TRIALS, {
       firstRefillOrder: 'shuffle',
     })
@@ -107,7 +149,7 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
     answeredRef.current = false
     startedAt.current = performance.now()
     setPhase('playing')
-  }, [])
+  }, [difficulty])
 
   const clearTimers = useCallback(() => {
     timeoutsRef.current.forEach((id) => clearTimeout(id))
@@ -116,9 +158,12 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
 
   const finishTrial = useCallback(
     (correct: boolean, rt: number) => {
+      const probeCap = sessionLevelRef.current.probe
+      const diff = sessionDifficultyRef.current
+
       if (correct) {
         correctRef.current += 1
-        rtsRef.current.push(Math.min(rt, PROBE_MS))
+        rtsRef.current.push(Math.min(rt, probeCap))
       }
       window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.(correct ? 'light' : 'medium')
 
@@ -128,10 +173,11 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
         const acc = (correctRef.current / n) * 100
         const rts = rtsRef.current
         const avgRt = rts.length ? Math.round(rts.reduce((a, b) => a + b, 0) / rts.length) : 0
-        const score = Math.min(
+        const base = Math.min(
           10000,
           correctRef.current * 42 + Math.max(0, Math.round(480 - avgRt / 2.5)),
         )
+        const score = Math.min(10000, Math.round(base * SCORE_MULT[diff]))
         const playtimeSec = Math.max(1, Math.round((performance.now() - startedAt.current) / 1000))
         onComplete({
           score,
@@ -139,6 +185,8 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
           avgReactionMs: avgRt,
           stimuliCount: n,
           playtimeSec,
+          difficulty: diff,
+          difficultyLabel: DOT_PROBE_LEVELS[diff].label,
         })
         return
       }
@@ -162,14 +210,15 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
     if (!pair) return
     clearTimers()
     answeredRef.current = false
+    const L = sessionLevelRef.current
     if (sub === 'fix') {
-      const t = window.setTimeout(() => setSub('cue'), FIX_MS)
+      const t = window.setTimeout(() => setSub('cue'), L.fix)
       timeoutsRef.current.push(t)
     } else if (sub === 'cue') {
-      const t = window.setTimeout(() => setSub('blank'), CUE_MS)
+      const t = window.setTimeout(() => setSub('blank'), L.cue)
       timeoutsRef.current.push(t)
     } else if (sub === 'blank') {
-      const t = window.setTimeout(() => setSub('probe'), BLANK_MS)
+      const t = window.setTimeout(() => setSub('probe'), L.blank)
       timeoutsRef.current.push(t)
     }
     return clearTimers
@@ -190,13 +239,14 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
   useEffect(() => {
     if (phase !== 'playing') return
     if (sub !== 'probe') return
+    const probeMs = sessionLevelRef.current.probe
     probeStartRef.current = performance.now()
     const t = window.setTimeout(() => {
       if (!answeredRef.current) {
         answeredRef.current = true
-        finishTrialRef.current(false, PROBE_MS)
+        finishTrialRef.current(false, probeMs)
       }
-    }, PROBE_MS)
+    }, probeMs)
     timeoutsRef.current.push(t)
     return () => clearTimeout(t)
   }, [sub, trialIndex, phase])
@@ -244,9 +294,37 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
             </li>
           </ol>
           <p className="text-xs text-[var(--color-text-secondary)] mt-5 leading-relaxed opacity-90">
-            Цвет картинок не подсказывает ответ — ориентируйся на форму и смысл. Ответ нужно дать быстро (парадигма
-            dot-probe).
+            Цвет картинок не подсказывает ответ — ориентируйся на форму и смысл. На сложном уровне темп выше, на
+            лёгком — больше времени на каждый шаг.
           </p>
+
+          <div className="mt-5 pt-4 border-t border-white/35">
+            <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--color-text-secondary)] mb-3">
+              Уровень сложности
+            </p>
+            <div className="flex flex-col gap-2">
+              {(['easy', 'medium', 'hard'] as const).map((key) => {
+                const L = DOT_PROBE_LEVELS[key]
+                const on = difficulty === key
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setDifficulty(key)}
+                    className={`text-left rounded-xl px-3 py-2.5 border transition-colors min-h-[48px] ${
+                      on
+                        ? 'border-[var(--color-glow-teal-dim)] bg-white/45 shadow-sm'
+                        : 'border-white/40 bg-white/20 hover:bg-white/30'
+                    }`}
+                    style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                  >
+                    <span className="block text-sm font-semibold text-[var(--color-text-primary)]">{L.label}</span>
+                    <span className="block text-xs text-[var(--color-text-secondary)] mt-0.5 leading-snug">{L.hint}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </div>
 
         <button

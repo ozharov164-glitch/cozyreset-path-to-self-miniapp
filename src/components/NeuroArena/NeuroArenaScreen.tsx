@@ -143,10 +143,20 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
               </div>
             </div>
             {result.game === 'dotprobe' && 'avgReactionMs' in p && (
-              <div className="rounded-xl bg-white/35 px-3 py-2 border border-white/40 col-span-2">
-                <div className="text-xs uppercase tracking-wide opacity-75">Средняя реакция</div>
-                <div className="text-lg font-bold font-display tabular-nums">{p.avgReactionMs} мс</div>
-              </div>
+              <>
+                {'difficultyLabel' in p && (
+                  <div className="rounded-xl bg-white/35 px-3 py-2 border border-white/40 col-span-2">
+                    <div className="text-xs uppercase tracking-wide opacity-75">Уровень</div>
+                    <div className="text-base font-semibold font-display text-[var(--color-text-primary)]">
+                      {p.difficultyLabel}
+                    </div>
+                  </div>
+                )}
+                <div className="rounded-xl bg-white/35 px-3 py-2 border border-white/40 col-span-2">
+                  <div className="text-xs uppercase tracking-wide opacity-75">Средняя реакция</div>
+                  <div className="text-lg font-bold font-display tabular-nums">{p.avgReactionMs} мс</div>
+                </div>
+              </>
             )}
           </div>
           {result.error && (
