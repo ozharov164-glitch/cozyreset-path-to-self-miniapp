@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import {
-  playFlashNote,
-  playTapCorrect,
-  playTapWrong,
-  resumeMemoryMatrixAudio,
-} from './memoryMatrixAudio'
+import { playFlashNote, playTapCell, playTapWrong, primeMemoryMatrixAudio, resumeMemoryMatrixAudio } from './memoryMatrixAudio'
 
 const CELLS = 9
 
@@ -130,6 +125,7 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
   }, [playSequence])
 
   const beginSession = useCallback(() => {
+    primeMemoryMatrixAudio()
     resumeMemoryMatrixAudio()
     generationRef.current += 1
     sequenceRef.current = [Math.floor(Math.random() * CELLS)]
@@ -164,7 +160,7 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
         return
       }
 
-      playTapCorrect()
+      playTapCell(index)
       okTapsRef.current += 1
       if (i + 1 >= seq.length) {
         generationRef.current += 1
