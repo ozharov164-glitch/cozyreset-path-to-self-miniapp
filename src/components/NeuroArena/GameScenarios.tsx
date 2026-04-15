@@ -166,7 +166,7 @@ export function GameScenarios({ onComplete, onBack }: Props) {
       </div>
 
       <p className="text-center text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
-        Выбери завершение, которое сейчас кажется тебе мягче и менее бременем.
+        Выбери завершение, которое сейчас кажется тебе мягче и менее тяжёлым.
       </p>
 
       <motion.div
