@@ -1,122 +1,91 @@
 /**
- * Лёгкие синтезированные звуки для «Матрицы памяти» (без внешних файлов).
- * В Telegram / iOS WebView AudioContext нужно явно разблокировать жестом пользователя
- * и при необходимости дождаться resume() перед планированием осцилляторов.
+ * Звуки «Матрицы памяти»: WAV через HTMLAudioElement.
+ * В Telegram WebView OscillatorNode/Web Audio часто не слышен; короткий PCM в blob
+ * + audio.play() после жеста пользователя работает стабильнее.
  */
 
-const BASE_VOL = 0.14
-
-function getAudioContext(): AudioContext | null {
-  if (typeof window === 'undefined') return null
-  const AC = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
-  if (!AC) return null
-  return new AC()
-}
-
-let ctxSingleton: AudioContext | null = null
-
-function ensureCtx(): AudioContext | null {
-  if (!ctxSingleton) ctxSingleton = getAudioContext()
-  return ctxSingleton
-}
-
-/**
- * Вызывать из обработчика клика «Начать»: разблокирует воспроизведение в WebView
- * (бесшумный кадр + resume).
- */
-export function primeMemoryMatrixAudio(): void {
-  try {
-    const ctx = ensureCtx()
-    if (!ctx) return
-    void ctx.resume()
-    const buf = ctx.createBuffer(1, 1, Math.max(8000, ctx.sampleRate))
-    const src = ctx.createBufferSource()
-    src.buffer = buf
-    src.connect(ctx.destination)
-    src.start(0)
-  } catch {
-    /* ignore */
-  }
-}
-
-export function resumeMemoryMatrixAudio(): void {
-  try {
-    const ctx = ensureCtx()
-    if (!ctx) return
-    void ctx.resume()
-  } catch {
-    /* ignore */
-  }
-}
-
-/** Нота для ячейки: пентатоника — без диссонансов при быстром переключении. */
 const CELL_FREQ_HZ: readonly number[] = [
   261.63, 293.66, 329.63, 349.23, 392.0, 440.0, 493.88, 523.25, 587.33,
 ]
 
-function scheduleTone(opts: {
-  frequencyHz: number
-  durationSec: number
-  type?: OscillatorType
-  peakGain?: number
-}): void {
-  const ctx = ctxSingleton
-  if (!ctx) return
-
-  const dur = Math.max(0.055, opts.durationSec)
-  const peak = Math.min(0.35, opts.peakGain ?? BASE_VOL)
-  const t0 = ctx.currentTime + 0.002
-
-  const osc = ctx.createOscillator()
-  const g = ctx.createGain()
-  osc.type = opts.type ?? 'sine'
-  osc.frequency.setValueAtTime(opts.frequencyHz, t0)
-
-  /* linearRamp надёжнее exponential в Safari/WebKit при малых значениях */
-  g.gain.setValueAtTime(0.0001, t0)
-  g.gain.linearRampToValueAtTime(peak, t0 + 0.006)
-  g.gain.linearRampToValueAtTime(0.0001, t0 + dur)
-
-  osc.connect(g)
-  g.connect(ctx.destination)
-  osc.start(t0)
-  osc.stop(t0 + dur + 0.02)
+function writeAscii(view: DataView, offset: number, s: string): void {
+  for (let i = 0; i < s.length; i++) view.setUint8(offset + i, s.charCodeAt(i))
 }
 
-function playTone(opts: Parameters<typeof scheduleTone>[0]): void {
-  try {
-    if (!ensureCtx()) return
+/** Моно 16-bit PCM WAV, синус. */
+function createSineWav(frequencyHz: number, durationSec: number, volume: number): ArrayBuffer {
+  const sampleRate = 44100
+  const n = Math.max(1, Math.floor(sampleRate * durationSec))
+  const samples = new Int16Array(n)
+  const amp = Math.min(0.92, Math.max(0, volume)) * 32767
+  for (let i = 0; i < n; i++) {
+    samples[i] = Math.round(amp * Math.sin((2 * Math.PI * frequencyHz * i) / sampleRate))
+  }
+  const dataSize = n * 2
+  const buffer = new ArrayBuffer(44 + dataSize)
+  const v = new DataView(buffer)
+  writeAscii(v, 0, 'RIFF')
+  v.setUint32(4, 36 + dataSize, true)
+  writeAscii(v, 8, 'WAVE')
+  writeAscii(v, 12, 'fmt ')
+  v.setUint32(16, 16, true)
+  v.setUint16(20, 1, true)
+  v.setUint16(22, 1, true)
+  v.setUint32(24, sampleRate, true)
+  v.setUint32(28, sampleRate * 2, true)
+  v.setUint16(32, 2, true)
+  v.setUint16(34, 16, true)
+  writeAscii(v, 36, 'data')
+  v.setUint32(40, dataSize, true)
+  for (let i = 0; i < n; i++) {
+    v.setInt16(44 + i * 2, samples[i]!, true)
+  }
+  return buffer
+}
 
-    const run = () => {
+function playWavBuffer(buf: ArrayBuffer): void {
+  try {
+    if (typeof window === 'undefined') return
+    const url = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }))
+    const a = new Audio(url)
+    a.setAttribute('playsinline', 'true')
+    a.setAttribute('webkit-playsinline', 'true')
+    const revoke = () => {
       try {
-        scheduleTone(opts)
+        URL.revokeObjectURL(url)
       } catch {
         /* ignore */
       }
     }
-
-    const ctx = ctxSingleton!
-    if (ctx.state === 'suspended') {
-      void ctx.resume().then(run).catch(run)
-    } else {
-      run()
-    }
+    a.addEventListener('ended', revoke, { once: true })
+    a.addEventListener('error', revoke, { once: true })
+    void a.play().catch(revoke)
   } catch {
     /* ignore */
   }
 }
 
-export function playFlashNote(cellIndex: number): void {
-  const hz = CELL_FREQ_HZ[Math.max(0, Math.min(CELL_FREQ_HZ.length - 1, cellIndex))]!
-  playTone({ frequencyHz: hz, durationSec: 0.12, type: 'sine', peakGain: 0.12 })
+/**
+ * Вызывать из клика «Начать» — разблокирует &lt;audio&gt; в WebView (короткий тихий импульс).
+ */
+export function primeMemoryMatrixAudio(): void {
+  const buf = createSineWav(523.25, 0.06, 0.12)
+  playWavBuffer(buf)
 }
 
-/** Звук нажатия по ячейке — та же высота, что и при демонстрации, чуть дольше и громче. */
+export function playFlashNote(cellIndex: number): void {
+  const hz = CELL_FREQ_HZ[Math.max(0, Math.min(CELL_FREQ_HZ.length - 1, cellIndex))]!
+  const buf = createSineWav(hz, 0.11, 0.28)
+  playWavBuffer(buf)
+}
+
 export function playTapCell(cellIndex: number): void {
   const hz = CELL_FREQ_HZ[Math.max(0, Math.min(CELL_FREQ_HZ.length - 1, cellIndex))]!
-  playTone({ frequencyHz: hz, durationSec: 0.1, type: 'sine', peakGain: 0.2 })
+  const buf = createSineWav(hz, 0.1, 0.42)
+  playWavBuffer(buf)
 }
 
 export function playTapWrong(): void {
-  playTone({ frequencyHz: 130.81, durationSec: 0.24, type: 'triangle', peakGain: 0.16 })
+  const buf = createSineWav(130.81, 0.22, 0.35)
+  playWavBuffer(buf)
 }
