@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { playFlashNote, playTapCell, playTapWrong, primeMemoryMatrixAudio } from './memoryMatrixAudio'
+import { playTapCell, playTapWrong, preloadMemoryMatrixTap, primeMemoryMatrixAudio } from './memoryMatrixAudio'
 
 const CELLS = 9
 
@@ -74,6 +74,10 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
     }
   }, [])
 
+  useEffect(() => {
+    preloadMemoryMatrixTap()
+  }, [])
+
   const playSequence = useCallback(
     async (seq: number[], gen: number) => {
       setMode('watch')
@@ -85,7 +89,6 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
         if (!mountedRef.current || generationRef.current !== gen) return
         const cell = seq[i]!
         setHighlight(cell)
-        if (!reduce) playFlashNote(cell)
         flashesRef.current += 1
         await sleep(highlightMs)
         setHighlight(null)
@@ -124,8 +127,8 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
     await playSequence(seq, gen)
   }, [playSequence])
 
-  const beginSession = useCallback(() => {
-    primeMemoryMatrixAudio()
+  const beginSession = useCallback(async () => {
+    await primeMemoryMatrixAudio()
     generationRef.current += 1
     sequenceRef.current = [Math.floor(Math.random() * CELLS)]
     setChainLen(sequenceRef.current.length)
@@ -213,7 +216,7 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
           </p>
           <motion.button
             type="button"
-            onClick={beginSession}
+            onClick={() => void beginSession()}
             className="w-full py-3.5 rounded-xl btn-primary font-semibold min-h-[48px]"
             whileTap={reduce ? undefined : { scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 500, damping: 32 }}

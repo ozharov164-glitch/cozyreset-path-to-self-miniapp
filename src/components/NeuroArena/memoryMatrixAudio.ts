@@ -1,81 +1,88 @@
 /**
- * Спокойные звуки «Матрицы памяти»: Web Audio + заранее посчитанные буферы.
- * Без генерации WAV/blob на каждый тап — только BufferSource.start(), минимальная задержка.
+ * Звук нажатия — один предзагруженный MP3 → AudioBuffer, воспроизведение через BufferSource (без задержки).
+ * Демонстрация цепочки без звука (только визуальная подсветка).
  */
+
+import { publicUrl } from '../../utils/publicUrl'
+
+const TAP_SRC = publicUrl('/neuro-arena/memory-tap.mp3')
 
 const ACtor =
   typeof window !== 'undefined'
     ? window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
     : null
 
-/** Пентатоника пониже — мягче, «воздушнее», ближе к нейтральному UI. */
-const CELL_FREQ_HZ: readonly number[] = [
-  196.0, 220.0, 246.94, 261.63, 293.66, 329.63, 349.23, 392.0, 440.0,
-]
-
 let ctx: AudioContext | null = null
-let cellBuffers: AudioBuffer[] = []
-let flashBuffers: AudioBuffer[] = []
-let wrongBuffer: AudioBuffer | null = null
 let master: GainNode | null = null
+/** Сырые байты MP3 — подгружаем заранее (fetch без AudioContext). */
+let mp3Bytes: ArrayBuffer | null = null
+let fetchPromise: Promise<ArrayBuffer> | null = null
+/** Декодированный буфер — один на все нажатия. */
+let tapDecoded: AudioBuffer | null = null
 
-/** Мягкий синус: линейная атака, экспоненциальное затухание — без щелчков. */
-function renderSoftTone(
-  context: AudioContext,
-  frequencyHz: number,
-  durationSec: number,
-  peak: number,
-): AudioBuffer {
-  const sr = context.sampleRate
-  const n = Math.max(32, Math.floor(sr * durationSec))
-  const buf = context.createBuffer(1, n, sr)
-  const ch = buf.getChannelData(0)
-  const attack = Math.floor(sr * 0.05)
-  for (let i = 0; i < n; i++) {
-    const t = i / sr
-    const atk = i < attack ? i / Math.max(1, attack) : 1
-    const decay = Math.exp(-3.6 * t)
-    ch[i] = peak * atk * decay * Math.sin(2 * Math.PI * frequencyHz * t)
+function ensureContext(): AudioContext | null {
+  if (!ACtor) return null
+  if (!ctx) {
+    ctx = new ACtor()
+    master = ctx.createGain()
+    master.gain.value = 0.88
+    master.connect(ctx.destination)
   }
-  return buf
+  return ctx
 }
 
-/** Очень тихий двухтон для ошибки — без резких обертонов. */
-function renderWrongTone(context: AudioContext): AudioBuffer {
-  const sr = context.sampleRate
-  const durationSec = 0.36
-  const n = Math.floor(sr * durationSec)
-  const buf = context.createBuffer(1, n, sr)
-  const ch = buf.getChannelData(0)
-  const f1 = 130.81
-  const f2 = 98.0
-  const attack = Math.floor(sr * 0.055)
-  const peak = 0.14
-  for (let i = 0; i < n; i++) {
-    const t = i / sr
-    const atk = i < attack ? i / Math.max(1, attack) : 1
-    const decay = Math.exp(-3.2 * t)
-    const w = 0.58 * Math.sin(2 * Math.PI * f1 * t) + 0.42 * Math.sin(2 * Math.PI * f2 * t)
-    ch[i] = peak * atk * decay * w
+/** Вызвать на экране интро: только fetch в фоне, без AudioContext. */
+export function preloadMemoryMatrixTap(): void {
+  if (typeof window === 'undefined' || mp3Bytes || fetchPromise) return
+  fetchPromise = fetch(TAP_SRC)
+    .then((r) => {
+      if (!r.ok) throw new Error(`memory-tap ${r.status}`)
+      return r.arrayBuffer()
+    })
+    .then((ab) => {
+      mp3Bytes = ab
+      return ab
+    })
+    .catch(() => {
+      fetchPromise = null
+      return new ArrayBuffer(0)
+    })
+}
+
+/**
+ * По клику «Начать»: контекст, decodeAudioData один раз, resume.
+ * Если fetch ещё шёл — дождётся (файл маленький).
+ */
+export async function primeMemoryMatrixAudio(): Promise<void> {
+  try {
+    if (typeof window === 'undefined') return
+    const c = ensureContext()
+    if (!c || !master) return
+
+    if (!mp3Bytes) {
+      if (!fetchPromise) preloadMemoryMatrixTap()
+      if (fetchPromise) await fetchPromise
+    }
+    if (!mp3Bytes || mp3Bytes.byteLength === 0) return
+
+    if (!tapDecoded) {
+      const copy = mp3Bytes.slice(0)
+      tapDecoded = await c.decodeAudioData(copy)
+    }
+
+    void c.resume()
+  } catch {
+    /* ignore */
   }
-  return buf
 }
 
-function ensureBuffers(): void {
-  if (!ctx || cellBuffers.length > 0) return
-  const demoPeak = 0.11
-  const tapPeak = 0.15
-  flashBuffers = CELL_FREQ_HZ.map((hz) => renderSoftTone(ctx!, hz * 0.98, 0.34, demoPeak))
-  cellBuffers = CELL_FREQ_HZ.map((hz) => renderSoftTone(ctx!, hz * 0.98, 0.3, tapPeak))
-  wrongBuffer = renderWrongTone(ctx!)
-}
-
-function playBuffer(buf: AudioBuffer | null | undefined): void {
-  if (!ctx || !buf || !master) return
+function playTapInternal(playbackRate: number): void {
+  if (!ctx || !tapDecoded || !master) return
   try {
     void ctx.resume()
     const src = ctx.createBufferSource()
-    src.buffer = buf
+    src.buffer = tapDecoded
+    src.playbackRate.value = playbackRate
     src.connect(master)
     src.start(0)
   } catch {
@@ -83,39 +90,17 @@ function playBuffer(buf: AudioBuffer | null | undefined): void {
   }
 }
 
-/**
- * Вызвать по клику «Начать» (жест пользователя) — создаёт контекст, буферы, resume.
- */
-export function primeMemoryMatrixAudio(): void {
-  try {
-    if (typeof window === 'undefined' || !ACtor) return
-    if (!ctx) {
-      ctx = new ACtor()
-      master = ctx.createGain()
-      master.gain.value = 0.72
-      master.connect(ctx.destination)
-    }
-    ensureBuffers()
-    void ctx.resume()
-  } catch {
-    /* ignore */
-  }
+/** Нажатие по ячейке (верно). */
+export function playTapCell(_cellIndex: number): void {
+  playTapInternal(1)
 }
 
-/** Демонстрация цепочки — чуть тише, чем тап. */
-export function playFlashNote(cellIndex: number): void {
-  primeMemoryMatrixAudio()
-  const i = Math.max(0, Math.min(flashBuffers.length - 1, cellIndex))
-  playBuffer(flashBuffers[i] ?? null)
-}
-
-export function playTapCell(cellIndex: number): void {
-  primeMemoryMatrixAudio()
-  const i = Math.max(0, Math.min(cellBuffers.length - 1, cellIndex))
-  playBuffer(cellBuffers[i] ?? null)
-}
-
+/** Неверное нажатие — тот же семпл чуть ниже по тону. */
 export function playTapWrong(): void {
-  primeMemoryMatrixAudio()
-  playBuffer(wrongBuffer)
+  playTapInternal(0.82)
+}
+
+/** Демонстрация: без звука (только подсветка). */
+export function playFlashNote(_cellIndex: number): void {
+  /* намеренно пусто */
 }
