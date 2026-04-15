@@ -7,13 +7,14 @@ import { apiNeuroArenaSessionEnd, apiNeuroArenaStatus } from '../../api/client'
 import { useAuthStore } from '../../store/authStore'
 import { GameDotProbe, type DotProbeResult } from './GameDotProbe'
 import { GameScenarios, type ScenariosResult } from './GameScenarios'
+import { GameMemoryMatrix, type MemoryMatrixResult } from './GameMemoryMatrix'
 import { NeuroArenaInfoPanel } from './NeuroArenaInfoPanel'
 
-type View = 'lobby' | 'dotprobe' | 'scenarios' | 'result'
+type View = 'lobby' | 'dotprobe' | 'scenarios' | 'memorymatrix' | 'result'
 
 type ResultState = {
-  game: 'dotprobe' | 'scenarios'
-  payload: DotProbeResult | ScenariosResult
+  game: 'dotprobe' | 'scenarios' | 'memory_matrix'
+  payload: DotProbeResult | ScenariosResult | MemoryMatrixResult
   saved: boolean
   error?: string
 }
@@ -52,9 +53,14 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
     !!stOk && (isPremium === true || (stOk.limits.dotprobeRemaining ?? 0) > 0)
   const canPlaySc =
     !!stOk && (isPremium === true || (stOk.limits.scenariosRemaining ?? 0) > 0)
+  const canPlayMm =
+    !!stOk && (isPremium === true || (stOk.limits.memoryMatrixRemaining ?? 0) > 0)
 
   const pushResult = useCallback(
-    async (game: 'dotprobe' | 'scenarios', payload: DotProbeResult | ScenariosResult) => {
+    async (
+      game: 'dotprobe' | 'scenarios' | 'memory_matrix',
+      payload: DotProbeResult | ScenariosResult | MemoryMatrixResult,
+    ) => {
       gamesThisVisit.current += 1
       setResult({ game, payload, saved: false })
       setView('result')
@@ -100,10 +106,25 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
       />
     )
   }
+  if (view === 'memorymatrix') {
+    return (
+      <GameMemoryMatrix
+        onBack={() => setView('lobby')}
+        onComplete={(r) => {
+          void pushResult('memory_matrix', r)
+        }}
+      />
+    )
+  }
 
   if (view === 'result' && result) {
     const p = result.payload
-    const title = result.game === 'dotprobe' ? 'Детектор внимания' : 'Сценарии'
+    const title =
+      result.game === 'dotprobe'
+        ? 'Детектор внимания'
+        : result.game === 'scenarios'
+          ? 'Сценарии'
+          : 'Матрица памяти'
     return (
       <div className="min-h-screen flex flex-col safe-area px-3 pb-8 max-w-[420px] mx-auto w-full">
         <motion.header
@@ -131,7 +152,9 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
           <h2 className="font-display text-lg font-bold text-[var(--color-text-primary)] mb-2">{title}</h2>
           <div className="grid grid-cols-2 gap-3 text-sm text-[var(--color-text-secondary)] mb-4">
             <div className="rounded-xl bg-white/35 px-3 py-2 border border-white/40">
-              <div className="text-xs uppercase tracking-wide opacity-75">Очки</div>
+              <div className="text-xs uppercase tracking-wide opacity-75">
+                {result.game === 'memory_matrix' ? 'Серия' : 'Очки'}
+              </div>
               <div className="text-xl font-bold font-display text-[var(--color-glow-teal-dim)] tabular-nums">
                 {p.score}
               </div>
@@ -157,6 +180,12 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
                   <div className="text-lg font-bold font-display tabular-nums">{p.avgReactionMs} мс</div>
                 </div>
               </>
+            )}
+            {result.game === 'memory_matrix' && (
+              <p className="text-xs text-[var(--color-text-secondary)] col-span-2 leading-relaxed">
+                Серия показывает, сколько полных цепочек подряд удалось воспроизвести без ошибки. После каждого успеха
+                цепочка становится длиннее.
+              </p>
             )}
           </div>
           {result.error && (
@@ -218,8 +247,9 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
             <span>Тренажёры внимания и интерпретации</span>
           </h3>
           <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
-            Два разных формата: быстрый «детектор» на переключение внимания и неспешные сценарии — выбор менее тяжёлого
-            прочтения неоднозначной ситуации. Обратная связь после каждой сессии. Не диагностика и не лечение.
+            Три формата: быстрый «детектор» на переключение внимания, неспешные сценарии с выбором более мягкой
+            интерпретации и «матрица памяти» — запоминание порядка подсветок в сетке. После каждой сессии — короткая
+            обратная связь. Это не диагностика и не лечение.
           </p>
           {gamesThisVisit.current >= MAX_GAMES_PER_VISIT && (
             <p className="text-sm rounded-xl bg-amber-100/45 border border-amber-200/60 px-3 py-2 mb-1 text-amber-950/90">
@@ -276,11 +306,14 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
                   <div className="text-[var(--color-text-secondary)] text-xs">Рекорд «Сценарии»</div>
                   <div className="font-bold tabular-nums">{prog?.scenariosBest ?? 0}</div>
                 </div>
+                <div className="rounded-xl bg-white/30 px-3 py-2 border border-white/35 col-span-2">
+                  <div className="text-[var(--color-text-secondary)] text-xs">Рекорд «Матрица памяти»</div>
+                  <div className="font-bold tabular-nums">{prog?.memoryMatrixBest ?? 0}</div>
+                </div>
               </div>
               {isPremium === false && lim && (
                 <p className="text-xs text-[var(--color-text-secondary)] mt-3 leading-relaxed">
-                  Без премиума: до {lim.freePerDayDotprobe} сессии «Детектор» и {lim.freePerDayScenarios} «Сценарии» в
-                  сутки. С премиумом — без лимита.
+                  Без премиума — по одной бесплатной сессии каждого из трёх режимов в сутки. С премиумом лимита нет.
                 </p>
               )}
             </PremiumCard>
@@ -324,6 +357,27 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
                 className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold disabled:opacity-45"
               >
                 {canPlaySc ? 'Открыть' : 'Лимит на сегодня'}
+              </button>
+            </PremiumCard>
+
+            <PremiumCard accent="slate" delay={0.12}>
+              <div className="neuro-arena-mode neuro-arena-mode--matrix">
+                <p className="neuro-arena-mode__kicker">Память · последовательность</p>
+                <h4 className="font-display text-lg font-bold text-[var(--color-text-primary)] mb-2 tracking-tight">
+                  Матрица памяти
+                </h4>
+                <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
+                  Сетка из девяти ячеек: сначала загорается цепочка — затем нужно повторить её по порядку. Цепочка
+                  удлиняется после каждого верного раунда.
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={!canPlayMm || gamesThisVisit.current >= MAX_GAMES_PER_VISIT}
+                onClick={() => setView('memorymatrix')}
+                className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold disabled:opacity-45"
+              >
+                {canPlayMm ? 'Открыть' : 'Лимит на сегодня'}
               </button>
             </PremiumCard>
           </>

@@ -504,8 +504,10 @@ export async function apiStatistics(period: StatsPeriod): Promise<ApiStatisticsR
 export type NeuroArenaLimits = {
   dotprobeRemaining: number
   scenariosRemaining: number
+  memoryMatrixRemaining: number
   freePerDayDotprobe: number
   freePerDayScenarios: number
+  freePerDayMemoryMatrix: number
 }
 
 export type NeuroArenaProgressApi = {
@@ -513,6 +515,8 @@ export type NeuroArenaProgressApi = {
   dotprobeSessions: number
   scenariosBest: number
   scenariosSessions: number
+  memoryMatrixBest: number
+  memoryMatrixSessions: number
   streakDays: number
   lastPlayedDate: string | null
   totalMinutes: number
@@ -550,11 +554,30 @@ export async function apiNeuroArenaStatus(): Promise<
       return { error: typeof data.error === 'string' ? data.error : 'Ошибка загрузки' }
     }
     if (data.status === 'ok' && data.limits && data.progress) {
+      const lim = data.limits as Record<string, unknown>
+      const pr = data.progress as Record<string, unknown>
       return {
         status: 'ok',
         premium: !!data.premium,
-        limits: data.limits as NeuroArenaLimits,
-        progress: data.progress as NeuroArenaProgressApi,
+        limits: {
+          dotprobeRemaining: Number(lim.dotprobeRemaining ?? 0),
+          scenariosRemaining: Number(lim.scenariosRemaining ?? 0),
+          memoryMatrixRemaining: Number(lim.memoryMatrixRemaining ?? 999),
+          freePerDayDotprobe: Number(lim.freePerDayDotprobe ?? 1),
+          freePerDayScenarios: Number(lim.freePerDayScenarios ?? 1),
+          freePerDayMemoryMatrix: Number(lim.freePerDayMemoryMatrix ?? 1),
+        },
+        progress: {
+          dotprobeBest: Number(pr.dotprobeBest ?? 0),
+          dotprobeSessions: Number(pr.dotprobeSessions ?? 0),
+          scenariosBest: Number(pr.scenariosBest ?? 0),
+          scenariosSessions: Number(pr.scenariosSessions ?? 0),
+          memoryMatrixBest: Number(pr.memoryMatrixBest ?? 0),
+          memoryMatrixSessions: Number(pr.memoryMatrixSessions ?? 0),
+          streakDays: Number(pr.streakDays ?? 0),
+          lastPlayedDate: typeof pr.lastPlayedDate === 'string' ? pr.lastPlayedDate : null,
+          totalMinutes: Number(pr.totalMinutes ?? 0),
+        },
         recentSessions: Array.isArray(data.recentSessions) ? (data.recentSessions as NeuroArenaSessionRow[]) : [],
       }
     }
@@ -565,7 +588,7 @@ export async function apiNeuroArenaStatus(): Promise<
 }
 
 export async function apiNeuroArenaSessionEnd(payload: {
-  gameType: 'dotprobe' | 'scenarios'
+  gameType: 'dotprobe' | 'scenarios' | 'memory_matrix'
   score: number
   accuracy?: number | null
   avgReactionMs?: number | null
