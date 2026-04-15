@@ -25,7 +25,7 @@ export function NeuroArenaInfoPanel() {
         {data.sections.map((s) => (
           <details
             key={s.id}
-            className="group rounded-xl border border-white/40 bg-white/22 px-3 py-2.5 open:bg-white/30 transition-colors"
+            className="group rounded-xl border border-white/40 bg-white/22 px-3 py-2.5 open:bg-white/32 open:border-white/50 transition-[background-color,border-color,box-shadow] duration-300 ease-out shadow-sm open:shadow-[0_8px_28px_rgba(45,62,46,0.08)]"
           >
             <summary className="cursor-pointer list-none flex flex-col gap-0.5 [&::-webkit-details-marker]:hidden">
               <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--color-text-secondary)]">
