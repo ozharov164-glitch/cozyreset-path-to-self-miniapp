@@ -1,91 +1,121 @@
 /**
- * Звуки «Матрицы памяти»: WAV через HTMLAudioElement.
- * В Telegram WebView OscillatorNode/Web Audio часто не слышен; короткий PCM в blob
- * + audio.play() после жеста пользователя работает стабильнее.
+ * Спокойные звуки «Матрицы памяти»: Web Audio + заранее посчитанные буферы.
+ * Без генерации WAV/blob на каждый тап — только BufferSource.start(), минимальная задержка.
  */
 
+const ACtor =
+  typeof window !== 'undefined'
+    ? window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+    : null
+
+/** Пентатоника пониже — мягче, «воздушнее», ближе к нейтральному UI. */
 const CELL_FREQ_HZ: readonly number[] = [
-  261.63, 293.66, 329.63, 349.23, 392.0, 440.0, 493.88, 523.25, 587.33,
+  196.0, 220.0, 246.94, 261.63, 293.66, 329.63, 349.23, 392.0, 440.0,
 ]
 
-function writeAscii(view: DataView, offset: number, s: string): void {
-  for (let i = 0; i < s.length; i++) view.setUint8(offset + i, s.charCodeAt(i))
+let ctx: AudioContext | null = null
+let cellBuffers: AudioBuffer[] = []
+let flashBuffers: AudioBuffer[] = []
+let wrongBuffer: AudioBuffer | null = null
+let master: GainNode | null = null
+
+/** Мягкий синус: линейная атака, экспоненциальное затухание — без щелчков. */
+function renderSoftTone(
+  context: AudioContext,
+  frequencyHz: number,
+  durationSec: number,
+  peak: number,
+): AudioBuffer {
+  const sr = context.sampleRate
+  const n = Math.max(32, Math.floor(sr * durationSec))
+  const buf = context.createBuffer(1, n, sr)
+  const ch = buf.getChannelData(0)
+  const attack = Math.floor(sr * 0.05)
+  for (let i = 0; i < n; i++) {
+    const t = i / sr
+    const atk = i < attack ? i / Math.max(1, attack) : 1
+    const decay = Math.exp(-3.6 * t)
+    ch[i] = peak * atk * decay * Math.sin(2 * Math.PI * frequencyHz * t)
+  }
+  return buf
 }
 
-/** Моно 16-bit PCM WAV, синус. */
-function createSineWav(frequencyHz: number, durationSec: number, volume: number): ArrayBuffer {
-  const sampleRate = 44100
-  const n = Math.max(1, Math.floor(sampleRate * durationSec))
-  const samples = new Int16Array(n)
-  const amp = Math.min(0.92, Math.max(0, volume)) * 32767
+/** Очень тихий двухтон для ошибки — без резких обертонов. */
+function renderWrongTone(context: AudioContext): AudioBuffer {
+  const sr = context.sampleRate
+  const durationSec = 0.36
+  const n = Math.floor(sr * durationSec)
+  const buf = context.createBuffer(1, n, sr)
+  const ch = buf.getChannelData(0)
+  const f1 = 130.81
+  const f2 = 98.0
+  const attack = Math.floor(sr * 0.055)
+  const peak = 0.14
   for (let i = 0; i < n; i++) {
-    samples[i] = Math.round(amp * Math.sin((2 * Math.PI * frequencyHz * i) / sampleRate))
+    const t = i / sr
+    const atk = i < attack ? i / Math.max(1, attack) : 1
+    const decay = Math.exp(-3.2 * t)
+    const w = 0.58 * Math.sin(2 * Math.PI * f1 * t) + 0.42 * Math.sin(2 * Math.PI * f2 * t)
+    ch[i] = peak * atk * decay * w
   }
-  const dataSize = n * 2
-  const buffer = new ArrayBuffer(44 + dataSize)
-  const v = new DataView(buffer)
-  writeAscii(v, 0, 'RIFF')
-  v.setUint32(4, 36 + dataSize, true)
-  writeAscii(v, 8, 'WAVE')
-  writeAscii(v, 12, 'fmt ')
-  v.setUint32(16, 16, true)
-  v.setUint16(20, 1, true)
-  v.setUint16(22, 1, true)
-  v.setUint32(24, sampleRate, true)
-  v.setUint32(28, sampleRate * 2, true)
-  v.setUint16(32, 2, true)
-  v.setUint16(34, 16, true)
-  writeAscii(v, 36, 'data')
-  v.setUint32(40, dataSize, true)
-  for (let i = 0; i < n; i++) {
-    v.setInt16(44 + i * 2, samples[i]!, true)
-  }
-  return buffer
+  return buf
 }
 
-function playWavBuffer(buf: ArrayBuffer): void {
+function ensureBuffers(): void {
+  if (!ctx || cellBuffers.length > 0) return
+  const demoPeak = 0.11
+  const tapPeak = 0.15
+  flashBuffers = CELL_FREQ_HZ.map((hz) => renderSoftTone(ctx!, hz * 0.98, 0.34, demoPeak))
+  cellBuffers = CELL_FREQ_HZ.map((hz) => renderSoftTone(ctx!, hz * 0.98, 0.3, tapPeak))
+  wrongBuffer = renderWrongTone(ctx!)
+}
+
+function playBuffer(buf: AudioBuffer | null | undefined): void {
+  if (!ctx || !buf || !master) return
   try {
-    if (typeof window === 'undefined') return
-    const url = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }))
-    const a = new Audio(url)
-    a.setAttribute('playsinline', 'true')
-    a.setAttribute('webkit-playsinline', 'true')
-    const revoke = () => {
-      try {
-        URL.revokeObjectURL(url)
-      } catch {
-        /* ignore */
-      }
-    }
-    a.addEventListener('ended', revoke, { once: true })
-    a.addEventListener('error', revoke, { once: true })
-    void a.play().catch(revoke)
+    void ctx.resume()
+    const src = ctx.createBufferSource()
+    src.buffer = buf
+    src.connect(master)
+    src.start(0)
   } catch {
     /* ignore */
   }
 }
 
 /**
- * Вызывать из клика «Начать» — разблокирует &lt;audio&gt; в WebView (короткий тихий импульс).
+ * Вызвать по клику «Начать» (жест пользователя) — создаёт контекст, буферы, resume.
  */
 export function primeMemoryMatrixAudio(): void {
-  const buf = createSineWav(523.25, 0.06, 0.12)
-  playWavBuffer(buf)
+  try {
+    if (typeof window === 'undefined' || !ACtor) return
+    if (!ctx) {
+      ctx = new ACtor()
+      master = ctx.createGain()
+      master.gain.value = 0.72
+      master.connect(ctx.destination)
+    }
+    ensureBuffers()
+    void ctx.resume()
+  } catch {
+    /* ignore */
+  }
 }
 
+/** Демонстрация цепочки — чуть тише, чем тап. */
 export function playFlashNote(cellIndex: number): void {
-  const hz = CELL_FREQ_HZ[Math.max(0, Math.min(CELL_FREQ_HZ.length - 1, cellIndex))]!
-  const buf = createSineWav(hz, 0.11, 0.28)
-  playWavBuffer(buf)
+  primeMemoryMatrixAudio()
+  const i = Math.max(0, Math.min(flashBuffers.length - 1, cellIndex))
+  playBuffer(flashBuffers[i] ?? null)
 }
 
 export function playTapCell(cellIndex: number): void {
-  const hz = CELL_FREQ_HZ[Math.max(0, Math.min(CELL_FREQ_HZ.length - 1, cellIndex))]!
-  const buf = createSineWav(hz, 0.1, 0.42)
-  playWavBuffer(buf)
+  primeMemoryMatrixAudio()
+  const i = Math.max(0, Math.min(cellBuffers.length - 1, cellIndex))
+  playBuffer(cellBuffers[i] ?? null)
 }
 
 export function playTapWrong(): void {
-  const buf = createSineWav(130.81, 0.22, 0.35)
-  playWavBuffer(buf)
+  primeMemoryMatrixAudio()
+  playBuffer(wrongBuffer)
 }
