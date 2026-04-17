@@ -84,6 +84,9 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
   const [phraseWordCount, setPhraseWordCount] = useState(0)
   /** Текст фразы, уже «собранный» в текущем раунде повтора (обновляется после каждого верного тапа). */
   const [phraseLine, setPhraseLine] = useState('')
+  /** Полная фраза собрана без ошибки — показываем премиальный баннер, затем экран победы. */
+  const [phraseWinCelebration, setPhraseWinCelebration] = useState(false)
+  const winCelebrationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const highlightMs = reduce ? 720 : 480
   const gapMs = reduce ? 320 : 200
@@ -92,6 +95,10 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
     mountedRef.current = true
     return () => {
       mountedRef.current = false
+      if (winCelebrationTimerRef.current) {
+        clearTimeout(winCelebrationTimerRef.current)
+        winCelebrationTimerRef.current = null
+      }
     }
   }, [])
 
@@ -213,8 +220,28 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
         if (seq.length >= maxLen) {
           generationRef.current += 1
           setCanTap(false)
-          setEndWinFull(joinPhraseWords(words))
-          setPhase('endWin')
+          const fullLine = joinPhraseWords(words)
+          setEndWinFull(fullLine)
+          if (winCelebrationTimerRef.current) {
+            clearTimeout(winCelebrationTimerRef.current)
+            winCelebrationTimerRef.current = null
+          }
+          setPhraseWinCelebration(true)
+          try {
+            const hf = window.Telegram?.WebApp?.HapticFeedback as
+              | { notificationOccurred?: (t: 'success' | 'error' | 'warning') => void }
+              | undefined
+            hf?.notificationOccurred?.('success')
+          } catch {
+            /* ignore */
+          }
+          const delayMs = reduce ? 850 : 2600
+          winCelebrationTimerRef.current = setTimeout(() => {
+            winCelebrationTimerRef.current = null
+            if (!mountedRef.current) return
+            setPhraseWinCelebration(false)
+            setPhase('endWin')
+          }, delayMs)
           return
         }
         generationRef.current += 1
@@ -348,31 +375,55 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
             Матрица памяти
           </h2>
           <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed mb-4">
-            Повторяйте порядок подсветки. С каждым верным шагом вы «собираете» слова спокойной фразы. После ошибки
-            увидите то, что уже получилось — это не оценка и не диагностика.
+            Повторяйте порядок подсветки на сетке. В каждом раунде к фразе добавляется следующее слово — так, шаг за
+            шагом, складывается цельное предложение с правильными окончаниями. После ошибки вы увидите текст до момента
+            сбоя. Это не оценка и не диагностика.
           </p>
-          <p className="text-xs text-[var(--color-text-secondary)] mb-3 leading-relaxed">Формулировки фразы:</p>
-          <div className="flex gap-3 mb-5">
-            <label className="flex items-center gap-2 cursor-pointer text-sm text-[var(--color-text-primary)]">
-              <input
-                type="radio"
-                name="mmg"
-                checked={gender === 'f'}
-                onChange={() => setGender('f')}
-                className="accent-[var(--color-glow-teal-dim)]"
-              />
-              женские
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer text-sm text-[var(--color-text-primary)]">
-              <input
-                type="radio"
-                name="mmg"
-                checked={gender === 'm'}
-                onChange={() => setGender('m')}
-                className="accent-[var(--color-glow-teal-dim)]"
-              />
-              мужские
-            </label>
+          <div className="mb-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)] mb-2">
+              Формулировки фразы
+            </p>
+            <div
+              role="radiogroup"
+              aria-label="Формулировки фразы: женские или мужские окончания"
+              className="flex rounded-2xl border border-white/55 bg-white/25 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]"
+            >
+              <button
+                type="button"
+                role="radio"
+                aria-checked={gender === 'f'}
+                onClick={() => setGender('f')}
+                className={[
+                  'relative flex-1 min-h-[52px] rounded-[0.85rem] px-2 py-2.5 text-sm font-semibold transition-all duration-200',
+                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-glow-teal)] focus-visible:ring-offset-2 focus-visible:ring-offset-white/30',
+                  gender === 'f'
+                    ? 'text-white shadow-[0_8px_28px_rgba(107,196,181,0.35)] bg-gradient-to-br from-[#f4b8a8] via-[#d4b8e8] to-[#9ec9c4]'
+                    : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-white/20',
+                ].join(' ')}
+              >
+                <span className="block leading-tight">Женские</span>
+                <span className="mt-0.5 block text-[11px] font-medium opacity-90">окончания</span>
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={gender === 'm'}
+                onClick={() => setGender('m')}
+                className={[
+                  'relative flex-1 min-h-[52px] rounded-[0.85rem] px-2 py-2.5 text-sm font-semibold transition-all duration-200',
+                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-glow-teal)] focus-visible:ring-offset-2 focus-visible:ring-offset-white/30',
+                  gender === 'm'
+                    ? 'text-white shadow-[0_8px_28px_rgba(107,196,181,0.35)] bg-gradient-to-br from-[#f4b8a8] via-[#d4b8e8] to-[#9ec9c4]'
+                    : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-white/20',
+                ].join(' ')}
+              >
+                <span className="block leading-tight">Мужские</span>
+                <span className="mt-0.5 block text-[11px] font-medium opacity-90">окончания</span>
+              </button>
+            </div>
+            <p className="text-[11px] text-[var(--color-text-secondary)] mt-2 leading-snug">
+              От выбора зависят грамматические формы в тексте (глаголы, краткие прилагательные и т. п.).
+            </p>
           </div>
           <motion.button
             type="button"
@@ -389,7 +440,34 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
   }
 
   return (
-    <div className="flex flex-col min-h-[min(100dvh,780px)] px-3 pb-8 max-w-[420px] mx-auto w-full">
+    <>
+      <AnimatePresence>
+        {phraseWinCelebration && phase === 'playing' ? (
+          <motion.div
+            key="mm-phrase-win"
+            role="status"
+            initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: -88 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduce ? { opacity: 0 } : { opacity: 0, y: -32 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 32, mass: 0.65 }}
+            className="fixed left-0 right-0 top-0 z-[100] flex justify-center px-3 pt-[max(0.6rem,env(safe-area-inset-top))] pointer-events-none"
+          >
+            <div
+              className="pointer-events-none w-full max-w-[min(100%,420px)] rounded-2xl border border-white/65 bg-gradient-to-br from-white/92 via-white/88 to-[rgba(158,201,196,0.22)] px-4 py-3.5 shadow-[0_20px_48px_rgba(45,62,46,0.2),0_0_0_1px_rgba(255,255,255,0.35)_inset] backdrop-blur-md"
+              style={{ WebkitBackdropFilter: 'blur(14px)' }}
+            >
+              <p className="font-display text-[17px] font-bold text-[var(--color-text-primary)] leading-snug">
+                Фраза собрана полностью
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-[var(--color-text-secondary)]">
+                Вы прошли цепочку без ошибки — отлично получилось. Так держать.
+              </p>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
+      <div className="flex flex-col min-h-[min(100dvh,780px)] px-3 pb-8 max-w-[420px] mx-auto w-full">
       <div className="flex items-center justify-between mb-4 shrink-0">
         <button
           type="button"
@@ -493,5 +571,6 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
         Подсказка: смотрите на центр поля — так проще держать порядок.
       </p>
     </div>
+    </>
   )
 }
