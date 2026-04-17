@@ -82,6 +82,8 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
   const [endWinFull, setEndWinFull] = useState('')
   /** Длина фразы в словах — для шапки во время игры (ref не даёт перерисовку). */
   const [phraseWordCount, setPhraseWordCount] = useState(0)
+  /** Текст фразы, уже «собранный» в текущем раунде повтора (обновляется после каждого верного тапа). */
+  const [phraseLine, setPhraseLine] = useState('')
 
   const highlightMs = reduce ? 720 : 480
   const gapMs = reduce ? 320 : 200
@@ -101,6 +103,7 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
     async (seq: number[], gen: number) => {
       setMode('watch')
       setCanTap(false)
+      setPhraseLine('')
       setHighlight(null)
       await sleep(reduce ? 220 : 140)
       if (!mountedRef.current || generationRef.current !== gen) return
@@ -164,6 +167,7 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
     const w = wordsForPhrase(picked, gender)
     phraseWordsRef.current = w
     setPhraseWordCount(w.length)
+    setPhraseLine('')
 
     generationRef.current += 1
     sequenceRef.current = [Math.floor(Math.random() * CELLS)]
@@ -203,6 +207,7 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
 
       playTapCell(index)
       okTapsRef.current += 1
+      setPhraseLine(joinPhraseWords(prefixWords(words, i + 1)))
 
       if (i + 1 >= seq.length) {
         if (seq.length >= maxLen) {
@@ -393,8 +398,11 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
         >
           ← Выход
         </button>
-        <span className="font-display text-sm font-semibold text-[var(--color-text-secondary)] tabular-nums">
-          Ячеек: {chainLen} / {phraseWordCount || '—'}
+        <span
+          className="font-display text-xs font-semibold text-[var(--color-text-secondary)] tabular-nums text-right max-w-[11rem] leading-tight"
+          title="Первое число — сколько шагов нужно повторить в этом раунде; второе — сколько всего слов во фразе."
+        >
+          Шагов: {chainLen}/{phraseWordCount || '—'}
         </span>
       </div>
 
@@ -415,9 +423,22 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
           </motion.p>
         </AnimatePresence>
         <p className="text-xs text-[var(--color-text-secondary)] mt-1 min-h-[1.25rem]">
-          {mode === 'repeat' ? 'Каждый верный тап — следующее слово фразы.' : '\u00a0'}
+          {mode === 'repeat'
+            ? 'Каждый верный тап в этом раунде добавляет следующее слово ниже.'
+            : '\u00a0'}
         </p>
       </div>
+
+      {mode === 'repeat' ? (
+        <div
+          className="mb-4 rounded-2xl border border-white/45 bg-white/30 px-3 py-3 text-center min-h-[3rem] flex items-center justify-center"
+          aria-live="polite"
+        >
+          <p className="text-[15px] leading-snug text-[var(--color-text-primary)] font-medium">
+            {phraseLine ? phraseLine : <span className="text-[var(--color-text-secondary)] font-normal">Фраза появится после первого верного тапа…</span>}
+          </p>
+        </div>
+      ) : null}
 
       <div className="w-full max-w-[min(100%,19rem)] aspect-square mx-auto mb-6">
         <motion.div
