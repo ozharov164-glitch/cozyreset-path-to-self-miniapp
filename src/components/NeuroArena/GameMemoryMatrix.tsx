@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { playTapCell, playTapWrong, preloadMemoryMatrixTap, primeMemoryMatrixAudio } from './memoryMatrixAudio'
 import {
@@ -38,7 +39,7 @@ type Props = {
   onBack: () => void
 }
 
-type Phase = 'intro' | 'playing' | 'endFail' | 'endWin'
+type Phase = 'intro' | 'playing' | 'endFail'
 
 const gridContainer = {
   hidden: { opacity: 0 },
@@ -79,25 +80,30 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
   const [chainLen, setChainLen] = useState(1)
 
   const [endFailPrefix, setEndFailPrefix] = useState('')
-  const [endWinFull, setEndWinFull] = useState('')
+  /** Индекс шага, на котором ошиблись (сколько верных тапов подряд в этом раунде до ошибки). */
+  const [failTapIndex, setFailTapIndex] = useState(0)
+  /** Пользователь уже собрал полную фразу в сессии — на экране ошибки показываем целиком. */
+  const [phraseUnlocked, setPhraseUnlocked] = useState(false)
   /** Длина фразы в словах — для шапки во время игры (ref не даёт перерисовку). */
   const [phraseWordCount, setPhraseWordCount] = useState(0)
   /** Текст фразы, уже «собранный» в текущем раунде повтора (обновляется после каждого верного тапа). */
   const [phraseLine, setPhraseLine] = useState('')
-  /** Полная фраза собрана без ошибки — показываем премиальный баннер, затем экран победы. */
-  const [phraseWinCelebration, setPhraseWinCelebration] = useState(false)
-  const winCelebrationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  /** Краткий тост «строка собрана» (один раз за сессию), игра не останавливается. */
+  const [phraseLineToast, setPhraseLineToast] = useState(false)
+  const phraseToastDismissRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [portalReady, setPortalReady] = useState(false)
 
   const highlightMs = reduce ? 720 : 480
   const gapMs = reduce ? 320 : 200
 
   useEffect(() => {
     mountedRef.current = true
+    setPortalReady(typeof document !== 'undefined')
     return () => {
       mountedRef.current = false
-      if (winCelebrationTimerRef.current) {
-        clearTimeout(winCelebrationTimerRef.current)
-        winCelebrationTimerRef.current = null
+      if (phraseToastDismissRef.current) {
+        clearTimeout(phraseToastDismissRef.current)
+        phraseToastDismissRef.current = null
       }
     }
   }, [])
@@ -175,6 +181,12 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
     phraseWordsRef.current = w
     setPhraseWordCount(w.length)
     setPhraseLine('')
+    setPhraseUnlocked(false)
+    if (phraseToastDismissRef.current) {
+      clearTimeout(phraseToastDismissRef.current)
+      phraseToastDismissRef.current = null
+    }
+    setPhraseLineToast(false)
 
     generationRef.current += 1
     sequenceRef.current = [Math.floor(Math.random() * CELLS)]
@@ -206,6 +218,12 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
         window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('medium')
         generationRef.current += 1
         setCanTap(false)
+        if (phraseToastDismissRef.current) {
+          clearTimeout(phraseToastDismissRef.current)
+          phraseToastDismissRef.current = null
+        }
+        setPhraseLineToast(false)
+        setFailTapIndex(i)
         const pref = joinPhraseWords(prefixWords(words, i))
         setEndFailPrefix(pref)
         setPhase('endFail')
@@ -214,34 +232,39 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
 
       playTapCell(index)
       okTapsRef.current += 1
-      setPhraseLine(joinPhraseWords(prefixWords(words, i + 1)))
+      const reveal = Math.min(i + 1, maxLen)
+      setPhraseLine(joinPhraseWords(prefixWords(words, reveal)))
 
       if (i + 1 >= seq.length) {
         if (seq.length >= maxLen) {
           generationRef.current += 1
           setCanTap(false)
-          const fullLine = joinPhraseWords(words)
-          setEndWinFull(fullLine)
-          if (winCelebrationTimerRef.current) {
-            clearTimeout(winCelebrationTimerRef.current)
-            winCelebrationTimerRef.current = null
+          if (!phraseUnlocked) {
+            setPhraseUnlocked(true)
+            if (phraseToastDismissRef.current) {
+              clearTimeout(phraseToastDismissRef.current)
+              phraseToastDismissRef.current = null
+            }
+            setPhraseLineToast(true)
+            try {
+              const hf = window.Telegram?.WebApp?.HapticFeedback as
+                | { notificationOccurred?: (t: 'success' | 'error' | 'warning') => void }
+                | undefined
+              hf?.notificationOccurred?.('success')
+            } catch {
+              /* ignore */
+            }
+            const dismissMs = reduce ? 2200 : 3200
+            phraseToastDismissRef.current = setTimeout(() => {
+              phraseToastDismissRef.current = null
+              if (!mountedRef.current) return
+              setPhraseLineToast(false)
+            }, dismissMs)
           }
-          setPhraseWinCelebration(true)
-          try {
-            const hf = window.Telegram?.WebApp?.HapticFeedback as
-              | { notificationOccurred?: (t: 'success' | 'error' | 'warning') => void }
-              | undefined
-            hf?.notificationOccurred?.('success')
-          } catch {
-            /* ignore */
-          }
-          const delayMs = reduce ? 850 : 2600
-          winCelebrationTimerRef.current = setTimeout(() => {
-            winCelebrationTimerRef.current = null
-            if (!mountedRef.current) return
-            setPhraseWinCelebration(false)
-            setPhase('endWin')
-          }, delayMs)
+          seq.push(Math.floor(Math.random() * CELLS))
+          sequenceRef.current = seq
+          setChainLen(seq.length)
+          void startRoundAfterSuccess()
           return
         }
         generationRef.current += 1
@@ -254,7 +277,7 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
         inputIndexRef.current = i + 1
       }
     },
-    [canTap, mode, phase, startRoundAfterSuccess],
+    [canTap, mode, phase, phraseUnlocked, startRoundAfterSuccess],
   )
 
   const statusText =
@@ -264,18 +287,66 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
         ? 'Повторите последовательность'
         : ''
 
+  const lineToastPortal =
+    portalReady && typeof document !== 'undefined'
+      ? createPortal(
+          <AnimatePresence>
+            {phraseLineToast ? (
+              <motion.div
+                key="mm-phrase-toast-pill"
+                role="status"
+                aria-live="polite"
+                initial={reduce ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: -36, scale: 0.86 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={reduce ? { opacity: 0 } : { opacity: 0, y: -20, scale: 0.94 }}
+                transition={{ type: 'spring', stiffness: 540, damping: 36, mass: 0.72 }}
+                className="fixed left-1/2 z-[400] w-[min(92vw,22rem)] -translate-x-1/2 pointer-events-none"
+                style={{ top: 'max(0.65rem, env(safe-area-inset-top))' }}
+              >
+                <div
+                  className="rounded-[999px] border border-white/50 bg-white/78 px-5 py-3 text-center shadow-[0_16px_44px_rgba(15,23,42,0.14),0_0_0_1px_rgba(255,255,255,0.55)_inset] backdrop-blur-2xl"
+                  style={{ WebkitBackdropFilter: 'blur(18px)' }}
+                >
+                  <p className="font-display text-[15px] font-bold tracking-tight text-[var(--color-text-primary)] leading-snug">
+                    Строка собрана
+                  </p>
+                  <p className="mt-1 text-[12px] leading-snug text-[var(--color-text-secondary)]">
+                    Игра продолжается: цепочка может расти дальше. Фразу целиком вы увидите после ошибки — спокойно и без
+                    спешки.
+                  </p>
+                </div>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>,
+          document.body,
+        )
+      : null
+
   if (phase === 'endFail') {
     const pref = endFailPrefix.trim()
-    const line = pref ? pref : 'Пока без слов — это нормально: можно попробовать ещё раз.'
-    const failScore = Math.max(0, sequenceRef.current.length - 1)
+    const fullPhrase = phraseWordsRef.current.length
+      ? joinPhraseWords(phraseWordsRef.current)
+      : ''
+    const failScore = phraseUnlocked ? phraseWordCount : failTapIndex
+    const line =
+      phraseUnlocked && fullPhrase
+        ? fullPhrase
+        : pref || 'Пока без слов — это нормально: можно попробовать ещё раз.'
+    const prefixForApi = phraseUnlocked && fullPhrase ? fullPhrase : pref || null
 
     return (
-      <div className="flex flex-col min-h-[min(100dvh,780px)] px-3 pb-8 max-w-[420px] mx-auto w-full safe-area">
+      <>
+        {lineToastPortal}
+        <div className="flex flex-col min-h-[min(100dvh,780px)] px-3 pb-8 max-w-[420px] mx-auto w-full safe-area">
         <div className="flex items-center justify-between mb-4 shrink-0">
           <button
             type="button"
             onClick={() => {
-              submitResult({ finalScore: failScore, completed: false, phrasePrefixText: pref || null })
+              submitResult({
+                finalScore: failScore,
+                completed: phraseUnlocked,
+                phrasePrefixText: prefixForApi,
+              })
             }}
             className="btn-ghost min-h-[44px] px-3 rounded-xl text-sm font-semibold text-[var(--color-forest-dark)]"
           >
@@ -288,12 +359,28 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
           className="rounded-[1.35rem] border border-white/50 bg-white/38 px-5 py-6 shadow-[0_12px_40px_rgba(45,62,46,0.1)] mb-4"
         >
           <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--color-text-secondary)] mb-2">
-            Фраза до ошибки
+            {phraseUnlocked ? 'Ваша фраза' : 'Фраза до ошибки'}
           </p>
-          <p className="text-[15px] leading-relaxed text-[var(--color-text-primary)] font-medium mb-4">{line}</p>
+          <p className="text-[15px] leading-relaxed text-[var(--color-text-primary)] font-medium mb-3">{line}</p>
+          {phraseUnlocked ? (
+            <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed mb-4">
+              Вы уже собрали строку целиком — игра шла дальше. Здесь можно спокойно перечитать текст целиком; ошибка была
+              уже на более длинной цепочке.
+            </p>
+          ) : (
+            <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed mb-4">
+              Это не оценка и не диагностика — просто опорная формулировка.
+            </p>
+          )}
           <button
             type="button"
-            onClick={() => submitResult({ finalScore: failScore, completed: false, phrasePrefixText: pref || null })}
+            onClick={() =>
+              submitResult({
+                finalScore: failScore,
+                completed: phraseUnlocked,
+                phrasePrefixText: prefixForApi,
+              })
+            }
             className="w-full py-3.5 rounded-xl btn-primary font-semibold min-h-[48px]"
           >
             Дальше
@@ -303,54 +390,14 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
           Текст подобран заранее, чтобы поддержать без спешки. Не медицинский совет.
         </p>
       </div>
-    )
-  }
-
-  if (phase === 'endWin') {
-    const full = endWinFull
-    return (
-      <div className="flex flex-col min-h-[min(100dvh,780px)] px-3 pb-8 max-w-[420px] mx-auto w-full safe-area">
-        <div className="flex items-center justify-between mb-4 shrink-0">
-          <button
-            type="button"
-            onClick={() => {
-              const full = joinPhraseWords(phraseWordsRef.current)
-              submitResult({ finalScore: phraseWordsRef.current.length, completed: true, phrasePrefixText: full })
-            }}
-            className="btn-ghost min-h-[44px] px-3 rounded-xl text-sm font-semibold text-[var(--color-forest-dark)]"
-          >
-            ← В лобби
-          </button>
-        </div>
-        <motion.div
-          initial={reduce ? false : { opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-[1.35rem] border border-white/50 bg-white/38 px-5 py-6 shadow-[0_12px_40px_rgba(45,62,46,0.1)] mb-4"
-        >
-          <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--color-glow-teal-dim)] mb-2">
-            Целая фраза собрана
-          </p>
-          <p className="text-[15px] leading-relaxed text-[var(--color-text-primary)] font-medium mb-4">{full}</p>
-          <button
-            type="button"
-            onClick={() =>
-              submitResult({
-                finalScore: phraseWordsRef.current.length,
-                completed: true,
-                phrasePrefixText: joinPhraseWords(phraseWordsRef.current),
-              })
-            }
-            className="w-full py-3.5 rounded-xl btn-primary font-semibold min-h-[48px]"
-          >
-            Завершить
-          </button>
-        </motion.div>
-      </div>
+      </>
     )
   }
 
   if (phase === 'intro') {
     return (
+      <>
+        {lineToastPortal}
       <div className="flex flex-col min-h-[60vh] px-3 pb-8 max-w-[420px] mx-auto w-full">
         <div className="flex items-center justify-between mb-5 shrink-0">
           <button
@@ -376,8 +423,10 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
           </h2>
           <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed mb-4">
             Повторяйте порядок подсветки на сетке. В каждом раунде к фразе добавляется следующее слово — так, шаг за
-            шагом, складывается цельное предложение с правильными окончаниями. После ошибки вы увидите текст до момента
-            сбоя. Это не оценка и не диагностика.
+            шагом, складывается цельное предложение с правильными окончаниями. Когда строка собрана, игра{' '}
+            <span className="text-[var(--color-text-primary)] font-medium">не заканчивается</span>: цепочка может
+            становиться длиннее, пока не промахнётесь. После ошибки вы спокойно перечитаете свою фразу (если успели собрать
+            её целиком — увидите текст полностью). Это не оценка и не диагностика.
           </p>
           <div className="mb-5">
             <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)] mb-2">
@@ -436,37 +485,13 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
           </motion.button>
         </motion.div>
       </div>
+      </>
     )
   }
 
   return (
     <>
-      <AnimatePresence>
-        {phraseWinCelebration && phase === 'playing' ? (
-          <motion.div
-            key="mm-phrase-win"
-            role="status"
-            initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: -88 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduce ? { opacity: 0 } : { opacity: 0, y: -32 }}
-            transition={{ type: 'spring', stiffness: 420, damping: 32, mass: 0.65 }}
-            className="fixed left-0 right-0 top-0 z-[100] flex justify-center px-3 pt-[max(0.6rem,env(safe-area-inset-top))] pointer-events-none"
-          >
-            <div
-              className="pointer-events-none w-full max-w-[min(100%,420px)] rounded-2xl border border-white/65 bg-gradient-to-br from-white/92 via-white/88 to-[rgba(158,201,196,0.22)] px-4 py-3.5 shadow-[0_20px_48px_rgba(45,62,46,0.2),0_0_0_1px_rgba(255,255,255,0.35)_inset] backdrop-blur-md"
-              style={{ WebkitBackdropFilter: 'blur(14px)' }}
-            >
-              <p className="font-display text-[17px] font-bold text-[var(--color-text-primary)] leading-snug">
-                Фраза собрана полностью
-              </p>
-              <p className="mt-1 text-sm leading-relaxed text-[var(--color-text-secondary)]">
-                Вы прошли цепочку без ошибки — отлично получилось. Так держать.
-              </p>
-            </div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-
+      {lineToastPortal}
       <div className="flex flex-col min-h-[min(100dvh,780px)] px-3 pb-8 max-w-[420px] mx-auto w-full">
       <div className="flex items-center justify-between mb-4 shrink-0">
         <button
@@ -477,10 +502,10 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
           ← Выход
         </button>
         <span
-          className="font-display text-xs font-semibold text-[var(--color-text-secondary)] tabular-nums text-right max-w-[11rem] leading-tight"
-          title="Первое число — сколько шагов нужно повторить в этом раунде; второе — сколько всего слов во фразе."
+          className="font-display text-[11px] font-semibold text-[var(--color-text-secondary)] tabular-nums text-right max-w-[12.5rem] leading-tight"
+          title="Сколько шагов в текущей цепочке и сколько слов во фразе (после сборки фразы первая цифра может расти дальше)."
         >
-          Шагов: {chainLen}/{phraseWordCount || '—'}
+          Цепочка: {chainLen} · слов: {phraseWordCount || '—'}
         </span>
       </div>
 

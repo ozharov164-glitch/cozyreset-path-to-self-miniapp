@@ -184,8 +184,9 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
             {result.game === 'memory_matrix' && 'phraseFull' in p && (
               <div className="col-span-2 space-y-2">
                 <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
-                  Каждый верный тап — следующее слово спокойной фразы. Очки — сколько слов удалось собрать (при полном
-                  прохождении совпадает с длиной фразы).
+                  Каждый верный тап в раунде — следующее слово фразы. После того как строка собрана, можно продолжать
+                  удлинять цепочку; очки отражают, сколько слов фразы вы удержали к моменту ошибки (если успели собрать
+                  фразу целиком — совпадает с длиной фразы).
                 </p>
                 {p.phraseCompleted && p.phraseFull ? (
                   <div className="rounded-xl bg-white/35 px-3 py-2 border border-white/40">
