@@ -1,6 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { playTapCell, playTapWrong, preloadMemoryMatrixTap, primeMemoryMatrixAudio } from './memoryMatrixAudio'
+import {
+  joinPhraseWords,
+  loadPhraseGender,
+  pickRandomPhrase,
+  prefixWords,
+  type PhraseGender,
+  type PhraseRow,
+  savePhraseGender,
+  wordsForPhrase,
+} from './memoryMatrixPhrases'
 
 const CELLS = 9
 
@@ -16,6 +26,11 @@ export type MemoryMatrixResult = {
   avgReactionMs: null
   stimuliCount: number
   playtimeSec: number
+  phraseId: string | null
+  phrasePrefix: string | null
+  phraseFull: string | null
+  phraseCompleted: boolean
+  phraseGender: PhraseGender
 }
 
 type Props = {
@@ -23,7 +38,7 @@ type Props = {
   onBack: () => void
 }
 
-type Phase = 'intro' | 'playing'
+type Phase = 'intro' | 'playing' | 'endFail' | 'endWin'
 
 const gridContainer = {
   hidden: { opacity: 0 },
@@ -43,10 +58,6 @@ const gridCell = {
   },
 }
 
-/**
- * Тренировка: последовательность удлиняется до ошибки.
- * Счёт — число полностью пройденных раундов (длина последней удачной цепочки).
- */
 export function GameMemoryMatrix({ onComplete, onBack }: Props) {
   const reduce = useReducedMotion()
   const startedAt = useRef(0)
@@ -58,11 +69,19 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
   const tapsRef = useRef(0)
   const okTapsRef = useRef(0)
 
+  const phraseRowRef = useRef<PhraseRow | null>(null)
+  const phraseWordsRef = useRef<string[]>([])
   const [phase, setPhase] = useState<Phase>('intro')
+  const [gender, setGender] = useState<PhraseGender>(() => loadPhraseGender())
   const [highlight, setHighlight] = useState<number | null>(null)
   const [mode, setMode] = useState<'watch' | 'repeat' | null>(null)
   const [canTap, setCanTap] = useState(false)
   const [chainLen, setChainLen] = useState(1)
+
+  const [endFailPrefix, setEndFailPrefix] = useState('')
+  const [endWinFull, setEndWinFull] = useState('')
+  /** Длина фразы в словах — для шапки во время игры (ref не даёт перерисовку). */
+  const [phraseWordCount, setPhraseWordCount] = useState(0)
 
   const highlightMs = reduce ? 720 : 480
   const gapMs = reduce ? 320 : 200
@@ -102,33 +121,50 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
     [gapMs, highlightMs, reduce],
   )
 
-  const finish = useCallback(
-    (finalScore: number) => {
-      const taps = tapsRef.current
-      const ok = okTapsRef.current
-      const flashes = flashesRef.current
-      const acc = taps > 0 ? Math.min(100, Math.round((ok / taps) * 1000) / 10) : 0
-      const stimuliCount = Math.max(2, flashes + taps)
-      const playtimeSec = Math.max(1, Math.round((performance.now() - startedAt.current) / 1000))
-      onComplete({
-        score: finalScore,
-        accuracy: acc,
-        avgReactionMs: null,
-        stimuliCount,
-        playtimeSec,
-      })
-    },
-    [onComplete],
-  )
-
   const startRoundAfterSuccess = useCallback(async () => {
     const gen = ++generationRef.current
     const seq = sequenceRef.current
     await playSequence(seq, gen)
   }, [playSequence])
 
+  const submitResult = useCallback(
+    (opts: { finalScore: number; completed: boolean; phrasePrefixText: string | null }) => {
+      const taps = tapsRef.current
+      const ok = okTapsRef.current
+      const flashes = flashesRef.current
+      const completed = opts.completed
+      const acc =
+        taps > 0 ? Math.min(100, Math.round((ok / taps) * 1000) / 10) : completed ? 100 : 0
+      const stimuliCount = Math.max(2, flashes + taps)
+      const playtimeSec = Math.max(1, Math.round((performance.now() - startedAt.current) / 1000))
+      const pr = phraseRowRef.current
+      const words = phraseWordsRef.current
+      const full = words.length ? joinPhraseWords(words) : null
+      onComplete({
+        score: opts.finalScore,
+        accuracy: acc,
+        avgReactionMs: null,
+        stimuliCount,
+        playtimeSec,
+        phraseId: pr?.id ?? null,
+        phrasePrefix: opts.phrasePrefixText,
+        phraseFull: full,
+        phraseCompleted: completed,
+        phraseGender: gender,
+      })
+    },
+    [gender, onComplete],
+  )
+
   const beginSession = useCallback(async () => {
     await primeMemoryMatrixAudio()
+    savePhraseGender(gender)
+    const picked = pickRandomPhrase()
+    phraseRowRef.current = picked
+    const w = wordsForPhrase(picked, gender)
+    phraseWordsRef.current = w
+    setPhraseWordCount(w.length)
+
     generationRef.current += 1
     sequenceRef.current = [Math.floor(Math.random() * CELLS)]
     setChainLen(sequenceRef.current.length)
@@ -140,7 +176,7 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
     setPhase('playing')
     setMode('watch')
     void startRoundAfterSuccess()
-  }, [startRoundAfterSuccess])
+  }, [gender, startRoundAfterSuccess])
 
   const onCellPress = useCallback(
     (index: number) => {
@@ -148,6 +184,9 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
       const seq = sequenceRef.current
       const i = inputIndexRef.current
       const expected = seq[i]
+      const words = phraseWordsRef.current
+      const maxLen = words.length
+
       tapsRef.current += 1
       window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light')
 
@@ -156,14 +195,23 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
         window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('medium')
         generationRef.current += 1
         setCanTap(false)
-        const finalScore = Math.max(0, seq.length - 1)
-        finish(finalScore)
+        const pref = joinPhraseWords(prefixWords(words, i))
+        setEndFailPrefix(pref)
+        setPhase('endFail')
         return
       }
 
       playTapCell(index)
       okTapsRef.current += 1
+
       if (i + 1 >= seq.length) {
+        if (seq.length >= maxLen) {
+          generationRef.current += 1
+          setCanTap(false)
+          setEndWinFull(joinPhraseWords(words))
+          setPhase('endWin')
+          return
+        }
         generationRef.current += 1
         setCanTap(false)
         seq.push(Math.floor(Math.random() * CELLS))
@@ -174,7 +222,7 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
         inputIndexRef.current = i + 1
       }
     },
-    [canTap, finish, mode, phase, startRoundAfterSuccess],
+    [canTap, mode, phase, startRoundAfterSuccess],
   )
 
   const statusText =
@@ -183,6 +231,91 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
       : mode === 'repeat'
         ? 'Повторите последовательность'
         : ''
+
+  if (phase === 'endFail') {
+    const pref = endFailPrefix.trim()
+    const line = pref ? pref : 'Пока без слов — это нормально: можно попробовать ещё раз.'
+    const failScore = Math.max(0, sequenceRef.current.length - 1)
+
+    return (
+      <div className="flex flex-col min-h-[min(100dvh,780px)] px-3 pb-8 max-w-[420px] mx-auto w-full safe-area">
+        <div className="flex items-center justify-between mb-4 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              submitResult({ finalScore: failScore, completed: false, phrasePrefixText: pref || null })
+            }}
+            className="btn-ghost min-h-[44px] px-3 rounded-xl text-sm font-semibold text-[var(--color-forest-dark)]"
+          >
+            ← В лобби
+          </button>
+        </div>
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-[1.35rem] border border-white/50 bg-white/38 px-5 py-6 shadow-[0_12px_40px_rgba(45,62,46,0.1)] mb-4"
+        >
+          <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--color-text-secondary)] mb-2">
+            Фраза до ошибки
+          </p>
+          <p className="text-[15px] leading-relaxed text-[var(--color-text-primary)] font-medium mb-4">{line}</p>
+          <button
+            type="button"
+            onClick={() => submitResult({ finalScore: failScore, completed: false, phrasePrefixText: pref || null })}
+            className="w-full py-3.5 rounded-xl btn-primary font-semibold min-h-[48px]"
+          >
+            Дальше
+          </button>
+        </motion.div>
+        <p className="text-xs text-center text-[var(--color-text-secondary)] leading-relaxed">
+          Текст подобран заранее, чтобы поддержать без спешки. Не медицинский совет.
+        </p>
+      </div>
+    )
+  }
+
+  if (phase === 'endWin') {
+    const full = endWinFull
+    return (
+      <div className="flex flex-col min-h-[min(100dvh,780px)] px-3 pb-8 max-w-[420px] mx-auto w-full safe-area">
+        <div className="flex items-center justify-between mb-4 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              const full = joinPhraseWords(phraseWordsRef.current)
+              submitResult({ finalScore: phraseWordsRef.current.length, completed: true, phrasePrefixText: full })
+            }}
+            className="btn-ghost min-h-[44px] px-3 rounded-xl text-sm font-semibold text-[var(--color-forest-dark)]"
+          >
+            ← В лобби
+          </button>
+        </div>
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-[1.35rem] border border-white/50 bg-white/38 px-5 py-6 shadow-[0_12px_40px_rgba(45,62,46,0.1)] mb-4"
+        >
+          <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--color-glow-teal-dim)] mb-2">
+            Целая фраза собрана
+          </p>
+          <p className="text-[15px] leading-relaxed text-[var(--color-text-primary)] font-medium mb-4">{full}</p>
+          <button
+            type="button"
+            onClick={() =>
+              submitResult({
+                finalScore: phraseWordsRef.current.length,
+                completed: true,
+                phrasePrefixText: joinPhraseWords(phraseWordsRef.current),
+              })
+            }
+            className="w-full py-3.5 rounded-xl btn-primary font-semibold min-h-[48px]"
+          >
+            Завершить
+          </button>
+        </motion.div>
+      </div>
+    )
+  }
 
   if (phase === 'intro') {
     return (
@@ -201,7 +334,7 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
           initial={reduce ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="rounded-[1.35rem] border border-white/50 bg-white/35 px-5 py-6 shadow-[0_12px_40px_rgba(45,62,46,0.11)] mb-6"
+          className="rounded-[1.35rem] border border-white/50 bg-white/35 px-5 py-6 shadow-[0_12px_40px_rgba(45,62,46,0.11)] mb-5"
         >
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-text-secondary)] mb-2">
             Память · последовательность
@@ -210,10 +343,32 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
             Матрица памяти
           </h2>
           <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed mb-4">
-            Запоминайте порядок подсветки ячеек и воспроизводите его по нажатиям. С каждым удачным раундом цепочка
-            становится длиннее. Если нажали не ту ячейку — сессия завершается. Это тренировка внимания и рабочей памяти,
-            не диагностика и не медицинское исследование.
+            Повторяйте порядок подсветки. С каждым верным шагом вы «собираете» слова спокойной фразы. После ошибки
+            увидите то, что уже получилось — это не оценка и не диагностика.
           </p>
+          <p className="text-xs text-[var(--color-text-secondary)] mb-3 leading-relaxed">Формулировки фразы:</p>
+          <div className="flex gap-3 mb-5">
+            <label className="flex items-center gap-2 cursor-pointer text-sm text-[var(--color-text-primary)]">
+              <input
+                type="radio"
+                name="mmg"
+                checked={gender === 'f'}
+                onChange={() => setGender('f')}
+                className="accent-[var(--color-glow-teal-dim)]"
+              />
+              женские
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer text-sm text-[var(--color-text-primary)]">
+              <input
+                type="radio"
+                name="mmg"
+                checked={gender === 'm'}
+                onChange={() => setGender('m')}
+                className="accent-[var(--color-glow-teal-dim)]"
+              />
+              мужские
+            </label>
+          </div>
           <motion.button
             type="button"
             onClick={() => void beginSession()}
@@ -239,7 +394,7 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
           ← Выход
         </button>
         <span className="font-display text-sm font-semibold text-[var(--color-text-secondary)] tabular-nums">
-          Ячеек в цепочке: {chainLen}
+          Ячеек: {chainLen} / {phraseWordCount || '—'}
         </span>
       </div>
 
@@ -260,7 +415,7 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
           </motion.p>
         </AnimatePresence>
         <p className="text-xs text-[var(--color-text-secondary)] mt-1 min-h-[1.25rem]">
-          {mode === 'repeat' ? 'Нажимайте по очереди, как запомнили.' : '\u00a0'}
+          {mode === 'repeat' ? 'Каждый верный тап — следующее слово фразы.' : '\u00a0'}
         </p>
       </div>
 
@@ -314,7 +469,7 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
       </div>
 
       <p className="text-xs text-center text-[var(--color-text-secondary)] leading-relaxed px-1">
-        Подсказка: держите взгляд на центре поля — так проще удерживать порядок.
+        Подсказка: смотрите на центр поля — так проще держать порядок.
       </p>
     </div>
   )

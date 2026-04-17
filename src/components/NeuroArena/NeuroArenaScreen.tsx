@@ -181,11 +181,24 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
                 </div>
               </>
             )}
-            {result.game === 'memory_matrix' && (
-              <p className="text-xs text-[var(--color-text-secondary)] col-span-2 leading-relaxed">
-                Серия показывает, сколько полных цепочек подряд удалось воспроизвести без ошибки. После каждого успеха
-                цепочка становится длиннее.
-              </p>
+            {result.game === 'memory_matrix' && 'phraseFull' in p && (
+              <div className="col-span-2 space-y-2">
+                <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
+                  Каждый верный тап — следующее слово спокойной фразы. Очки — сколько слов удалось собрать (при полном
+                  прохождении совпадает с длиной фразы).
+                </p>
+                {p.phraseCompleted && p.phraseFull ? (
+                  <div className="rounded-xl bg-white/35 px-3 py-2 border border-white/40">
+                    <div className="text-xs uppercase tracking-wide opacity-75 mb-1">Фраза целиком</div>
+                    <p className="text-sm font-medium text-[var(--color-text-primary)] leading-snug">{p.phraseFull}</p>
+                  </div>
+                ) : p.phrasePrefix ? (
+                  <div className="rounded-xl bg-white/35 px-3 py-2 border border-white/40">
+                    <div className="text-xs uppercase tracking-wide opacity-75 mb-1">Фраза до ошибки</div>
+                    <p className="text-sm font-medium text-[var(--color-text-primary)] leading-snug">{p.phrasePrefix}</p>
+                  </div>
+                ) : null}
+              </div>
             )}
           </div>
           {result.error && (
