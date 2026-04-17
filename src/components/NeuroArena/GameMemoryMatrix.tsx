@@ -86,8 +86,6 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
   const [phraseUnlocked, setPhraseUnlocked] = useState(false)
   /** Длина фразы в словах — для шапки во время игры (ref не даёт перерисовку). */
   const [phraseWordCount, setPhraseWordCount] = useState(0)
-  /** Текст фразы, уже «собранный» в текущем раунде повтора (обновляется после каждого верного тапа). */
-  const [phraseLine, setPhraseLine] = useState('')
   /** Краткий тост «строка собрана» (один раз за сессию), игра не останавливается. */
   const [phraseLineToast, setPhraseLineToast] = useState(false)
   const phraseToastDismissRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -116,7 +114,6 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
     async (seq: number[], gen: number) => {
       setMode('watch')
       setCanTap(false)
-      setPhraseLine('')
       setHighlight(null)
       await sleep(reduce ? 220 : 140)
       if (!mountedRef.current || generationRef.current !== gen) return
@@ -180,7 +177,6 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
     const w = wordsForPhrase(picked, gender)
     phraseWordsRef.current = w
     setPhraseWordCount(w.length)
-    setPhraseLine('')
     setPhraseUnlocked(false)
     if (phraseToastDismissRef.current) {
       clearTimeout(phraseToastDismissRef.current)
@@ -232,8 +228,6 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
 
       playTapCell(index)
       okTapsRef.current += 1
-      const reveal = Math.min(i + 1, maxLen)
-      setPhraseLine(joinPhraseWords(prefixWords(words, reveal)))
 
       if (i + 1 >= seq.length) {
         if (seq.length >= maxLen) {
@@ -422,11 +416,12 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
             Матрица памяти
           </h2>
           <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed mb-4">
-            Повторяйте порядок подсветки на сетке. В каждом раунде к фразе добавляется следующее слово — так, шаг за
-            шагом, складывается цельное предложение с правильными окончаниями. Когда строка собрана, игра{' '}
-            <span className="text-[var(--color-text-primary)] font-medium">не заканчивается</span>: цепочка может
-            становиться длиннее, пока не промахнётесь. После ошибки вы спокойно перечитаете свою фразу (если успели собрать
-            её целиком — увидите текст полностью). Это не оценка и не диагностика.
+            Повторяйте порядок подсветки на сетке. Сам текст фразы во время игры{' '}
+            <span className="text-[var(--color-text-primary)] font-medium">не показываем</span> — только цепочку и счётчик
+            шагов. Когда длина цепочки совпадёт с длиной фразы и вы пройдёте раунд без ошибки, сверху появится короткое
+            уведомление, что строка собрана; игра при этом{' '}
+            <span className="text-[var(--color-text-primary)] font-medium">не заканчивается</span>, цепочка может расти
+            дальше. Полностью фразу вы увидите после ошибки, когда сессия завершится. Это не оценка и не диагностика.
           </p>
           <div className="mb-5">
             <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)] mb-2">
@@ -510,7 +505,7 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
       </div>
 
       <div
-        className="min-h-[4.75rem] mb-4 flex flex-col items-center justify-center text-center px-2 overflow-hidden"
+        className="mb-4 flex min-h-[3rem] flex-col items-center justify-center px-2 text-center"
         aria-live="polite"
       >
         <AnimatePresence mode="wait">
@@ -520,28 +515,12 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
             animate={{ opacity: 1, y: 0 }}
             exit={reduce ? undefined : { opacity: 0, y: -4 }}
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-            className="text-sm font-medium text-[var(--color-text-primary)] leading-snug min-h-[2.75rem] flex items-center justify-center"
+            className="text-sm font-medium text-[var(--color-text-primary)] leading-snug"
           >
             {statusText}
           </motion.p>
         </AnimatePresence>
-        <p className="text-xs text-[var(--color-text-secondary)] mt-1 min-h-[1.25rem]">
-          {mode === 'repeat'
-            ? 'Каждый верный тап в этом раунде добавляет следующее слово ниже.'
-            : '\u00a0'}
-        </p>
       </div>
-
-      {mode === 'repeat' ? (
-        <div
-          className="mb-4 rounded-2xl border border-white/45 bg-white/30 px-3 py-3 text-center min-h-[3rem] flex items-center justify-center"
-          aria-live="polite"
-        >
-          <p className="text-[15px] leading-snug text-[var(--color-text-primary)] font-medium">
-            {phraseLine ? phraseLine : <span className="text-[var(--color-text-secondary)] font-normal">Фраза появится после первого верного тапа…</span>}
-          </p>
-        </div>
-      ) : null}
 
       <div className="w-full max-w-[min(100%,19rem)] aspect-square mx-auto mb-6">
         <motion.div
