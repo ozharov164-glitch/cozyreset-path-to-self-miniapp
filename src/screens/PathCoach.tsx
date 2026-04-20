@@ -369,16 +369,19 @@ export function PathCoach({ onBack }: PathCoachProps) {
       </div>
 
       {isPremium === true && (
-        <div className="shrink-0 z-20 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 bg-gradient-to-t from-[#eaf8f4]/98 via-[#eaf8f4]/92 to-transparent border-t border-white/30">
+        <div className="shrink-0 z-20 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-4 bg-gradient-to-t from-[#eaf8f4] from-35% via-[#eaf8f4]/75 to-transparent pointer-events-auto">
           <div className="max-w-[420px] mx-auto w-full">
-            <div className="rounded-2xl border border-white/50 bg-white/85 backdrop-blur-md shadow-md p-2 flex gap-2 items-end">
+            <div
+              className="flex gap-1.5 items-end rounded-[1.35rem] bg-white/[0.72] backdrop-blur-xl px-2 py-1.5 border border-white/55 shadow-[0_6px_28px_rgba(45,95,85,0.09)] focus-within:border-[var(--color-glow-teal)]/45 focus-within:shadow-[0_8px_32px_rgba(45,95,85,0.12)] focus-within:ring-2 focus-within:ring-[var(--color-glow-teal)]/20 transition-[box-shadow,border-color] duration-200"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
+            >
               <textarea
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder="Напиши, что происходит…"
                 rows={2}
                 maxLength={3800}
-                className="flex-1 resize-none rounded-xl bg-white/80 border border-white/60 px-3 py-2.5 text-[15px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-glow-teal)]/50 min-h-[48px]"
+                className="flex-1 min-h-[48px] max-h-[min(40vh,9.5rem)] resize-none rounded-[1rem] bg-transparent border-0 px-2.5 py-2.5 text-[15px] leading-relaxed text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] placeholder:opacity-85 focus:outline-none focus:ring-0 min-w-0"
                 disabled={loading || bootLoading}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
@@ -391,7 +394,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
                 type="button"
                 onClick={() => void send()}
                 disabled={loading || bootLoading || !draft.trim()}
-                className="shrink-0 min-h-[48px] min-w-[52px] rounded-xl btn-primary px-3 font-semibold disabled:opacity-45"
+                className="shrink-0 mb-0.5 min-h-[44px] min-w-[48px] rounded-[1rem] btn-primary px-2.5 font-semibold disabled:opacity-45 self-end"
                 style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
               >
                 →
