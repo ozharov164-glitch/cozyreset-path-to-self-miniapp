@@ -158,10 +158,29 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
 
       <div className="flex-1 flex flex-col max-w-[420px] mx-auto w-full px-3 pb-6">
         <PremiumCard accent="rose" delay={0.02}>
-          <CardHeading icon={IconSparkle} title="ИИ-коуч «Путь к Себе»" iconClassName="text-[#c97a8a]" />
+          <div className="flex gap-4 mb-4">
+            <img
+              src={`${import.meta.env.BASE_URL}ai-venus-avatar.png`}
+              alt="Иллюстративный образ ИИ-Венеры, коуча приложения"
+              width={80}
+              height={80}
+              className="w-20 h-20 shrink-0 rounded-2xl object-cover shadow-md ring-2 ring-white/55"
+              decoding="async"
+            />
+            <div className="min-w-0 flex-1 pt-0.5">
+              <h3 className="font-display text-lg font-bold text-[var(--color-text-primary)] tracking-tight leading-snug">
+                ИИ-Венера
+              </h3>
+              <p className="text-xs text-[var(--color-text-secondary)] mt-1 leading-snug font-medium">
+                Коуч внутри приложения «Путь к себе»
+              </p>
+            </div>
+          </div>
           <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
-            Отдельный чат в приложении: знает твои тесты, самореализацию и нейро-арену — предложит шаг и кнопку, куда
-            перейти.
+            Спокойный ИИ-собеседник: отвечает с учётом твоих тестов, заметок в самореализации и сессий в нейро-арене —
+            только того, что ты уже сделал здесь, без домыслов. Помогает сформулировать следующий шаг и подсказать,
+            куда перейти в приложении. Это не психотерапия и не медицинская консультация, а поддержка в понятном,
+            взрослом темпе.
           </p>
           {isPremium === true ? (
             <button
@@ -170,7 +189,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
               className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
               style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
-              Открыть коуча
+              Открыть чат
             </button>
           ) : isPremium === false ? (
             <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">

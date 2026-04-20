@@ -11,7 +11,6 @@ import {
 import { useAuthStore } from '../store/authStore'
 import { useAppStore } from '../store/appStore'
 import { PremiumCard } from '../components/PremiumCard'
-import { IconSparkle } from '../components/FeatureIcons'
 
 interface PathCoachProps {
   onBack: () => void
@@ -162,7 +161,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
   }
 
   const onReset = async () => {
-    if (!window.confirm('Очистить весь диалог с коучом в приложении?')) return
+    if (!window.confirm('Очистить весь диалог с ИИ-Венерой в приложении?')) return
     setError(null)
     const r = await apiPathCoachReset()
     if ('ok' in r && r.ok) {
@@ -191,7 +190,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
           ← Назад
         </button>
         <h1 className="font-display text-[15px] font-bold text-[var(--color-text-primary)] tracking-tight text-center flex-1 px-1">
-          ИИ-коуч
+          ИИ-Венера
         </h1>
         <button
           type="button"
@@ -207,12 +206,19 @@ export function PathCoach({ onBack }: PathCoachProps) {
         {isPremium === true && (
           <div className="shrink-0 mb-2">
             <PremiumCard accent="mint" delay={0} className="!mb-2 !p-4">
-              <div className="flex items-start gap-2.5">
-                <IconSparkle className="shrink-0 mt-0.5 w-6 h-6 text-[#4aab9c]" aria-hidden />
+              <div className="flex items-start gap-3">
+                <img
+                  src={`${import.meta.env.BASE_URL}ai-venus-avatar.png`}
+                  alt="Иллюстративный образ ИИ-Венеры"
+                  width={48}
+                  height={48}
+                  className="w-12 h-12 shrink-0 rounded-xl object-cover ring-2 ring-white/45 shadow-sm"
+                  decoding="async"
+                />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <h2 className="font-display text-base font-bold text-[var(--color-text-primary)] tracking-tight">
-                      Путь к себе — коуч
+                      ИИ-Венера
                     </h2>
                     <button
                       type="button"
@@ -221,7 +227,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
                       style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                       aria-expanded={introOpen}
                     >
-                      {introOpen ? 'Свернуть' : 'О коуче'}
+                      {introOpen ? 'Свернуть' : 'Подробнее'}
                     </button>
                   </div>
                   <AnimatePresence initial={false}>
@@ -234,8 +240,9 @@ export function PathCoach({ onBack }: PathCoachProps) {
                         className="overflow-hidden"
                       >
                         <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed mt-2">
-                          Коуч опирается на твои данные в приложении (тесты, самореализация, нейро-арена — только
-                          агрегаты из БД). Это отдельный канал от чата поддержки в боте.
+                          Ответы строятся по твоим данным в приложении: тесты, самореализация, нейро-арена (в виде
+                          обезличенных сводок). Это отдельный канал от поддержки в боте и не заменяет работу со
+                          специалистом.
                         </p>
                       </motion.div>
                     )}
@@ -249,7 +256,8 @@ export function PathCoach({ onBack }: PathCoachProps) {
         {isPremium !== true && (
           <PremiumCard accent="coral" delay={0.05} className="shrink-0 !mb-2">
             <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-              Раздел доступен с премиум-подпиской — так мы безопасно подставляем твою статистику в контекст ИИ.
+              Чат с ИИ-Венерой доступен с премиум-подпиской — так мы безопасно подставляем твою статистику в контекст
+              модели.
             </p>
           </PremiumCard>
         )}
@@ -312,7 +320,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
                       />
                     ))}
                   </span>
-                  <span className="text-sm text-[var(--color-text-secondary)]">Коуч пишет…</span>
+                  <span className="text-sm text-[var(--color-text-secondary)]">ИИ-Венера отвечает…</span>
                 </div>
                 <p className="text-xs text-[var(--color-text-secondary)] leading-snug px-1">
                   Ответ собирается с учётом твоего прогресса — обычно 10–50 сек.
@@ -324,7 +332,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
 
           {!bootLoading && isPremium === true && messages.length === 0 && !loading && (
             <p className="text-sm text-[var(--color-text-secondary)] text-center py-8 px-2 leading-relaxed">
-              Напиши первое сообщение — коуч ответит с опорой на твои тесты и активность в приложении.
+              Напиши первое сообщение — ИИ-Венера ответит с опорой на твои тесты и активность в приложении.
             </p>
           )}
 
