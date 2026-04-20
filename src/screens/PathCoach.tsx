@@ -17,6 +17,20 @@ interface PathCoachProps {
   onBack: () => void
 }
 
+type CoachRow = { id: string; role: 'user' | 'assistant'; content: string }
+
+function rowId(prefix: string): string {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+}
+
+function toRowsFromServer(messages: PathCoachChatMessage[]): CoachRow[] {
+  return messages.map((m, i) => ({
+    id: `srv-${i}-${m.content.length}`,
+    role: m.role,
+    content: m.content,
+  }))
+}
+
 function applyCoachAction(a: PathCoachAction): void {
   const setScreen = useAppStore.getState().setScreen
   const setCurrentTest = useAppStore.getState().setCurrentTest
@@ -65,12 +79,15 @@ function applyCoachAction(a: PathCoachAction): void {
 export function PathCoach({ onBack }: PathCoachProps) {
   const reduceMotion = useReducedMotion()
   const isPremium = useAuthStore((s) => s.isPremium)
-  const [messages, setMessages] = useState<PathCoachChatMessage[]>([])
+  const [messages, setMessages] = useState<CoachRow[]>([])
   const [draft, setDraft] = useState('')
   const [loading, setLoading] = useState(false)
   const [bootLoading, setBootLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [lastActions, setLastActions] = useState<PathCoachAction[]>([])
+  const [introOpen, setIntroOpen] = useState(true)
+  const [waitSec, setWaitSec] = useState(0)
+  const scrollRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = useCallback(() => {
@@ -81,7 +98,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages, lastActions, scrollToBottom])
+  }, [messages, lastActions, loading, scrollToBottom])
 
   useEffect(() => {
     if (isPremium !== true) {
@@ -94,8 +111,10 @@ export function PathCoach({ onBack }: PathCoachProps) {
       const r = await apiPathCoachHistory()
       if (cancelled) return
       if (r.status === 'ok') {
-        setMessages(r.messages)
+        const rows = toRowsFromServer(r.messages)
+        setMessages(rows)
         setLastActions([])
+        if (rows.length > 0) setIntroOpen(false)
       } else if ('premium_required' in r && r.premium_required) {
         setError('Нужен премиум — оформи подписку в боте 💛')
       } else {
@@ -108,21 +127,32 @@ export function PathCoach({ onBack }: PathCoachProps) {
     }
   }, [isPremium])
 
+  useEffect(() => {
+    if (!loading) {
+      setWaitSec(0)
+      return
+    }
+    const t = window.setInterval(() => setWaitSec((s) => s + 1), 1000)
+    return () => window.clearInterval(t)
+  }, [loading])
+
   const send = async () => {
     const text = draft.trim()
     if (!text || loading) return
     setError(null)
     setDraft('')
-    setMessages((m) => [...m, { role: 'user', content: text }])
+    const userRow: CoachRow = { id: rowId('u'), role: 'user', content: text }
+    setMessages((m) => [...m, userRow])
     setLastActions([])
     setLoading(true)
     const r = await apiPathCoachSend(text)
     setLoading(false)
     if (r.status === 'ok') {
-      setMessages((m) => [...m, { role: 'assistant', content: r.reply }])
+      setMessages((m) => [...m, { id: rowId('a'), role: 'assistant', content: r.reply }])
       setLastActions(r.actions || [])
+      setIntroOpen(false)
     } else {
-      setMessages((m) => m.slice(0, -1))
+      setMessages((m) => m.filter((x) => x.id !== userRow.id))
       if ('premium_required' in r && r.premium_required) {
         setError('Нужен премиум — оформи подписку в боте 💛')
       } else {
@@ -138,23 +168,16 @@ export function PathCoach({ onBack }: PathCoachProps) {
     if ('ok' in r && r.ok) {
       setMessages([])
       setLastActions([])
+      setIntroOpen(true)
     } else {
       setError('error' in r ? r.error : 'Не удалось очистить')
     }
   }
 
-  const intro = (
-    <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-      Коуч видит твой прогресс в приложении (тесты, самореализация, нейро-арена — только агрегаты из данных, без
-      доступа к чужим аккаунтам). Ответы идут через отдельный канал ИИ внутри «Пути к Себе» — не путай с чатом
-      поддержки в боте.
-    </p>
-  )
-
   return (
-    <div className="min-h-screen flex flex-col safe-area">
+    <div className="min-h-[100dvh] max-h-[100dvh] flex flex-col safe-area overflow-hidden bg-transparent">
       <motion.header
-        className="header-app-glass h-14 flex items-center justify-between px-3 mb-3 rounded-2xl shrink-0"
+        className="header-app-glass h-14 flex items-center justify-between px-3 mb-2 rounded-2xl shrink-0 mx-3 mt-1"
         initial={reduceMotion ? false : { opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
@@ -180,29 +203,59 @@ export function PathCoach({ onBack }: PathCoachProps) {
         </button>
       </motion.header>
 
-      <div className="flex-1 flex flex-col max-w-[420px] mx-auto w-full px-3 pb-28">
-        <PremiumCard accent="mint" delay={0}>
-          <div className="flex items-start gap-2.5 mb-3">
-            <IconSparkle className="shrink-0 mt-0.5 w-6 h-6 text-[#4aab9c]" aria-hidden />
-            <div>
-              <h2 className="font-display text-lg font-bold text-[var(--color-text-primary)] tracking-tight">
-                Путь к себе — коуч
-              </h2>
-              {intro}
-            </div>
+      <div className="flex-1 flex flex-col min-h-0 max-w-[420px] mx-auto w-full px-3">
+        {isPremium === true && (
+          <div className="shrink-0 mb-2">
+            <PremiumCard accent="mint" delay={0} className="!mb-2 !p-4">
+              <div className="flex items-start gap-2.5">
+                <IconSparkle className="shrink-0 mt-0.5 w-6 h-6 text-[#4aab9c]" aria-hidden />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <h2 className="font-display text-base font-bold text-[var(--color-text-primary)] tracking-tight">
+                      Путь к себе — коуч
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={() => setIntroOpen((v) => !v)}
+                      className="text-xs font-semibold text-[var(--color-glow-teal)] shrink-0 py-1 px-2 rounded-lg btn-ghost"
+                      style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                      aria-expanded={introOpen}
+                    >
+                      {introOpen ? 'Свернуть' : 'О коуче'}
+                    </button>
+                  </div>
+                  <AnimatePresence initial={false}>
+                    {introOpen && (
+                      <motion.div
+                        initial={reduceMotion ? false : { height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={reduceMotion ? undefined : { height: 0, opacity: 0 }}
+                        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                        className="overflow-hidden"
+                      >
+                        <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed mt-2">
+                          Коуч опирается на твои данные в приложении (тесты, самореализация, нейро-арена — только
+                          агрегаты из БД). Это отдельный канал от чата поддержки в боте.
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+            </PremiumCard>
           </div>
-        </PremiumCard>
+        )}
 
         {isPremium !== true && (
-          <PremiumCard accent="coral" delay={0.05}>
+          <PremiumCard accent="coral" delay={0.05} className="shrink-0 !mb-2">
             <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-              Раздел доступен с премиум-подпиской: так мы можем безопасно подставлять твою статистику в контекст ИИ.
+              Раздел доступен с премиум-подпиской — так мы безопасно подставляем твою статистику в контекст ИИ.
             </p>
           </PremiumCard>
         )}
 
         {bootLoading && isPremium === true && (
-          <div className="flex justify-center py-10">
+          <div className="flex justify-center py-8 shrink-0">
             <motion.div
               className="w-10 h-10 rounded-full border-2 border-[var(--color-glow-teal)] border-t-transparent"
               animate={reduceMotion ? {} : { rotate: 360 }}
@@ -212,97 +265,112 @@ export function PathCoach({ onBack }: PathCoachProps) {
           </div>
         )}
 
-        <div className="space-y-3 mt-2">
-          <AnimatePresence initial={false}>
-            {messages.map((msg, i) => (
-              <motion.div
-                key={`${i}-${msg.role}-${msg.content.slice(0, 24)}`}
-                layout
-                initial={reduceMotion ? false : { opacity: 0, y: 10, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ type: 'spring', stiffness: 320, damping: 26 }}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[92%] rounded-2xl px-3.5 py-3 shadow-sm border ${
-                    msg.role === 'user'
-                      ? 'bg-gradient-to-br from-[#5ad4c4]/35 to-white/50 border-white/50 text-[var(--color-text-primary)]'
-                      : 'bg-white/55 border-white/60 text-[var(--color-text-primary)] backdrop-blur-sm'
-                  }`}
+        <div
+          ref={scrollRef}
+          className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain pb-3 [-webkit-overflow-scrolling:touch]"
+        >
+          <div className="space-y-3">
+            <AnimatePresence initial={false}>
+              {messages.map((msg) => (
+                <motion.div
+                  key={msg.id}
+                  layout
+                  initial={reduceMotion ? false : { opacity: 0, y: 10, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                  <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+                  <div
+                    className={`max-w-[92%] rounded-2xl px-3.5 py-3 shadow-sm border ${
+                      msg.role === 'user'
+                        ? 'bg-gradient-to-br from-[#5ad4c4]/35 to-white/50 border-white/50 text-[var(--color-text-primary)]'
+                        : 'bg-white/55 border-white/60 text-[var(--color-text-primary)] backdrop-blur-sm'
+                    }`}
+                  >
+                    <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
 
-          {loading && (
+            {loading && (
+              <motion.div
+                className="flex flex-col gap-2 justify-start"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <div className="rounded-2xl px-4 py-3 bg-white/40 border border-white/50 flex items-center gap-2 w-fit max-w-[92%]">
+                  <span className="inline-flex gap-1" aria-hidden>
+                    {[0, 1, 2].map((d) => (
+                      <motion.span
+                        key={d}
+                        className="w-2 h-2 rounded-full bg-[var(--color-glow-teal)]"
+                        animate={reduceMotion ? {} : { y: [0, -5, 0], opacity: [0.5, 1, 0.5] }}
+                        transition={{ repeat: Infinity, duration: 0.9, delay: d * 0.12 }}
+                      />
+                    ))}
+                  </span>
+                  <span className="text-sm text-[var(--color-text-secondary)]">Коуч пишет…</span>
+                </div>
+                <p className="text-xs text-[var(--color-text-secondary)] leading-snug px-1">
+                  Ответ собирается с учётом твоего прогресса — обычно 15–60 сек.
+                  {waitSec >= 20 ? ` Уже ${waitSec} сек — можно подождать ещё немного.` : ''}
+                </p>
+              </motion.div>
+            )}
+          </div>
+
+          {!bootLoading && isPremium === true && messages.length === 0 && !loading && (
+            <p className="text-sm text-[var(--color-text-secondary)] text-center py-8 px-2 leading-relaxed">
+              Напиши первое сообщение — коуч ответит с опорой на твои тесты и активность в приложении.
+            </p>
+          )}
+
+          {lastActions.length > 0 && !loading && (
             <motion.div
-              className="flex justify-start"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              className="mt-4 flex flex-wrap gap-2"
+              initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35 }}
             >
-              <div className="rounded-2xl px-4 py-3 bg-white/40 border border-white/50 flex items-center gap-2">
-                <span className="inline-flex gap-1" aria-hidden>
-                  {[0, 1, 2].map((d) => (
-                    <motion.span
-                      key={d}
-                      className="w-2 h-2 rounded-full bg-[var(--color-glow-teal)]"
-                      animate={reduceMotion ? {} : { y: [0, -5, 0], opacity: [0.5, 1, 0.5] }}
-                      transition={{ repeat: Infinity, duration: 0.9, delay: d * 0.12 }}
-                    />
-                  ))}
-                </span>
-                <span className="text-sm text-[var(--color-text-secondary)]">Коуч пишет…</span>
-              </div>
+              {lastActions.map((a, idx) => (
+                <motion.button
+                  key={`${a.type}-${a.testId ?? ''}-${idx}`}
+                  type="button"
+                  whileTap={reduceMotion ? {} : { scale: 0.97 }}
+                  onClick={() => applyCoachAction(a)}
+                  className="px-3.5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-[#c5f5ec]/90 to-white/80 border border-[var(--color-glow-teal)]/40 text-[var(--color-forest-dark)] shadow-sm active:opacity-90"
+                  style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                >
+                  {a.label}
+                </motion.button>
+              ))}
             </motion.div>
           )}
+
+          {error && (
+            <p className="text-sm text-red-700/90 mt-3 px-1" role="alert">
+              {error}
+            </p>
+          )}
+
+          <div ref={bottomRef} className="h-4 shrink-0" aria-hidden />
         </div>
-
-        {lastActions.length > 0 && !loading && (
-          <motion.div
-            className="mt-4 flex flex-wrap gap-2"
-            initial={reduceMotion ? false : { opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
-          >
-            {lastActions.map((a, idx) => (
-              <motion.button
-                key={`${a.type}-${a.testId ?? ''}-${idx}`}
-                type="button"
-                whileTap={reduceMotion ? {} : { scale: 0.97 }}
-                onClick={() => applyCoachAction(a)}
-                className="px-3.5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-[#c5f5ec]/90 to-white/80 border border-[var(--color-glow-teal)]/40 text-[var(--color-forest-dark)] shadow-sm"
-                style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-              >
-                {a.label}
-              </motion.button>
-            ))}
-          </motion.div>
-        )}
-
-        {error && (
-          <p className="text-sm text-red-700/90 mt-3 px-1" role="alert">
-            {error}
-          </p>
-        )}
-
-        <div ref={bottomRef} />
       </div>
 
       {isPremium === true && (
-        <div className="fixed bottom-0 left-0 right-0 z-20 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 bg-gradient-to-t from-[#0f2a24]/12 via-[#eaf8f4]/95 to-transparent pointer-events-none">
-          <div className="max-w-[420px] mx-auto w-full pointer-events-auto">
-            <div className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur-md shadow-lg p-2 flex gap-2 items-end">
+        <div className="shrink-0 z-20 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 bg-gradient-to-t from-[#eaf8f4]/98 via-[#eaf8f4]/92 to-transparent border-t border-white/30">
+          <div className="max-w-[420px] mx-auto w-full">
+            <div className="rounded-2xl border border-white/50 bg-white/85 backdrop-blur-md shadow-md p-2 flex gap-2 items-end">
               <textarea
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
-                placeholder="Напиши, что происходит и чем помочь…"
+                placeholder="Напиши, что происходит…"
                 rows={2}
                 maxLength={3800}
-                className="flex-1 resize-none rounded-xl bg-white/70 border border-white/60 px-3 py-2.5 text-[15px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-glow-teal)]/50 min-h-[48px]"
+                className="flex-1 resize-none rounded-xl bg-white/80 border border-white/60 px-3 py-2.5 text-[15px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-glow-teal)]/50 min-h-[48px]"
                 disabled={loading || bootLoading}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
