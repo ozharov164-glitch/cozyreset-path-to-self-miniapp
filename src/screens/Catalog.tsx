@@ -17,6 +17,11 @@ export function Catalog({ onBack }: CatalogProps) {
 
   useEffect(() => {
     useAppStore.getState().setPathCoachReturnAfterTest(false)
+    try {
+      sessionStorage.removeItem('pts_vcoach_return')
+    } catch {
+      /* ignore */
+    }
   }, [])
 
   const { data: historyData } = useQuery({
@@ -27,6 +32,12 @@ export function Catalog({ onBack }: CatalogProps) {
   const completedTestIds = new Set((historyData?.items ?? []).map((item) => item.testId))
 
   const startTest = (testId: string) => {
+    useAppStore.getState().setPathCoachReturnAfterTest(false)
+    try {
+      sessionStorage.removeItem('pts_vcoach_return')
+    } catch {
+      /* ignore */
+    }
     setCurrentTest(testId)
     setScreen('test')
   }

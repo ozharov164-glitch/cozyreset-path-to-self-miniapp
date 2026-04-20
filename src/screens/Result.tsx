@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
 import { TESTS } from '../data/tests'
@@ -16,6 +16,15 @@ import {
 } from '../api/client'
 import { ResultPremiumAiLoading } from '../components/ResultPremiumAiLoading'
 import { goBackToBot, copyQuestionToClipboard } from '../utils/telegram'
+
+function readVenCoachStored(): boolean {
+  if (typeof sessionStorage === 'undefined') return false
+  try {
+    return sessionStorage.getItem('pts_vcoach_return') === '1'
+  } catch {
+    return false
+  }
+}
 
 /** Краткое описание результата по среднему баллу — в духе поддержки и тематики бота. */
 function getScoreDescription(avg: number, _testTitle: string): string {
@@ -46,7 +55,7 @@ export function Result({ onBack }: ResultProps) {
   const resetTest = useAppStore((s) => s.resetTest)
   const openResultId = useAppStore((s) => s.openResultId)
   const setOpenResultId = useAppStore((s) => s.setOpenResultId)
-  const pathCoachReturnAfterTest = useAppStore((s) => s.pathCoachReturnAfterTest)
+  const pathCoachReturnZustand = useAppStore((s) => s.pathCoachReturnAfterTest)
   const setPathCoachReturnAfterTest = useAppStore((s) => s.setPathCoachReturnAfterTest)
   const setScreen = useAppStore((s) => s.setScreen)
 
@@ -56,6 +65,16 @@ export function Result({ onBack }: ResultProps) {
   const saveStartedRef = useRef(false)
   const lastSaveKeyRef = useRef<string>('')
   const coachIngestSentRef = useRef<string | null>(null)
+
+  useLayoutEffect(() => {
+    if (openResultId) return
+    if (readVenCoachStored()) {
+      useAppStore.getState().setPathCoachReturnAfterTest(true)
+    }
+  }, [openResultId])
+
+  const pathCoachReturnAfterTest =
+    pathCoachReturnZustand || (!openResultId && readVenCoachStored())
 
   const test = TESTS.find((t) => t.id === currentTestId)
   const isViewingHistory = !!openResultId
@@ -177,6 +196,11 @@ export function Result({ onBack }: ResultProps) {
 
   const goToPathCoach = () => {
     setPathCoachReturnAfterTest(false)
+    try {
+      sessionStorage.removeItem('pts_vcoach_return')
+    } catch {
+      /* ignore */
+    }
     setOpenResultId(null)
     resetTest()
     setScreen('pathCoach')
@@ -187,6 +211,11 @@ export function Result({ onBack }: ResultProps) {
     resetTest()
     if (pathCoachReturnAfterTest) {
       setPathCoachReturnAfterTest(false)
+      try {
+        sessionStorage.removeItem('pts_vcoach_return')
+      } catch {
+        /* ignore */
+      }
       setScreen('pathCoach')
     } else {
       onBack()

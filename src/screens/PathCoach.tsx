@@ -36,6 +36,11 @@ function applyCoachAction(a: PathCoachAction): void {
   switch (a.type) {
     case 'open_catalog':
       useAppStore.getState().setPathCoachReturnAfterTest(false)
+      try {
+        sessionStorage.removeItem('pts_vcoach_return')
+      } catch {
+        /* ignore */
+      }
       setScreen('catalog')
       break
     case 'open_statistics':
@@ -67,6 +72,11 @@ function applyCoachAction(a: PathCoachAction): void {
       const id = (a.testId || '').trim()
       if (id) {
         useAppStore.getState().setPathCoachReturnAfterTest(true)
+        try {
+          sessionStorage.setItem('pts_vcoach_return', '1')
+        } catch {
+          /* ignore */
+        }
         setCurrentTest(id)
         setScreen('test')
       }
@@ -170,6 +180,12 @@ export function PathCoach({ onBack }: PathCoachProps) {
       setMessages([])
       setLastActions([])
       setIntroOpen(true)
+      useAppStore.getState().setPathCoachReturnAfterTest(false)
+      try {
+        sessionStorage.removeItem('pts_vcoach_return')
+      } catch {
+        /* ignore */
+      }
     } else {
       setError('error' in r ? r.error : 'Не удалось очистить')
     }
