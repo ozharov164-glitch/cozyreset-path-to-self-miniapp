@@ -619,6 +619,96 @@ export async function apiNeuroArenaSessionEnd(payload: {
   return { error: 'Некорректный ответ' }
 }
 
+export type PathCoachAction = { type: string; label: string; testId?: string }
+
+export type PathCoachChatMessage = { role: 'user' | 'assistant'; content: string }
+
+export async function apiPathCoachHistory(): Promise<
+  { status: 'ok'; messages: PathCoachChatMessage[] } | { error: string; premium_required?: boolean; status?: number }
+> {
+  const res = await fetchWithAuth('/mini-app/path-coach', {
+    method: 'POST',
+    body: JSON.stringify({ historyOnly: true }),
+  })
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>
+  if (res.status === 403) {
+    return { error: 'premium', premium_required: true, status: 403 }
+  }
+  if (!res.ok) {
+    return {
+      error: typeof data.error === 'string' ? data.error : 'Ошибка загрузки',
+      status: res.status,
+    }
+  }
+  if (data.status === 'ok' && Array.isArray(data.messages)) {
+    const messages = (data.messages as { role?: string; content?: string }[])
+      .map((m) => ({
+        role: (m.role === 'assistant' ? 'assistant' : 'user') as 'user' | 'assistant',
+        content: typeof m.content === 'string' ? m.content : '',
+      }))
+      .filter((m) => m.content.trim())
+    return { status: 'ok', messages }
+  }
+  return { error: 'Некорректный ответ', status: res.status }
+}
+
+export async function apiPathCoachSend(
+  message: string,
+): Promise<
+  | { status: 'ok'; reply: string; actions: PathCoachAction[] }
+  | { error: string; code?: string; premium_required?: boolean; status?: number }
+> {
+  const res = await fetchWithAuth('/mini-app/path-coach', {
+    method: 'POST',
+    body: JSON.stringify({ message: message.trim() }),
+  })
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>
+  if (res.status === 403) {
+    return { error: 'premium', premium_required: true, status: 403 }
+  }
+  if (res.status === 429) {
+    return { error: typeof data.error === 'string' ? data.error : 'Слишком много запросов', status: 429 }
+  }
+  if (res.status === 503) {
+    return {
+      error: typeof data.error === 'string' ? data.error : 'Сервис временно недоступен',
+      code: typeof data.code === 'string' ? data.code : undefined,
+      status: 503,
+    }
+  }
+  if (!res.ok) {
+    return {
+      error: typeof data.error === 'string' ? data.error : 'Ошибка ИИ',
+      status: res.status,
+    }
+  }
+  if (data.status === 'ok' && typeof data.reply === 'string') {
+    const raw = Array.isArray(data.actions) ? data.actions : []
+    const actions: PathCoachAction[] = raw
+      .map((a) => {
+        const o = a as Record<string, unknown>
+        const type = typeof o.type === 'string' ? o.type : ''
+        const label = typeof o.label === 'string' ? o.label : ''
+        const testId = typeof o.testId === 'string' ? o.testId : undefined
+        return { type, label, testId }
+      })
+      .filter((a) => a.type && a.label)
+    return { status: 'ok', reply: data.reply, actions }
+  }
+  return { error: 'Некорректный ответ', status: res.status }
+}
+
+export async function apiPathCoachReset(): Promise<{ ok: boolean; cleared: number } | { error: string }> {
+  const res = await fetchWithAuth('/mini-app/path-coach', {
+    method: 'POST',
+    body: JSON.stringify({ reset: true }),
+  })
+  const data = await res.json().catch(() => ({})) as { status?: string; cleared?: number; error?: string }
+  if (!res.ok) return { error: data.error || 'Ошибка' }
+  if (data.status === 'ok') return { ok: true, cleared: data.cleared ?? 0 }
+  return { error: data.error || 'Ошибка' }
+}
+
 export async function apiClearTestHistory(): Promise<{ ok: boolean; deleted: number } | { error: string }> {
   const res = await fetchWithAuth('/mini-app/clear-test-history', { method: 'POST', body: '{}' })
   const data = await res.json().catch(() => ({})) as { ok?: boolean; deleted?: number; error?: string }

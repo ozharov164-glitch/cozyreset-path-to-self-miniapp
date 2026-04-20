@@ -157,6 +157,30 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
       </motion.header>
 
       <div className="flex-1 flex flex-col max-w-[420px] mx-auto w-full px-3 pb-6">
+        <PremiumCard accent="rose" delay={0.02}>
+          <CardHeading icon={IconSparkle} title="ИИ-коуч «Путь к Себе»" iconClassName="text-[#c97a8a]" />
+          <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
+            Отдельный чат в приложении: знает твои тесты, самореализацию и нейро-арену — предложит шаг и кнопку, куда
+            перейти.
+          </p>
+          {isPremium === true ? (
+            <button
+              type="button"
+              onClick={() => useAppStore.getState().setScreen('pathCoach')}
+              className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            >
+              Открыть коуча
+            </button>
+          ) : isPremium === false ? (
+            <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
+              С премиумом — оформи в боте 💛
+            </p>
+          ) : (
+            <p className="text-sm text-[var(--color-text-secondary)]">Проверяем доступ…</p>
+          )}
+        </PremiumCard>
+
         <PremiumCard accent="coral" delay={0}>
           <h2 className="font-display text-xl font-bold text-[var(--color-text-primary)] mb-1.5 tracking-tight">
             Привет, {userName}!

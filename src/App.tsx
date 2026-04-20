@@ -19,6 +19,7 @@ import { SelfRealization } from './screens/SelfRealization'
 import { StatisticsPage } from './screens/StatisticsPage'
 import { SpecialistBrief } from './screens/SpecialistBrief'
 import { TherapyMap } from './screens/TherapyMap'
+import { PathCoach } from './screens/PathCoach'
 import { useAppStore } from './store/appStore'
 
 const NeuroArenaScreen = lazy(async () => {
@@ -115,6 +116,7 @@ function AppContent() {
         {screen === 'statistics' && <StatisticsPage onBack={() => setScreen('dashboard')} />}
         {screen === 'specialistBrief' && <SpecialistBrief onBack={() => setScreen('dashboard')} />}
         {screen === 'therapyMap' && <TherapyMap onBack={() => setScreen('dashboard')} />}
+        {screen === 'pathCoach' && <PathCoach onBack={() => setScreen('dashboard')} />}
         {screen === 'neuroArena' && (
           <Suspense
             fallback={
