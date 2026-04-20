@@ -420,18 +420,34 @@ export function PathCoach({ onBack }: PathCoachProps) {
       </div>
 
       {isPremium === true && (
-        <div className="shrink-0 z-20 relative max-w-[420px] w-full mx-auto isolate">
-          {/* Мягкая лавандовая «подушка» под полем: без жёсткой границы с чатом */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(9.5rem,42vh)] overflow-hidden" aria-hidden>
+        <div className="shrink-0 z-20 relative w-full isolate">
+          {/*
+            Подложка на всю ширину экрана (не max-w), иначе на широких дисплеях — «стены» по бокам.
+            Радиальное пятно + вертикальный градиент: мягкие края слева/справа и плавный уход вверх.
+          */}
+          <div
+            className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-0 w-screen max-w-[100vw] h-[min(11.5rem,46vh)] overflow-hidden"
+            aria-hidden
+          >
             <div
-              className="absolute inset-x-0 bottom-0 h-full bg-gradient-to-t from-[#dfd2f2] from-[8%] via-[#ebe3f7]/92 via-[42%] to-transparent opacity-[0.96]"
+              className="absolute inset-0 opacity-[0.98]"
               style={{
-                maskImage: 'linear-gradient(to bottom, transparent 0%, black 18%)',
-                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 18%)',
+                background:
+                  'radial-gradient(165% 100% at 50% 100%, rgba(218,202,244,0.96) 0%, rgba(232,220,248,0.5) 40%, rgba(244,238,252,0.14) 64%, transparent 76%), linear-gradient(to top, rgba(229,216,242,0.95) 0%, rgba(236,226,248,0.78) 24%, rgba(242,235,250,0.32) 54%, transparent 100%)',
+                maskImage: 'linear-gradient(to bottom, transparent 0%, black 14%, black 100%)',
+                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 14%, black 100%)',
+              }}
+            />
+            {/* Низ экрана: без резкого «обрыва» на фон приложения / home indicator */}
+            <div
+              className="absolute inset-x-0 bottom-0 h-[max(2.25rem,env(safe-area-inset-bottom,0px)+1.35rem)]"
+              style={{
+                background:
+                  'linear-gradient(to top, rgba(214, 198, 236, 0.55) 0%, rgba(225, 210, 242, 0.22) 55%, transparent 100%)',
               }}
             />
           </div>
-          <div className="relative px-3 pt-5 pb-[max(0.85rem,env(safe-area-inset-bottom))]">
+          <div className="relative max-w-[420px] mx-auto w-full px-3 pt-5 pb-[max(1rem,calc(env(safe-area-inset-bottom,0px)+0.65rem))]">
             <div
               className="flex gap-2 items-end rounded-[1.4rem] border border-[#d8c8ec]/70 px-2 py-2 backdrop-blur-[14px] transition-[box-shadow,border-color,background] duration-300 ease-out focus-within:border-[#c4aedc]/95 focus-within:shadow-[0_0_0_1px_rgba(196,174,220,0.35),inset_0_1px_0_rgba(255,255,255,0.55)]"
               style={{
