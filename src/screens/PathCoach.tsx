@@ -424,42 +424,26 @@ export function PathCoach({ onBack }: PathCoachProps) {
       </div>
 
       {isPremium === true && (
-        <div className="shrink-0 z-20 relative w-full isolate bg-[#dfd2f2]">
+        <div className="shrink-0 z-20 relative w-full bg-transparent">
           {/*
-            Подложка на всю ширину (колонка без бокового padding у корня — не режется overflow).
-            Снизу — непрозрачная полоса под safe-area, чтобы не просвечивал белый фон WebView.
+            Без отдельного «лаванда-блока»: виден тот же ambient, что и в чате.
+            Низ — цвет последней ступени глобального градиента (#ebe3f9), зерно fixed как у .pts-ambient__grain.
           */}
           <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 w-full h-[min(11.5rem,46vh)] overflow-hidden"
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-0 bg-[#ebe3f9]"
+            style={{ height: 'max(1.4rem, calc(env(safe-area-inset-bottom, 0px) + 0.7rem))' }}
             aria-hidden
-          >
-            {/* Сплошная подложка под индикатор «домой» + типичный зазор dvh (без белой линии) */}
+          />
+          <div className="pts-pathcoach-dock-grain z-[1]" aria-hidden />
+          <div className="relative z-[2] max-w-[420px] mx-auto w-full pl-[max(12px,env(safe-area-inset-left,0px))] pr-[max(12px,env(safe-area-inset-right,0px))] pt-4 pb-[max(0.9rem,calc(env(safe-area-inset-bottom,0px)+0.55rem))]">
             <div
-              className="absolute inset-x-0 bottom-0 z-0 bg-[#dfd2f2]"
-              style={{ height: 'max(1.25rem, calc(env(safe-area-inset-bottom, 0px) + 0.5rem))' }}
-            />
-            <div
-              className="absolute inset-0 z-[1] opacity-[0.98]"
-              style={{
-                background:
-                  'radial-gradient(165% 100% at 50% 100%, rgba(218,202,244,0.96) 0%, rgba(232,220,248,0.5) 40%, rgba(244,238,252,0.14) 64%, transparent 76%), linear-gradient(to top, rgba(229,216,242,0.95) 0%, rgba(236,226,248,0.78) 24%, rgba(242,235,250,0.32) 54%, transparent 100%)',
-                maskImage: 'linear-gradient(to bottom, transparent 0%, black 14%, black 100%)',
-                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 14%, black 100%)',
-              }}
-            />
-            <div
-              className="absolute inset-x-0 bottom-0 z-[1] h-[max(2.25rem,calc(env(safe-area-inset-bottom,0px)+1.35rem))] bg-gradient-to-t from-[#d8c8ec]/90 from-[0%] via-[#e2d4f4]/35 via-[55%] to-transparent"
-            />
-          </div>
-          <div className="relative z-[2] max-w-[420px] mx-auto w-full pl-[max(12px,env(safe-area-inset-left,0px))] pr-[max(12px,env(safe-area-inset-right,0px))] pt-5 pb-[max(1rem,calc(env(safe-area-inset-bottom,0px)+0.65rem))]">
-            <div
-              className="flex gap-2 items-end rounded-[1.4rem] border border-[#d8c8ec]/70 px-2 py-2 backdrop-blur-[14px] transition-[box-shadow,border-color,background] duration-300 ease-out focus-within:border-[#c4aedc]/95 focus-within:shadow-[0_0_0_1px_rgba(196,174,220,0.35),inset_0_1px_0_rgba(255,255,255,0.55)]"
+              className="flex gap-2 items-end rounded-[1.4rem] border border-[#e4daf0]/90 px-2 py-2 transition-[box-shadow,border-color,background] duration-300 ease-out focus-within:border-[#d2c4e8] focus-within:shadow-[0_0_0_1px_rgba(200,185,225,0.35),inset_0_1px_0_rgba(255,255,255,0.6)]"
               style={{
                 WebkitTapHighlightColor: 'transparent',
                 background:
-                  'linear-gradient(155deg, rgba(255,254,255,0.94) 0%, rgba(244,236,252,0.9) 38%, rgba(232,218,248,0.88) 100%)',
+                  'linear-gradient(158deg, rgba(255,255,255,0.9) 0%, rgba(250,246,255,0.86) 42%, rgba(240,232,252,0.88) 100%)',
                 boxShadow:
-                  'inset 0 1px 0 rgba(255,255,255,0.72), inset 0 -1px 0 rgba(180,150,210,0.08), 0 6px 28px rgba(95,65,130,0.1)',
+                  'inset 0 1px 0 rgba(255,255,255,0.68), inset 0 -1px 0 rgba(185,160,215,0.07), 0 4px 22px rgba(90,65,125,0.08)',
               }}
             >
               <textarea
