@@ -74,7 +74,7 @@ export function TestFlow({ onBack }: TestFlowProps) {
         <div className="flex flex-col flex-1 min-h-[120px]" style={{ overflow: 'visible' }}>
           <AnimatePresence mode="wait">
             <motion.div
-              key={currentQuestionIndex}
+              key={`${currentTestId ?? 't'}-${currentQuestionIndex}`}
               className="rounded-2xl mb-6 p-6 relative overflow-hidden test-question-card"
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
