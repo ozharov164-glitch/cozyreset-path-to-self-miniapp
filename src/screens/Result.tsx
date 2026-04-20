@@ -177,7 +177,10 @@ export function Result({ onBack }: ResultProps) {
   const aiMovies = suggestionsData?.movies ?? []
 
   useEffect(() => {
-    if (!saved || !pathCoachReturnAfterTest || !lastSavedResultId || !displayTest?.title) return
+    if (!saved || !lastSavedResultId || !displayTest?.title) return
+    // Флаг в zustand или метка в sessionStorage — иначе при «Вернуться к Венере» сброс zustand рвёт ingest до вызова API.
+    const cameFromVenus = pathCoachReturnZustand || readVenCoachStored()
+    if (!cameFromVenus) return
     const key = lastSavedResultId
     if (coachIngestSentRef.current === key) return
     coachIngestSentRef.current = key
@@ -189,22 +192,18 @@ export function Result({ onBack }: ResultProps) {
     }).catch(() => {
       coachIngestSentRef.current = null
     })
-  }, [saved, pathCoachReturnAfterTest, lastSavedResultId, displayTest?.title, avgRounded])
+  }, [saved, pathCoachReturnZustand, lastSavedResultId, displayTest?.title, avgRounded])
 
   const openBot = () => {
     goBackToBot()
   }
 
   const goToPathCoach = () => {
-    setPathCoachReturnAfterTest(false)
-    try {
-      sessionStorage.removeItem('pts_vcoach_return')
-    } catch {
-      /* ignore */
-    }
     setOpenResultId(null)
     resetTest()
     setScreen('pathCoach')
+    setPathCoachReturnAfterTest(false)
+    // pts_vcoach_return не трогаем здесь — снимает PathCoach после загрузки истории, чтобы не сорвать ingest.
   }
 
   const handleBack = () => {
@@ -212,11 +211,6 @@ export function Result({ onBack }: ResultProps) {
     resetTest()
     if (pathCoachReturnAfterTest) {
       setPathCoachReturnAfterTest(false)
-      try {
-        sessionStorage.removeItem('pts_vcoach_return')
-      } catch {
-        /* ignore */
-      }
       setScreen('pathCoach')
     } else {
       onBack()

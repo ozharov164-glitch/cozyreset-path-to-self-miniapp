@@ -117,6 +117,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
       return
     }
     let cancelled = false
+    let catchUpId: number | undefined
     ;(async () => {
       setBootLoading(true)
       const r = await apiPathCoachHistory()
@@ -126,6 +127,29 @@ export function PathCoach({ onBack }: PathCoachProps) {
         setMessages(rows)
         setLastActions([])
         if (rows.length > 0) setIntroOpen(false)
+        // Возврат с экрана результата: ingest на сервере может завершиться чуть позже первой загрузки истории.
+        let pendingVenusReturn = false
+        try {
+          pendingVenusReturn = sessionStorage.getItem('pts_vcoach_return') === '1'
+          if (pendingVenusReturn) {
+            sessionStorage.removeItem('pts_vcoach_return')
+          }
+        } catch {
+          /* ignore */
+        }
+        if (pendingVenusReturn) {
+          catchUpId = window.setTimeout(() => {
+            void (async () => {
+              if (cancelled) return
+              const r2 = await apiPathCoachHistory()
+              if (cancelled || r2.status !== 'ok') return
+              const rows2 = toRowsFromServer(r2.messages)
+              setMessages(rows2)
+              setLastActions([])
+              if (rows2.length > 0) setIntroOpen(false)
+            })()
+          }, 1600)
+        }
       } else if ('premium_required' in r && r.premium_required) {
         setError('Нужен премиум — оформи подписку в боте 💛')
       } else {
@@ -135,6 +159,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
     })()
     return () => {
       cancelled = true
+      if (catchUpId !== undefined) window.clearTimeout(catchUpId)
     }
   }, [isPremium])
 
