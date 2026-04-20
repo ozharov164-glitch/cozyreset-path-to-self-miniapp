@@ -4,7 +4,16 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { TESTS } from '../data/tests'
 import { useAppStore } from '../store/appStore'
 import { useAuthStore } from '../store/authStore'
-import { apiSaveTestResult, apiTestResult, apiAiSuggestions, ensureAuth, getInitDataString, loadBackendConfig, refreshInitData } from '../api/client'
+import {
+  apiSaveTestResult,
+  apiTestResult,
+  apiAiSuggestions,
+  apiPathCoachIngestTestResult,
+  ensureAuth,
+  getInitDataString,
+  loadBackendConfig,
+  refreshInitData,
+} from '../api/client'
 import { ResultPremiumAiLoading } from '../components/ResultPremiumAiLoading'
 import { goBackToBot, copyQuestionToClipboard } from '../utils/telegram'
 
@@ -37,12 +46,16 @@ export function Result({ onBack }: ResultProps) {
   const resetTest = useAppStore((s) => s.resetTest)
   const openResultId = useAppStore((s) => s.openResultId)
   const setOpenResultId = useAppStore((s) => s.setOpenResultId)
+  const pathCoachReturnAfterTest = useAppStore((s) => s.pathCoachReturnAfterTest)
+  const setPathCoachReturnAfterTest = useAppStore((s) => s.setPathCoachReturnAfterTest)
+  const setScreen = useAppStore((s) => s.setScreen)
 
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const saveStartedRef = useRef(false)
   const lastSaveKeyRef = useRef<string>('')
+  const coachIngestSentRef = useRef<string | null>(null)
 
   const test = TESTS.find((t) => t.id === currentTestId)
   const isViewingHistory = !!openResultId
@@ -126,22 +139,58 @@ export function Result({ onBack }: ResultProps) {
   // Точный resultId нужен, чтобы темы ИИ не генерировались повторно при повторном заходе.
   const suggestionsResultId = openResultId ?? lastSavedResultId
 
+  const suggestionsQueryEnabled = !!(
+    displayTest?.title &&
+    displayAnswers.length > 0 &&
+    authReady &&
+    appSaveToken &&
+    suggestionsResultId &&
+    !pathCoachReturnAfterTest
+  )
+
   const { data: suggestionsData, isLoading: aiSuggestionsLoading } = useQuery({
     queryKey: ['ai-suggestions-result', displayTest?.title ?? '', avgRounded, suggestionsResultId ?? ''],
     queryFn: () => apiAiSuggestions(displayTest?.title ?? '', avgRounded, suggestionsResultId),
-    enabled: !!(displayTest?.title && displayAnswers.length > 0 && authReady && appSaveToken && suggestionsResultId),
+    enabled: suggestionsQueryEnabled,
   })
   const aiSuggestions = suggestionsData?.suggestions ?? []
   const aiMovies = suggestionsData?.movies ?? []
+
+  useEffect(() => {
+    if (!saved || !pathCoachReturnAfterTest || !lastSavedResultId || !displayTest?.title) return
+    const key = lastSavedResultId
+    if (coachIngestSentRef.current === key) return
+    coachIngestSentRef.current = key
+    const narrative = getScoreDescription(avgRounded, displayTest.title)
+    void apiPathCoachIngestTestResult({
+      testTitle: displayTest.title,
+      avgRounded,
+      narrative,
+    }).catch(() => {
+      coachIngestSentRef.current = null
+    })
+  }, [saved, pathCoachReturnAfterTest, lastSavedResultId, displayTest?.title, avgRounded])
 
   const openBot = () => {
     goBackToBot()
   }
 
+  const goToPathCoach = () => {
+    setPathCoachReturnAfterTest(false)
+    setOpenResultId(null)
+    resetTest()
+    setScreen('pathCoach')
+  }
+
   const handleBack = () => {
     setOpenResultId(null)
     resetTest()
-    onBack()
+    if (pathCoachReturnAfterTest) {
+      setPathCoachReturnAfterTest(false)
+      setScreen('pathCoach')
+    } else {
+      onBack()
+    }
   }
 
   const handleRetrySave = () => {
@@ -278,123 +327,173 @@ export function Result({ onBack }: ResultProps) {
               <p className="text-center text-sm font-medium py-2" style={{ color: '#0d9488' }}>
                 Результат сохранён в истории ✅
               </p>
-              <motion.div
-                className="rounded-2xl p-4"
-                initial={{ y: 8 }}
-                animate={{ y: 0 }}
-                transition={{ duration: 0.4, delay: 0.12 }}
-                style={{
-                  background: 'linear-gradient(145deg, rgba(125,211,192,0.15) 0%, rgba(201,184,232,0.12) 100%)',
-                  border: '1px solid rgba(125,211,192,0.35)',
-                }}
-              >
-                <h4 className="text-sm font-semibold mb-3" style={{ color: 'var(--color-forest-dark)' }}>
-                  Что дальше?
-                </h4>
-                <ul className="space-y-2 text-sm mb-3" style={{ color: 'var(--color-text-primary)' }}>
-                  <li className="flex gap-2">
-                    <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
-                    <span>Терапия и регулярные практики усиливают эффект — в боте есть поддержка и инструменты для каждого дня.</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
-                    <span>Чек-ины, аффирмации и ИИ-поддержка помогут закрепить прогресс и замечать изменения.</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
-                    <span>Твоя дорога к себе продолжается в боте — открой его и сделай следующий шаг.</span>
-                  </li>
-                </ul>
-                {(aiSuggestionsLoading || aiSuggestions.length > 0) && (
-                  <AnimatePresence mode="wait" initial={false}>
-                    {aiSuggestionsLoading ? (
+              {pathCoachReturnAfterTest ? (
+                <>
+                  <motion.div
+                    className="rounded-2xl p-5"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+                    style={{
+                      background:
+                        'linear-gradient(155deg, rgba(255,255,255,0.96) 0%, rgba(238,230,252,0.94) 50%, rgba(222,210,245,0.9) 100%)',
+                      border: '1px solid rgba(155,130,200,0.42)',
+                      boxShadow: '0 10px 36px rgba(75,55,115,0.14)',
+                    }}
+                  >
+                    <h4 className="font-display text-base font-bold mb-2" style={{ color: '#3a2d4d' }}>
+                      Продолжим в чате с ИИ-Венерой
+                    </h4>
+                    <p className="text-sm leading-relaxed mb-5" style={{ color: 'var(--color-text-secondary)' }}>
+                      Краткий итог теста и твой средний балл уже добавлены в диалог с Венерой — можно сразу продолжить
+                      разбор там, без отдельных фраз для чата в боте.
+                    </p>
+                    <motion.button
+                      type="button"
+                      onClick={goToPathCoach}
+                      className="w-full py-3.5 px-4 rounded-2xl font-semibold text-white mb-3 min-h-[52px]"
+                      style={{
+                        background: 'linear-gradient(135deg, #9578c4 0%, #6b5090 45%, #5a4578 100%)',
+                        boxShadow: '0 10px 30px rgba(80,55,120,0.38)',
+                      }}
+                      whileTap={{ scale: 0.98 }}
+                      whileHover={{ scale: 1.015 }}
+                    >
+                      Вернуться к Венере
+                    </motion.button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPathCoachReturnAfterTest(false)
+                        onBack()
+                      }}
+                      className="w-full py-2.5 px-4 rounded-xl btn-secondary text-sm font-semibold"
+                    >
+                      На главную приложения
+                    </button>
+                  </motion.div>
+                </>
+              ) : (
+                <>
+                  <motion.div
+                    className="rounded-2xl p-4"
+                    initial={{ y: 8 }}
+                    animate={{ y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.12 }}
+                    style={{
+                      background: 'linear-gradient(145deg, rgba(125,211,192,0.15) 0%, rgba(201,184,232,0.12) 100%)',
+                      border: '1px solid rgba(125,211,192,0.35)',
+                    }}
+                  >
+                    <h4 className="text-sm font-semibold mb-3" style={{ color: 'var(--color-forest-dark)' }}>
+                      Что дальше?
+                    </h4>
+                    <ul className="space-y-2 text-sm mb-3" style={{ color: 'var(--color-text-primary)' }}>
+                      <li className="flex gap-2">
+                        <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
+                        <span>Терапия и регулярные практики усиливают эффект — в боте есть поддержка и инструменты для каждого дня.</span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
+                        <span>Чек-ины, аффирмации и ИИ-поддержка помогут закрепить прогресс и замечать изменения.</span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
+                        <span>Твоя дорога к себе продолжается в боте — открой его и сделай следующий шаг.</span>
+                      </li>
+                    </ul>
+                    {(aiSuggestionsLoading || aiSuggestions.length > 0) && (
+                      <AnimatePresence mode="wait" initial={false}>
+                        {aiSuggestionsLoading ? (
+                          <motion.div
+                            key="ai-suggestions-loading"
+                            initial={{ opacity: 1 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2, ease: 'easeOut' }}
+                          >
+                            <ResultPremiumAiLoading withTopDivider />
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="ai-suggestions-ready"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.32, ease: 'easeOut' }}
+                          >
+                            <h5 className="text-xs font-semibold mb-2" style={{ color: 'var(--color-forest-dark)' }}>
+                              Проработать с ИИ в боте:
+                            </h5>
+                            <p className="text-xs mb-1.5" style={{ color: 'var(--color-glow-teal)' }}>
+                              Нажми на фразу — скопируется
+                            </p>
+                            <ul className="space-y-1 text-sm" style={{ color: 'var(--color-text-primary)' }}>
+                              {aiSuggestions.slice(0, 4).map((s, idx) => (
+                                <li key={idx} className="flex gap-2">
+                                  <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => copyQuestionToClipboard(s)}
+                                    className="copyable-question text-left flex-1 min-h-[44px] py-1.5 px-2 -mx-2 rounded-lg"
+                                  >
+                                    {s}
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    )}
+                    {aiMovies.length > 0 && (
                       <motion.div
-                        key="ai-suggestions-loading"
-                        initial={{ opacity: 1 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.2, ease: 'easeOut' }}
+                        className="mt-4 pt-4"
+                        initial={{ y: 6 }}
+                        animate={{ y: 0 }}
+                        transition={{ duration: 0.4, delay: 0.1 }}
+                        style={{ borderTop: '1px solid rgba(125,211,192,0.3)' }}
                       >
-                        <ResultPremiumAiLoading withTopDivider />
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="ai-suggestions-ready"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.32, ease: 'easeOut' }}
-                      >
-                        <h5 className="text-xs font-semibold mb-2" style={{ color: 'var(--color-forest-dark)' }}>
-                          Проработать с ИИ в боте:
+                        <h5 className="text-sm font-semibold mb-3" style={{ color: 'var(--color-forest-dark)' }}>
+                          🎬 Фильмы, которые могут откликнуться в твоём состоянии
                         </h5>
-                        <p className="text-xs mb-1.5" style={{ color: 'var(--color-glow-teal)' }}>
-                          Нажми на фразу — скопируется
-                        </p>
-                        <ul className="space-y-1 text-sm" style={{ color: 'var(--color-text-primary)' }}>
-                          {aiSuggestions.slice(0, 4).map((s, idx) => (
-                            <li key={idx} className="flex gap-2">
-                              <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
-                              <button
-                                type="button"
-                                onClick={() => copyQuestionToClipboard(s)}
-                                className="copyable-question text-left flex-1 min-h-[44px] py-1.5 px-2 -mx-2 rounded-lg"
-                              >
-                                {s}
-                              </button>
-                            </li>
+                        <div className="space-y-3">
+                          {aiMovies.slice(0, 3).map((movie) => (
+                            <div
+                              key={movie.id}
+                              className="rounded-xl p-3.5"
+                              style={{
+                                background: 'rgba(255,255,255,0.6)',
+                                border: '1px solid rgba(201,184,232,0.35)',
+                                boxShadow: '0 2px 12px rgba(45,42,38,0.06)',
+                              }}
+                            >
+                              <p className="text-sm font-semibold mb-0.5" style={{ color: 'var(--color-forest-dark)' }}>
+                                {movie.title}{movie.year ? ` • ${movie.year}` : ''}
+                              </p>
+                              <p className="text-xs mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+                                {movie.director && `Режиссёр: ${movie.director}`}
+                                {Array.isArray(movie.actors) && movie.actors.length > 0 && ` • ${movie.actors.join(', ')}`}
+                              </p>
+                              <p className="text-xs leading-relaxed mb-1.5" style={{ color: 'var(--color-text-primary)' }}>
+                                {movie.plot}
+                              </p>
+                              <p className="text-xs leading-relaxed italic" style={{ color: 'var(--color-glow-teal)' }}>
+                                {movie.whyWatch}
+                              </p>
+                            </div>
                           ))}
-                        </ul>
+                        </div>
+                        <p className="text-[10px] mt-2" style={{ color: 'var(--color-text-secondary)' }}>
+                          Фильмы не заменяют работу со специалистом, но могут помочь мягче прожить своё состояние 💛
+                        </p>
                       </motion.div>
                     )}
-                  </AnimatePresence>
-                )}
-                {aiMovies.length > 0 && (
-                  <motion.div
-                    className="mt-4 pt-4"
-                    initial={{ y: 6 }}
-                    animate={{ y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.1 }}
-                    style={{ borderTop: '1px solid rgba(125,211,192,0.3)' }}
-                  >
-                    <h5 className="text-sm font-semibold mb-3" style={{ color: 'var(--color-forest-dark)' }}>
-                      🎬 Фильмы, которые могут откликнуться в твоём состоянии
-                    </h5>
-                    <div className="space-y-3">
-                      {aiMovies.slice(0, 3).map((movie) => (
-                        <div
-                          key={movie.id}
-                          className="rounded-xl p-3.5"
-                          style={{
-                            background: 'rgba(255,255,255,0.6)',
-                            border: '1px solid rgba(201,184,232,0.35)',
-                            boxShadow: '0 2px 12px rgba(45,42,38,0.06)',
-                          }}
-                        >
-                          <p className="text-sm font-semibold mb-0.5" style={{ color: 'var(--color-forest-dark)' }}>
-                            {movie.title}{movie.year ? ` • ${movie.year}` : ''}
-                          </p>
-                          <p className="text-xs mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
-                            {movie.director && `Режиссёр: ${movie.director}`}
-                            {Array.isArray(movie.actors) && movie.actors.length > 0 && ` • ${movie.actors.join(', ')}`}
-                          </p>
-                          <p className="text-xs leading-relaxed mb-1.5" style={{ color: 'var(--color-text-primary)' }}>
-                            {movie.plot}
-                          </p>
-                          <p className="text-xs leading-relaxed italic" style={{ color: 'var(--color-glow-teal)' }}>
-                            {movie.whyWatch}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-[10px] mt-2" style={{ color: 'var(--color-text-secondary)' }}>
-                      Фильмы не заменяют работу со специалистом, но могут помочь мягче прожить своё состояние 💛
-                    </p>
                   </motion.div>
-                )}
-              </motion.div>
-              <button type="button" onClick={openBot} className="w-full py-3.5 px-4 rounded-xl btn-primary font-semibold">
-                Вернуться в бота
-              </button>
+                  <button type="button" onClick={openBot} className="w-full py-3.5 px-4 rounded-xl btn-primary font-semibold">
+                    Вернуться в бота
+                  </button>
+                </>
+              )}
             </div>
           )}
 

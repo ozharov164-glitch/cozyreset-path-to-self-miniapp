@@ -108,7 +108,19 @@ function AppContent() {
       )}
       <div className="relative z-10 pointer-events-auto min-h-screen flex flex-col">
         {screen === 'catalog' && <Catalog onBack={() => setScreen('dashboard')} />}
-        {screen === 'test' && <TestFlow onBack={() => setScreen('catalog')} />}
+        {screen === 'test' && (
+          <TestFlow
+            onBack={() => {
+              const st = useAppStore.getState()
+              if (st.pathCoachReturnAfterTest) {
+                st.setPathCoachReturnAfterTest(false)
+                st.setScreen('pathCoach')
+              } else {
+                st.setScreen('catalog')
+              }
+            }}
+          />
+        )}
         {screen === 'result' && <Result onBack={() => setScreen('dashboard')} />}
         {screen === 'history' && <History onBack={() => setScreen('dashboard')} />}
         {screen === 'voiceSupport' && <VoiceSupport onBack={() => setScreen('dashboard')} />}

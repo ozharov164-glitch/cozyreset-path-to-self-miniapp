@@ -652,15 +652,25 @@ export async function apiPathCoachHistory(): Promise<
   return { error: 'Некорректный ответ', status: res.status }
 }
 
+function telegramFirstNameForCoach(): string | undefined {
+  if (typeof window === 'undefined') return undefined
+  const n = window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name
+  return typeof n === 'string' && n.trim() ? n.trim().slice(0, 64) : undefined
+}
+
 export async function apiPathCoachSend(
   message: string,
 ): Promise<
   | { status: 'ok'; reply: string; actions: PathCoachAction[] }
   | { error: string; code?: string; premium_required?: boolean; status?: number }
 > {
+  const firstName = telegramFirstNameForCoach()
   const res = await fetchWithAuth('/mini-app/path-coach', {
     method: 'POST',
-    body: JSON.stringify({ message: message.trim() }),
+    body: JSON.stringify({
+      message: message.trim(),
+      ...(firstName ? { firstName } : {}),
+    }),
   })
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>
   if (res.status === 403) {
@@ -694,6 +704,35 @@ export async function apiPathCoachSend(
       })
       .filter((a) => a.type && a.label)
     return { status: 'ok', reply: data.reply, actions }
+  }
+  return { error: 'Некорректный ответ', status: res.status }
+}
+
+export async function apiPathCoachIngestTestResult(payload: {
+  testTitle: string
+  avgRounded: number
+  narrative: string
+}): Promise<{ status: 'ok'; ingested: boolean } | { error: string; status?: number }> {
+  const firstName = telegramFirstNameForCoach()
+  const res = await fetchWithAuth('/mini-app/path-coach', {
+    method: 'POST',
+    body: JSON.stringify({
+      ingestTestResult: true,
+      testTitle: payload.testTitle.trim().slice(0, 200),
+      avgRounded: payload.avgRounded,
+      narrative: payload.narrative.trim().slice(0, 2400),
+      ...(firstName ? { firstName } : {}),
+    }),
+  })
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>
+  if (res.status === 429) {
+    return { error: typeof data.error === 'string' ? data.error : 'Слишком много запросов', status: 429 }
+  }
+  if (!res.ok) {
+    return { error: typeof data.error === 'string' ? data.error : 'Ошибка записи в чат', status: res.status }
+  }
+  if (data.status === 'ok' && data.ingested === true) {
+    return { status: 'ok', ingested: true }
   }
   return { error: 'Некорректный ответ', status: res.status }
 }

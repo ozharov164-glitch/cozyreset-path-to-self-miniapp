@@ -35,6 +35,7 @@ function applyCoachAction(a: PathCoachAction): void {
   const setCurrentTest = useAppStore.getState().setCurrentTest
   switch (a.type) {
     case 'open_catalog':
+      useAppStore.getState().setPathCoachReturnAfterTest(false)
       setScreen('catalog')
       break
     case 'open_statistics':
@@ -65,6 +66,7 @@ function applyCoachAction(a: PathCoachAction): void {
     case 'open_test': {
       const id = (a.testId || '').trim()
       if (id) {
+        useAppStore.getState().setPathCoachReturnAfterTest(true)
         setCurrentTest(id)
         setScreen('test')
       }
@@ -338,21 +340,54 @@ export function PathCoach({ onBack }: PathCoachProps) {
 
           {lastActions.length > 0 && !loading && (
             <motion.div
-              className="mt-4 flex flex-wrap gap-2"
-              initial={reduceMotion ? false : { opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35 }}
+              className="mt-4 flex flex-wrap gap-2.5"
+              role="group"
+              aria-label="Предложения ИИ-Венеры"
+              initial="hidden"
+              animate="visible"
+              variants={
+                reduceMotion
+                  ? { hidden: {}, visible: {} }
+                  : {
+                      hidden: {},
+                      visible: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } },
+                    }
+              }
             >
               {lastActions.map((a, idx) => (
                 <motion.button
-                  key={`${a.type}-${a.testId ?? ''}-${idx}`}
+                  key={`${a.type}-${a.testId ?? ''}-${idx}-${a.label.slice(0, 24)}`}
                   type="button"
-                  whileTap={reduceMotion ? {} : { scale: 0.97 }}
+                  variants={
+                    reduceMotion
+                      ? { hidden: {}, visible: {} }
+                      : {
+                          hidden: { opacity: 0, y: 14, scale: 0.92, filter: 'blur(5px)' },
+                          visible: {
+                            opacity: 1,
+                            y: 0,
+                            scale: 1,
+                            filter: 'blur(0px)',
+                            transition: { type: 'spring', stiffness: 380, damping: 26, mass: 0.85 },
+                          },
+                        }
+                  }
+                  whileHover={reduceMotion ? {} : { scale: 1.02, y: -1 }}
+                  whileTap={reduceMotion ? {} : { scale: 0.96 }}
                   onClick={() => applyCoachAction(a)}
-                  className="px-3.5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-[#c5f5ec]/90 to-white/80 border border-[var(--color-glow-teal)]/40 text-[var(--color-forest-dark)] shadow-sm active:opacity-90"
+                  className="relative overflow-hidden px-4 py-2.5 rounded-2xl text-sm font-semibold text-[#3a2d4a] bg-gradient-to-br from-white via-[#f6f2fc] to-[#e8dff7] border border-[#cfc0e6]/90 shadow-[0_4px_20px_rgba(75,50,115,0.11)] ring-1 ring-white/70 active:opacity-95"
                   style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                 >
-                  {a.label}
+                  <span className="relative z-10">{a.label}</span>
+                  {!reduceMotion && (
+                    <motion.span
+                      className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/55 to-transparent skew-x-[-18deg]"
+                      initial={{ x: '-120%', opacity: 0 }}
+                      animate={{ x: '120%', opacity: [0, 0.9, 0] }}
+                      transition={{ duration: 1.1, delay: 0.15 + idx * 0.06, ease: 'easeInOut' }}
+                      aria-hidden
+                    />
+                  )}
                 </motion.button>
               ))}
             </motion.div>

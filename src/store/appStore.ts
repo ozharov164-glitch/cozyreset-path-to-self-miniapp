@@ -33,6 +33,9 @@ interface AppState {
   resetTest: () => void
   /** Открыть экран результата по id из истории — один вызов, без промежуточного рендера */
   openResultFromHistory: (resultId: string) => void
+  /** Тест открыт из чата ИИ-Венеры — после результата не грузим фразы для бота, пишем сводку в чат Венеры */
+  pathCoachReturnAfterTest: boolean
+  setPathCoachReturnAfterTest: (v: boolean) => void
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -53,4 +56,6 @@ export const useAppStore = create<AppState>((set) => ({
   setOpenResultId: (openResultId) => set({ openResultId }),
   resetTest: () => set({ currentTestId: null, currentQuestionIndex: 0, answers: [] }),
   openResultFromHistory: (resultId) => set({ openResultId: resultId, screen: 'result' }),
+  pathCoachReturnAfterTest: false,
+  setPathCoachReturnAfterTest: (pathCoachReturnAfterTest) => set({ pathCoachReturnAfterTest }),
 }))

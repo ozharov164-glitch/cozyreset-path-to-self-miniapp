@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { TESTS } from '../data/tests'
@@ -13,6 +14,10 @@ export function Catalog({ onBack }: CatalogProps) {
   const setScreen = useAppStore((s) => s.setScreen)
   const setCurrentTest = useAppStore((s) => s.setCurrentTest)
   const authReady = useAuthStore((s) => s.isInitialized)
+
+  useEffect(() => {
+    useAppStore.getState().setPathCoachReturnAfterTest(false)
+  }, [])
 
   const { data: historyData } = useQuery({
     queryKey: ['test-history'],
