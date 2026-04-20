@@ -192,9 +192,10 @@ export function PathCoach({ onBack }: PathCoachProps) {
   }
 
   return (
-    <div className="min-h-[100dvh] max-h-[100dvh] flex flex-col safe-area overflow-hidden bg-transparent">
+    <div className="min-h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden bg-transparent pt-[max(12px,env(safe-area-inset-top,0px))]">
+      <div className="flex flex-1 flex-col min-h-0 min-w-0 pl-[max(16px,env(safe-area-inset-left,0px))] pr-[max(16px,env(safe-area-inset-right,0px))]">
       <motion.header
-        className="header-app-glass h-14 flex items-center justify-between px-3 mb-2 rounded-2xl shrink-0 mx-3 mt-1"
+        className="header-app-glass h-14 flex items-center justify-between px-3 mb-2 rounded-2xl shrink-0 mt-1 w-full"
         initial={reduceMotion ? false : { opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
@@ -220,7 +221,9 @@ export function PathCoach({ onBack }: PathCoachProps) {
         </button>
       </motion.header>
 
-      <div className="flex-1 flex flex-col min-h-0 max-w-[420px] mx-auto w-full px-3">
+      <div
+        className={`flex-1 flex flex-col min-h-0 max-w-[420px] mx-auto w-full px-3 ${isPremium === true ? '' : 'pb-[max(16px,env(safe-area-inset-bottom,0px))]'}`}
+      >
         {isPremium === true && (
           <div className="shrink-0 mb-2">
             <PremiumCard accent="mint" delay={0} className="!mb-2 !p-4">
@@ -418,19 +421,25 @@ export function PathCoach({ onBack }: PathCoachProps) {
           <div ref={bottomRef} className="h-4 shrink-0" aria-hidden />
         </div>
       </div>
+      </div>
 
       {isPremium === true && (
-        <div className="shrink-0 z-20 relative w-full isolate">
+        <div className="shrink-0 z-20 relative w-full isolate bg-[#dfd2f2]">
           {/*
-            Подложка на всю ширину экрана (не max-w), иначе на широких дисплеях — «стены» по бокам.
-            Радиальное пятно + вертикальный градиент: мягкие края слева/справа и плавный уход вверх.
+            Подложка на всю ширину (колонка без бокового padding у корня — не режется overflow).
+            Снизу — непрозрачная полоса под safe-area, чтобы не просвечивал белый фон WebView.
           */}
           <div
-            className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-0 w-screen max-w-[100vw] h-[min(11.5rem,46vh)] overflow-hidden"
+            className="pointer-events-none absolute inset-x-0 bottom-0 w-full h-[min(11.5rem,46vh)] overflow-hidden"
             aria-hidden
           >
+            {/* Сплошная подложка под индикатор «домой» + типичный зазор dvh (без белой линии) */}
             <div
-              className="absolute inset-0 opacity-[0.98]"
+              className="absolute inset-x-0 bottom-0 z-0 bg-[#dfd2f2]"
+              style={{ height: 'max(1.25rem, calc(env(safe-area-inset-bottom, 0px) + 0.5rem))' }}
+            />
+            <div
+              className="absolute inset-0 z-[1] opacity-[0.98]"
               style={{
                 background:
                   'radial-gradient(165% 100% at 50% 100%, rgba(218,202,244,0.96) 0%, rgba(232,220,248,0.5) 40%, rgba(244,238,252,0.14) 64%, transparent 76%), linear-gradient(to top, rgba(229,216,242,0.95) 0%, rgba(236,226,248,0.78) 24%, rgba(242,235,250,0.32) 54%, transparent 100%)',
@@ -438,16 +447,11 @@ export function PathCoach({ onBack }: PathCoachProps) {
                 WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 14%, black 100%)',
               }}
             />
-            {/* Низ экрана: без резкого «обрыва» на фон приложения / home indicator */}
             <div
-              className="absolute inset-x-0 bottom-0 h-[max(2.25rem,env(safe-area-inset-bottom,0px)+1.35rem)]"
-              style={{
-                background:
-                  'linear-gradient(to top, rgba(214, 198, 236, 0.55) 0%, rgba(225, 210, 242, 0.22) 55%, transparent 100%)',
-              }}
+              className="absolute inset-x-0 bottom-0 z-[1] h-[max(2.25rem,calc(env(safe-area-inset-bottom,0px)+1.35rem))] bg-gradient-to-t from-[#d8c8ec]/90 from-[0%] via-[#e2d4f4]/35 via-[55%] to-transparent"
             />
           </div>
-          <div className="relative max-w-[420px] mx-auto w-full px-3 pt-5 pb-[max(1rem,calc(env(safe-area-inset-bottom,0px)+0.65rem))]">
+          <div className="relative z-[2] max-w-[420px] mx-auto w-full pl-[max(12px,env(safe-area-inset-left,0px))] pr-[max(12px,env(safe-area-inset-right,0px))] pt-5 pb-[max(1rem,calc(env(safe-area-inset-bottom,0px)+0.65rem))]">
             <div
               className="flex gap-2 items-end rounded-[1.4rem] border border-[#d8c8ec]/70 px-2 py-2 backdrop-blur-[14px] transition-[box-shadow,border-color,background] duration-300 ease-out focus-within:border-[#c4aedc]/95 focus-within:shadow-[0_0_0_1px_rgba(196,174,220,0.35),inset_0_1px_0_rgba(255,255,255,0.55)]"
               style={{
