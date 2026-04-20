@@ -293,7 +293,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
 
         <div
           ref={scrollRef}
-          className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain pb-3 [-webkit-overflow-scrolling:touch]"
+          className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain pb-5 [-webkit-overflow-scrolling:touch]"
         >
           <div className="space-y-3">
             <AnimatePresence initial={false}>
@@ -420,11 +420,27 @@ export function PathCoach({ onBack }: PathCoachProps) {
       </div>
 
       {isPremium === true && (
-        <div className="shrink-0 z-20 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-4 bg-gradient-to-t from-[#f6f4fa] from-40% via-[#f6f4fa]/70 to-transparent">
-          <div className="max-w-[420px] mx-auto w-full">
+        <div className="shrink-0 z-20 relative max-w-[420px] w-full mx-auto isolate">
+          {/* Мягкая лавандовая «подушка» под полем: без жёсткой границы с чатом */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(9.5rem,42vh)] overflow-hidden" aria-hidden>
             <div
-              className="flex gap-1.5 items-end rounded-[1.35rem] bg-white/90 backdrop-blur-xl px-2 py-1.5 border border-[#e8e4f0] shadow-[0_6px_24px_rgba(55,45,75,0.07)] focus-within:border-[#d4cce8] focus-within:shadow-[0_8px_28px_rgba(55,45,75,0.1)] focus-within:ring-1 focus-within:ring-[#c4b8dc]/35 transition-[box-shadow,border-color] duration-200"
-              style={{ WebkitTapHighlightColor: 'transparent' }}
+              className="absolute inset-x-0 bottom-0 h-full bg-gradient-to-t from-[#dfd2f2] from-[8%] via-[#ebe3f7]/92 via-[42%] to-transparent opacity-[0.96]"
+              style={{
+                maskImage: 'linear-gradient(to bottom, transparent 0%, black 18%)',
+                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 18%)',
+              }}
+            />
+          </div>
+          <div className="relative px-3 pt-5 pb-[max(0.85rem,env(safe-area-inset-bottom))]">
+            <div
+              className="flex gap-2 items-end rounded-[1.4rem] border border-[#d8c8ec]/70 px-2 py-2 backdrop-blur-[14px] transition-[box-shadow,border-color,background] duration-300 ease-out focus-within:border-[#c4aedc]/95 focus-within:shadow-[0_0_0_1px_rgba(196,174,220,0.35),inset_0_1px_0_rgba(255,255,255,0.55)]"
+              style={{
+                WebkitTapHighlightColor: 'transparent',
+                background:
+                  'linear-gradient(155deg, rgba(255,254,255,0.94) 0%, rgba(244,236,252,0.9) 38%, rgba(232,218,248,0.88) 100%)',
+                boxShadow:
+                  'inset 0 1px 0 rgba(255,255,255,0.72), inset 0 -1px 0 rgba(180,150,210,0.08), 0 6px 28px rgba(95,65,130,0.1)',
+              }}
             >
               <textarea
                 value={draft}
@@ -432,7 +448,8 @@ export function PathCoach({ onBack }: PathCoachProps) {
                 placeholder="Напиши, что происходит…"
                 rows={2}
                 maxLength={3800}
-                className="flex-1 min-h-[48px] max-h-[min(40vh,9.5rem)] resize-none rounded-[1rem] bg-transparent border-0 px-2.5 py-2.5 text-[15px] leading-relaxed text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] placeholder:opacity-80 focus:outline-none focus:ring-0 min-w-0"
+                className="flex-1 min-h-[48px] max-h-[min(40vh,9.5rem)] resize-none rounded-xl bg-transparent border-0 px-2.5 py-2.5 text-[15px] leading-relaxed text-[#3a2d4a] placeholder:text-[#7a6b92] placeholder:opacity-[0.78] focus:outline-none focus:ring-0 min-w-0 caret-[#7b5fa8]"
+                style={{ WebkitAppearance: 'none' }}
                 disabled={loading || bootLoading}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
@@ -445,7 +462,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
                 type="button"
                 onClick={() => void send()}
                 disabled={loading || bootLoading || !draft.trim()}
-                className="shrink-0 mb-0.5 min-h-[44px] min-w-[48px] rounded-[1rem] px-2.5 font-semibold text-white self-end bg-[#6b5b8c] shadow-[0_2px_10px_rgba(80,60,110,0.25)] hover:brightness-105 active:scale-[0.98] active:brightness-95 disabled:opacity-45 disabled:hover:brightness-100 disabled:active:scale-100 transition-[transform,filter,opacity]"
+                className="shrink-0 mb-px min-h-[44px] min-w-[50px] rounded-xl px-2.5 font-semibold text-white self-end bg-gradient-to-br from-[#a088cc] via-[#8465b3] to-[#6a4d96] shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_3px_14px_rgba(75,48,115,0.28)] hover:brightness-[1.05] active:scale-[0.97] active:brightness-[0.96] disabled:opacity-45 disabled:hover:brightness-100 disabled:active:scale-100 transition-[transform,filter,opacity]"
                 style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
               >
                 →
