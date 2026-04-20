@@ -117,7 +117,8 @@ export function PathCoach({ onBack }: PathCoachProps) {
       return
     }
     let cancelled = false
-    let catchUpId: number | undefined
+    let catchUpStartId: number | undefined
+    let catchUpIntervalId: number | undefined
     ;(async () => {
       setBootLoading(true)
       const r = await apiPathCoachHistory()
@@ -127,7 +128,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
         setMessages(rows)
         setLastActions([])
         if (rows.length > 0) setIntroOpen(false)
-        // Возврат с экрана результата: ingest на сервере может завершиться чуть позже первой загрузки истории.
+        // Ingest + LLM на сервере часто 6–15 с — один refetch не хватает; опрашиваем историю до появления новой реплики.
         let pendingVenusReturn = false
         try {
           pendingVenusReturn = sessionStorage.getItem('pts_vcoach_return') === '1'
@@ -138,17 +139,29 @@ export function PathCoach({ onBack }: PathCoachProps) {
           /* ignore */
         }
         if (pendingVenusReturn) {
-          catchUpId = window.setTimeout(() => {
-            void (async () => {
-              if (cancelled) return
-              const r2 = await apiPathCoachHistory()
-              if (cancelled || r2.status !== 'ok') return
-              const rows2 = toRowsFromServer(r2.messages)
-              setMessages(rows2)
-              setLastActions([])
-              if (rows2.length > 0) setIntroOpen(false)
-            })()
-          }, 1600)
+          const baselineLen = rows.length
+          let polls = 0
+          const maxPolls = 16
+          const runPoll = async () => {
+            if (cancelled) return
+            polls += 1
+            const r2 = await apiPathCoachHistory()
+            if (cancelled || r2.status !== 'ok') return
+            const rows2 = toRowsFromServer(r2.messages)
+            setMessages(rows2)
+            setLastActions([])
+            if (rows2.length > 0) setIntroOpen(false)
+            if (rows2.length > baselineLen || polls >= maxPolls) {
+              if (catchUpIntervalId !== undefined) {
+                window.clearInterval(catchUpIntervalId)
+                catchUpIntervalId = undefined
+              }
+            }
+          }
+          catchUpStartId = window.setTimeout(() => {
+            void runPoll()
+            catchUpIntervalId = window.setInterval(() => void runPoll(), 2200)
+          }, 700)
         }
       } else if ('premium_required' in r && r.premium_required) {
         setError('Нужен премиум — оформи подписку в боте 💛')
@@ -159,7 +172,8 @@ export function PathCoach({ onBack }: PathCoachProps) {
     })()
     return () => {
       cancelled = true
-      if (catchUpId !== undefined) window.clearTimeout(catchUpId)
+      if (catchUpStartId !== undefined) window.clearTimeout(catchUpStartId)
+      if (catchUpIntervalId !== undefined) window.clearInterval(catchUpIntervalId)
     }
   }, [isPremium])
 
@@ -419,13 +433,17 @@ export function PathCoach({ onBack }: PathCoachProps) {
                   whileHover={reduceMotion ? {} : { scale: 1.02, y: -1 }}
                   whileTap={reduceMotion ? {} : { scale: 0.96 }}
                   onClick={() => applyCoachAction(a)}
-                  className="relative overflow-hidden px-4 py-2.5 rounded-2xl text-sm font-semibold text-[#3a2d4a] bg-gradient-to-br from-white via-[#f6f2fc] to-[#e8dff7] border border-[#cfc0e6]/90 shadow-[0_4px_20px_rgba(75,50,115,0.11)] ring-1 ring-white/70 active:opacity-95"
-                  style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                  className="relative isolate overflow-hidden px-4 py-2.5 rounded-2xl text-sm font-semibold text-[#3a2d4a] bg-gradient-to-br from-white via-[#faf7ff] to-[#ede4f7] border border-[#d2c2e6] shadow-[0_2px_14px_rgba(55,40,95,0.08)] active:opacity-[0.96] [transform:translateZ(0)]"
+                  style={{
+                    touchAction: 'manipulation',
+                    WebkitTapHighlightColor: 'transparent',
+                    WebkitFontSmoothing: 'antialiased',
+                  }}
                 >
                   <span className="relative z-10">{a.label}</span>
                   {!reduceMotion && (
                     <motion.span
-                      className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/55 to-transparent skew-x-[-18deg]"
+                      className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-white/45 to-transparent skew-x-[-14deg]"
                       initial={{ x: '-120%', opacity: 0 }}
                       animate={{ x: '120%', opacity: [0, 0.9, 0] }}
                       transition={{ duration: 1.1, delay: 0.15 + idx * 0.06, ease: 'easeInOut' }}
