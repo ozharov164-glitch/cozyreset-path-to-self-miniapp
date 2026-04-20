@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { TESTS } from '../data/tests'
 import { useAppStore } from '../store/appStore'
 import { useAuthStore } from '../store/authStore'
@@ -45,6 +45,7 @@ interface ResultProps {
 }
 
 export function Result({ onBack }: ResultProps) {
+  const reduceMotion = useReducedMotion()
   const authReady = useAuthStore((s) => s.isInitialized)
   const appSaveToken = useAuthStore((s) => s.appSaveToken)
   const queryClient = useQueryClient()
@@ -353,55 +354,127 @@ export function Result({ onBack }: ResultProps) {
 
           {!saving && saved && (
             <div className="space-y-4">
-              <p className="text-center text-sm font-medium py-2" style={{ color: '#0d9488' }}>
+              <motion.p
+                className="text-center text-sm font-medium py-2"
+                style={{ color: '#0d9488' }}
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+              >
                 Результат сохранён в истории ✅
-              </p>
+              </motion.p>
               {pathCoachReturnAfterTest ? (
-                <>
                   <motion.div
-                    className="rounded-2xl p-5"
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-                    style={{
-                      background:
-                        'linear-gradient(155deg, rgba(255,255,255,0.96) 0%, rgba(238,230,252,0.94) 50%, rgba(222,210,245,0.9) 100%)',
-                      border: '1px solid rgba(155,130,200,0.42)',
-                      boxShadow: '0 10px 36px rgba(75,55,115,0.14)',
-                    }}
+                    key="path-coach-venus-nudge"
+                    className="relative pt-1"
+                    initial={
+                      reduceMotion
+                        ? { opacity: 0 }
+                        : { opacity: 0, y: 26, scale: 0.96, filter: 'blur(10px)' }
+                    }
+                    animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                    transition={
+                      reduceMotion
+                        ? { duration: 0.22, delay: 0.12 }
+                        : { duration: 0.62, delay: 0.38, ease: [0.22, 1, 0.36, 1] }
+                    }
                   >
-                    <h4 className="font-display text-base font-bold mb-2" style={{ color: '#3a2d4d' }}>
-                      Продолжим в чате с ИИ-Венерой
-                    </h4>
-                    <p className="text-sm leading-relaxed mb-5" style={{ color: 'var(--color-text-secondary)' }}>
-                      Краткий итог теста и твой средний балл уже добавлены в диалог с Венерой — можно сразу продолжить
-                      разбор там, без отдельных фраз для чата в боте.
-                    </p>
-                    <motion.button
-                      type="button"
-                      onClick={goToPathCoach}
-                      className="w-full py-3.5 px-4 rounded-2xl font-semibold text-white mb-3 min-h-[52px]"
+                    {!reduceMotion && (
+                      <motion.div
+                        aria-hidden
+                        className="pointer-events-none absolute -left-2 -right-2 -top-2 bottom-0 rounded-[1.75rem] bg-gradient-to-b from-[#c4aedc]/35 via-[#e8dff8]/12 to-transparent blur-2xl"
+                        initial={{ opacity: 0, scale: 0.92 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.65, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                      />
+                    )}
+                    <div
+                      className="relative rounded-2xl p-5 overflow-hidden ring-1 ring-white/60"
                       style={{
-                        background: 'linear-gradient(135deg, #9578c4 0%, #6b5090 45%, #5a4578 100%)',
-                        boxShadow: '0 10px 30px rgba(80,55,120,0.38)',
+                        background:
+                          'linear-gradient(155deg, rgba(255,255,255,0.97) 0%, rgba(240,232,252,0.95) 48%, rgba(224,210,246,0.92) 100%)',
+                        border: '1px solid rgba(155,130,200,0.38)',
+                        boxShadow: '0 12px 40px rgba(75,55,115,0.16), inset 0 1px 0 rgba(255,255,255,0.75)',
                       }}
-                      whileTap={{ scale: 0.98 }}
-                      whileHover={{ scale: 1.015 }}
                     >
-                      Вернуться к Венере
-                    </motion.button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPathCoachReturnAfterTest(false)
-                        onBack()
-                      }}
-                      className="w-full py-2.5 px-4 rounded-xl btn-secondary text-sm font-semibold"
-                    >
-                      На главную приложения
-                    </button>
+                      {!reduceMotion && (
+                        <motion.span
+                          aria-hidden
+                          className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/90 to-transparent"
+                          initial={{ opacity: 0, scaleX: 0.2 }}
+                          animate={{ opacity: 1, scaleX: 1 }}
+                          transition={{ duration: 0.55, delay: 0.62, ease: [0.22, 1, 0.36, 1] }}
+                        />
+                      )}
+                      <motion.h4
+                        className="font-display text-base font-bold mb-2"
+                        style={{ color: '#3a2d4d' }}
+                        initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 14 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={
+                          reduceMotion
+                            ? { duration: 0.2, delay: 0.55 }
+                            : { type: 'spring', stiffness: 400, damping: 28, delay: 0.58 }
+                        }
+                      >
+                        Продолжим в чате с ИИ-Венерой
+                      </motion.h4>
+                      <motion.p
+                        className="text-sm leading-relaxed mb-5"
+                        style={{ color: 'var(--color-text-secondary)' }}
+                        initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={
+                          reduceMotion
+                            ? { duration: 0.2, delay: 0.62 }
+                            : { type: 'spring', stiffness: 380, damping: 30, delay: 0.68 }
+                        }
+                      >
+                        Краткий итог теста и твой средний балл уже добавлены в диалог с Венерой — можно сразу продолжить
+                        разбор там, без отдельных фраз для чата в боте.
+                      </motion.p>
+                      <div className="space-y-3">
+                        <motion.button
+                          type="button"
+                          onClick={goToPathCoach}
+                          className="w-full py-3.5 px-4 rounded-2xl font-semibold text-white min-h-[52px]"
+                          style={{
+                            background: 'linear-gradient(135deg, #9d82c9 0%, #7352a0 42%, #5c4385 100%)',
+                            boxShadow: '0 10px 32px rgba(80,55,120,0.4), inset 0 1px 0 rgba(255,255,255,0.22)',
+                          }}
+                          initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={
+                            reduceMotion
+                              ? { duration: 0.2, delay: 0.7 }
+                              : { type: 'spring', stiffness: 360, damping: 26, delay: 0.76 }
+                          }
+                          whileTap={reduceMotion ? {} : { scale: 0.98 }}
+                          whileHover={reduceMotion ? {} : { scale: 1.02, y: -1 }}
+                        >
+                          Вернуться к Венере
+                        </motion.button>
+                        <motion.button
+                          type="button"
+                          onClick={() => {
+                            setPathCoachReturnAfterTest(false)
+                            onBack()
+                          }}
+                          className="w-full py-2.5 px-4 rounded-xl btn-secondary text-sm font-semibold"
+                          initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={
+                            reduceMotion
+                              ? { duration: 0.2, delay: 0.78 }
+                              : { type: 'spring', stiffness: 340, damping: 28, delay: 0.84 }
+                          }
+                          whileTap={reduceMotion ? {} : { scale: 0.99 }}
+                        >
+                          На главную приложения
+                        </motion.button>
+                      </div>
+                    </div>
                   </motion.div>
-                </>
               ) : (
                 <>
                   <motion.div
