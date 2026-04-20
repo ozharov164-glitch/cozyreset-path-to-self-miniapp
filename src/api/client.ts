@@ -708,22 +708,38 @@ export async function apiPathCoachSend(
   return { error: 'Некорректный ответ', status: res.status }
 }
 
+/** Ingest после теста на сервере вызывает LLM — даём запас по времени. */
+const PATH_COACH_INGEST_TIMEOUT_MS = 120_000
+
 export async function apiPathCoachIngestTestResult(payload: {
   testTitle: string
   avgRounded: number
   narrative: string
 }): Promise<{ status: 'ok'; ingested: boolean } | { error: string; status?: number }> {
   const firstName = telegramFirstNameForCoach()
-  const res = await fetchWithAuth('/mini-app/path-coach', {
-    method: 'POST',
-    body: JSON.stringify({
-      ingestTestResult: true,
-      testTitle: payload.testTitle.trim().slice(0, 200),
-      avgRounded: payload.avgRounded,
-      narrative: payload.narrative.trim().slice(0, 2400),
-      ...(firstName ? { firstName } : {}),
-    }),
-  })
+  const controller = new AbortController()
+  const timeoutId = window.setTimeout(() => controller.abort(), PATH_COACH_INGEST_TIMEOUT_MS)
+  let res: Response
+  try {
+    res = await fetchWithAuth('/mini-app/path-coach', {
+      method: 'POST',
+      signal: controller.signal,
+      body: JSON.stringify({
+        ingestTestResult: true,
+        testTitle: payload.testTitle.trim().slice(0, 200),
+        avgRounded: payload.avgRounded,
+        narrative: payload.narrative.trim().slice(0, 2400),
+        ...(firstName ? { firstName } : {}),
+      }),
+    })
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError') {
+      return { error: 'Запись в чат заняла слишком много времени. Зайди к Венере из результата ещё раз или напиши в чате.', status: 408 }
+    }
+    throw e
+  } finally {
+    window.clearTimeout(timeoutId)
+  }
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>
   if (res.status === 429) {
     return { error: typeof data.error === 'string' ? data.error : 'Слишком много запросов', status: 429 }
