@@ -369,10 +369,10 @@ export function PathCoach({ onBack }: PathCoachProps) {
       </div>
 
       {isPremium === true && (
-        <div className="shrink-0 z-20 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-4 bg-gradient-to-t from-[#eaf8f4] from-35% via-[#eaf8f4]/75 to-transparent pointer-events-auto">
+        <div className="shrink-0 z-20 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-4 bg-gradient-to-t from-[#f6f4fa] from-40% via-[#f6f4fa]/70 to-transparent">
           <div className="max-w-[420px] mx-auto w-full">
             <div
-              className="flex gap-1.5 items-end rounded-[1.35rem] bg-white/[0.72] backdrop-blur-xl px-2 py-1.5 border border-white/55 shadow-[0_6px_28px_rgba(45,95,85,0.09)] focus-within:border-[var(--color-glow-teal)]/45 focus-within:shadow-[0_8px_32px_rgba(45,95,85,0.12)] focus-within:ring-2 focus-within:ring-[var(--color-glow-teal)]/20 transition-[box-shadow,border-color] duration-200"
+              className="flex gap-1.5 items-end rounded-[1.35rem] bg-white/90 backdrop-blur-xl px-2 py-1.5 border border-[#e8e4f0] shadow-[0_6px_24px_rgba(55,45,75,0.07)] focus-within:border-[#d4cce8] focus-within:shadow-[0_8px_28px_rgba(55,45,75,0.1)] focus-within:ring-1 focus-within:ring-[#c4b8dc]/35 transition-[box-shadow,border-color] duration-200"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
               <textarea
@@ -381,7 +381,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
                 placeholder="Напиши, что происходит…"
                 rows={2}
                 maxLength={3800}
-                className="flex-1 min-h-[48px] max-h-[min(40vh,9.5rem)] resize-none rounded-[1rem] bg-transparent border-0 px-2.5 py-2.5 text-[15px] leading-relaxed text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] placeholder:opacity-85 focus:outline-none focus:ring-0 min-w-0"
+                className="flex-1 min-h-[48px] max-h-[min(40vh,9.5rem)] resize-none rounded-[1rem] bg-transparent border-0 px-2.5 py-2.5 text-[15px] leading-relaxed text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] placeholder:opacity-80 focus:outline-none focus:ring-0 min-w-0"
                 disabled={loading || bootLoading}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
@@ -394,7 +394,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
                 type="button"
                 onClick={() => void send()}
                 disabled={loading || bootLoading || !draft.trim()}
-                className="shrink-0 mb-0.5 min-h-[44px] min-w-[48px] rounded-[1rem] btn-primary px-2.5 font-semibold disabled:opacity-45 self-end"
+                className="shrink-0 mb-0.5 min-h-[44px] min-w-[48px] rounded-[1rem] px-2.5 font-semibold text-white self-end bg-[#6b5b8c] shadow-[0_2px_10px_rgba(80,60,110,0.25)] hover:brightness-105 active:scale-[0.98] active:brightness-95 disabled:opacity-45 disabled:hover:brightness-100 disabled:active:scale-100 transition-[transform,filter,opacity]"
                 style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
               >
                 →
