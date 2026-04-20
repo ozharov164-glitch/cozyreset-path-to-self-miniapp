@@ -315,8 +315,8 @@ export function PathCoach({ onBack }: PathCoachProps) {
                   <span className="text-sm text-[var(--color-text-secondary)]">Коуч пишет…</span>
                 </div>
                 <p className="text-xs text-[var(--color-text-secondary)] leading-snug px-1">
-                  Ответ собирается с учётом твоего прогресса — обычно 15–60 сек.
-                  {waitSec >= 20 ? ` Уже ${waitSec} сек — можно подождать ещё немного.` : ''}
+                  Ответ собирается с учётом твоего прогресса — обычно 10–50 сек.
+                  {waitSec >= 18 ? ` Уже ${waitSec} сек — модель иногда дольше думает.` : ''}
                 </p>
               </motion.div>
             )}
