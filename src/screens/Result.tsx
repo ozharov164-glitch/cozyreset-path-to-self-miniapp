@@ -1,21 +1,19 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { TESTS } from '../data/tests'
 import { useAppStore } from '../store/appStore'
-import { useAuthStore } from '../store/authStore'
 import {
   apiSaveTestResult,
   apiTestResult,
-  apiAiSuggestions,
   apiPathCoachIngestTestResult,
   ensureAuth,
   getInitDataString,
   loadBackendConfig,
   refreshInitData,
 } from '../api/client'
-import { ResultPremiumAiLoading } from '../components/ResultPremiumAiLoading'
-import { goBackToBot, copyQuestionToClipboard } from '../utils/telegram'
+import { VenusCoachNudgeCard } from '../components/VenusCoachNudgeCard'
+import { goBackToBot } from '../utils/telegram'
 
 function readVenCoachStored(): boolean {
   if (typeof sessionStorage === 'undefined') return false
@@ -46,8 +44,6 @@ interface ResultProps {
 
 export function Result({ onBack }: ResultProps) {
   const reduceMotion = useReducedMotion()
-  const authReady = useAuthStore((s) => s.isInitialized)
-  const appSaveToken = useAuthStore((s) => s.appSaveToken)
   const queryClient = useQueryClient()
   const currentTestId = useAppStore((s) => s.currentTestId)
   const answers = useAppStore((s) => s.answers)
@@ -155,26 +151,6 @@ export function Result({ onBack }: ResultProps) {
   const avgRounded = Math.round(avg * 10) / 10
   const scorePercent = Math.min(100, Math.max(0, (avg / 10) * 100))
   const description = getScoreDescription(avgRounded, displayTest?.title ?? '')
-
-  // Точный resultId нужен, чтобы темы ИИ не генерировались повторно при повторном заходе.
-  const suggestionsResultId = openResultId ?? lastSavedResultId
-
-  const suggestionsQueryEnabled = !!(
-    displayTest?.title &&
-    displayAnswers.length > 0 &&
-    authReady &&
-    appSaveToken &&
-    suggestionsResultId &&
-    !pathCoachReturnAfterTest
-  )
-
-  const { data: suggestionsData, isLoading: aiSuggestionsLoading } = useQuery({
-    queryKey: ['ai-suggestions-result', displayTest?.title ?? '', avgRounded, suggestionsResultId ?? ''],
-    queryFn: () => apiAiSuggestions(displayTest?.title ?? '', avgRounded, suggestionsResultId),
-    enabled: suggestionsQueryEnabled,
-  })
-  const aiSuggestions = suggestionsData?.suggestions ?? []
-  const aiMovies = suggestionsData?.movies ?? []
 
   useEffect(() => {
     if (!saved || !lastSavedResultId || !displayTest?.title) return
@@ -491,99 +467,16 @@ export function Result({ onBack }: ResultProps) {
                       </li>
                       <li className="flex gap-2">
                         <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
-                        <span>Чек-ины, аффирмации и ИИ-поддержка помогут закрепить прогресс и замечать изменения.</span>
+                        <span>Чек-ины, аффирмации и ИИ-Венера в приложении помогут закрепить прогресс и замечать изменения.</span>
                       </li>
                       <li className="flex gap-2">
                         <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
                         <span>Твоя дорога к себе продолжается в боте — открой его и сделай следующий шаг.</span>
                       </li>
                     </ul>
-                    {(aiSuggestionsLoading || aiSuggestions.length > 0) && (
-                      <AnimatePresence mode="wait" initial={false}>
-                        {aiSuggestionsLoading ? (
-                          <motion.div
-                            key="ai-suggestions-loading"
-                            initial={{ opacity: 1 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.2, ease: 'easeOut' }}
-                          >
-                            <ResultPremiumAiLoading withTopDivider />
-                          </motion.div>
-                        ) : (
-                          <motion.div
-                            key="ai-suggestions-ready"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.32, ease: 'easeOut' }}
-                          >
-                            <h5 className="text-xs font-semibold mb-2" style={{ color: 'var(--color-forest-dark)' }}>
-                              Проработать с ИИ в боте:
-                            </h5>
-                            <p className="text-xs mb-1.5" style={{ color: 'var(--color-glow-teal)' }}>
-                              Нажми на фразу — скопируется
-                            </p>
-                            <ul className="space-y-1 text-sm" style={{ color: 'var(--color-text-primary)' }}>
-                              {aiSuggestions.slice(0, 4).map((s, idx) => (
-                                <li key={idx} className="flex gap-2">
-                                  <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => copyQuestionToClipboard(s)}
-                                    className="copyable-question text-left flex-1 min-h-[44px] py-1.5 px-2 -mx-2 rounded-lg"
-                                  >
-                                    {s}
-                                  </button>
-                                </li>
-                              ))}
-                            </ul>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    )}
-                    {aiMovies.length > 0 && (
-                      <motion.div
-                        className="mt-4 pt-4"
-                        initial={{ y: 6 }}
-                        animate={{ y: 0 }}
-                        transition={{ duration: 0.4, delay: 0.1 }}
-                        style={{ borderTop: '1px solid rgba(125,211,192,0.3)' }}
-                      >
-                        <h5 className="text-sm font-semibold mb-3" style={{ color: 'var(--color-forest-dark)' }}>
-                          🎬 Фильмы, которые могут откликнуться в твоём состоянии
-                        </h5>
-                        <div className="space-y-3">
-                          {aiMovies.slice(0, 3).map((movie) => (
-                            <div
-                              key={movie.id}
-                              className="rounded-xl p-3.5"
-                              style={{
-                                background: 'rgba(255,255,255,0.6)',
-                                border: '1px solid rgba(201,184,232,0.35)',
-                                boxShadow: '0 2px 12px rgba(45,42,38,0.06)',
-                              }}
-                            >
-                              <p className="text-sm font-semibold mb-0.5" style={{ color: 'var(--color-forest-dark)' }}>
-                                {movie.title}{movie.year ? ` • ${movie.year}` : ''}
-                              </p>
-                              <p className="text-xs mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
-                                {movie.director && `Режиссёр: ${movie.director}`}
-                                {Array.isArray(movie.actors) && movie.actors.length > 0 && ` • ${movie.actors.join(', ')}`}
-                              </p>
-                              <p className="text-xs leading-relaxed mb-1.5" style={{ color: 'var(--color-text-primary)' }}>
-                                {movie.plot}
-                              </p>
-                              <p className="text-xs leading-relaxed italic" style={{ color: 'var(--color-glow-teal)' }}>
-                                {movie.whyWatch}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                        <p className="text-[10px] mt-2" style={{ color: 'var(--color-text-secondary)' }}>
-                          Фильмы не заменяют работу со специалистом, но могут помочь мягче прожить своё состояние 💛
-                        </p>
-                      </motion.div>
-                    )}
+                    <div className="mt-4 pt-1">
+                      <VenusCoachNudgeCard className="!mb-0 shadow-none" />
+                    </div>
                   </motion.div>
                   <button type="button" onClick={openBot} className="w-full py-3.5 px-4 rounded-xl btn-primary font-semibold">
                     Вернуться в бота
@@ -606,101 +499,9 @@ export function Result({ onBack }: ResultProps) {
 
           {!saving && !saved && !error && isViewingHistory && (
             <div className="space-y-3">
-              {(aiSuggestionsLoading || aiSuggestions.length > 0) && (
-                <div
-                  className="rounded-2xl p-4"
-                  style={{
-                    background: 'linear-gradient(145deg, rgba(125,211,192,0.12) 0%, rgba(201,184,232,0.1) 100%)',
-                    border: '1px solid rgba(125,211,192,0.3)',
-                  }}
-                >
-                  <AnimatePresence mode="wait" initial={false}>
-                    {aiSuggestionsLoading ? (
-                      <motion.div
-                        key="ai-suggestions-loading-history"
-                        initial={{ opacity: 1 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.2, ease: 'easeOut' }}
-                      >
-                        <ResultPremiumAiLoading />
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="ai-suggestions-ready-history"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.32, ease: 'easeOut' }}
-                      >
-                        <h5 className="text-xs font-semibold mb-2" style={{ color: 'var(--color-forest-dark)' }}>
-                          Проработать с ИИ в боте:
-                        </h5>
-                        <p className="text-xs mb-1.5" style={{ color: 'var(--color-glow-teal)' }}>
-                          Нажми на фразу — скопируется
-                        </p>
-                        <ul className="space-y-1 text-sm mb-2" style={{ color: 'var(--color-text-primary)' }}>
-                          {aiSuggestions.slice(0, 4).map((s, idx) => (
-                            <li key={idx} className="flex gap-2">
-                              <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
-                              <button
-                                type="button"
-                                onClick={() => copyQuestionToClipboard(s)}
-                                className="copyable-question text-left flex-1 min-h-[44px] py-1.5 px-2 -mx-2 rounded-lg"
-                              >
-                                {s}
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              )}
-              {aiMovies.length > 0 && (
-                <div
-                  className="rounded-2xl p-4"
-                  style={{
-                    background: 'linear-gradient(145deg, rgba(255,255,255,0.7) 0%, rgba(249,245,255,0.75) 100%)',
-                    border: '1px solid rgba(201,184,232,0.35)',
-                  }}
-                >
-                  <h5 className="text-sm font-semibold mb-3" style={{ color: 'var(--color-forest-dark)' }}>
-                    🎬 Фильмы, которые могут откликнуться
-                  </h5>
-                  <div className="space-y-3">
-                    {aiMovies.slice(0, 3).map((movie) => (
-                      <div
-                        key={movie.id}
-                        className="rounded-xl p-3"
-                        style={{
-                          background: 'rgba(255,255,255,0.6)',
-                          border: '1px solid rgba(201,184,232,0.3)',
-                        }}
-                      >
-                        <p className="text-sm font-semibold mb-0.5" style={{ color: 'var(--color-forest-dark)' }}>
-                          {movie.title}{movie.year ? ` • ${movie.year}` : ''}
-                        </p>
-                        <p className="text-xs mb-1" style={{ color: 'var(--color-text-secondary)' }}>
-                          {movie.director && `Режиссёр: ${movie.director}`}
-                          {Array.isArray(movie.actors) && movie.actors.length > 0 && ` • ${movie.actors.join(', ')}`}
-                        </p>
-                        <p className="text-xs leading-relaxed mb-1" style={{ color: 'var(--color-text-primary)' }}>
-                          {movie.plot}
-                        </p>
-                        <p className="text-xs leading-relaxed italic" style={{ color: 'var(--color-glow-teal)' }}>
-                          {movie.whyWatch}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-[10px] mt-2" style={{ color: 'var(--color-text-secondary)' }}>
-                    Фильмы не заменяют работу со специалистом 💛
-                  </p>
-                </div>
-              )}
+              <VenusCoachNudgeCard />
               <p className="text-center text-sm text-[var(--color-text-secondary)]">
-                Продолжить путь и получить поддержку — в боте.
+                Продолжить путь — в боте или в чате с Венерой в приложении.
               </p>
               <button type="button" onClick={openBot} className="w-full py-3.5 px-4 rounded-xl btn-primary font-semibold">
                 Вернуться в бота

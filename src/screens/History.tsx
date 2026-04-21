@@ -54,7 +54,6 @@ export function History({ onBack }: HistoryProps) {
       return
     }
     await queryClient.invalidateQueries({ queryKey: ['test-history'] })
-    await queryClient.invalidateQueries({ queryKey: ['ai-suggestions-dashboard'] })
   }
 
   const handleClearHeartRhythmHistory = async () => {

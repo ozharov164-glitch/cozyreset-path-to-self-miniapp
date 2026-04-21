@@ -38,6 +38,15 @@ function AppContent() {
   const [connectionDiag, setConnectionDiag] = useState<{ search: string; backend: string; initDataLength: number } | null>(null)
 
   useEffect(() => {
+    const hash = (window.location.hash || '').replace(/^#/, '').trim().toLowerCase()
+    if (hash === 'pathcoach' || hash === 'path-coach' || hash === 'venus') {
+      useAppStore.getState().setScreen('pathCoach')
+      try {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search)
+      } catch {
+        /* ignore */
+      }
+    }
     if (window.Telegram?.WebApp) {
       document.documentElement.classList.add('tg-mini-app')
     }

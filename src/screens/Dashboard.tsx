@@ -2,18 +2,11 @@ import { useEffect, useState, type ComponentType } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../store/authStore'
-import {
-  apiTestHistory,
-  apiAiSuggestions,
-  apiStatistics,
-  getBackendUrl,
-  syncPremiumFromInit,
-  type ApiStatisticsResult,
-} from '../api/client'
+import { apiTestHistory, apiStatistics, getBackendUrl, syncPremiumFromInit, type ApiStatisticsResult } from '../api/client'
 import { useAppStore } from '../store/appStore'
-import { goBackToBot, copyQuestionToClipboard } from '../utils/telegram'
-import { AiSuggestionsLoading } from '../components/AiSuggestionsLoading'
+import { goBackToBot } from '../utils/telegram'
 import { PremiumCard } from '../components/PremiumCard'
+import { VenusCoachNudgeCard } from '../components/VenusCoachNudgeCard'
 import {
   IconChart,
   IconHeartLine,
@@ -22,7 +15,6 @@ import {
   IconMapPin,
   IconNeuroArena,
   IconPulse,
-  IconSparkle,
   IconSprout,
 } from '../components/FeatureIcons'
 
@@ -84,15 +76,6 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
   const items = historyData?.items ?? []
   const recentItems = items.slice(0, 5)
   const showHistoryLoading = !authReady || (authReady && historyLoading && items.length === 0)
-
-  const { data: suggestionsData, isPending: suggestionsPending } = useQuery({
-    queryKey: ['ai-suggestions-dashboard', appSaveToken ?? ''],
-    queryFn: () => apiAiSuggestions(),
-    enabled: authReady && !!appSaveToken && items.length > 0,
-  })
-  const suggestions = suggestionsData?.suggestions ?? []
-  const suggestionsLoading =
-    authReady && !!appSaveToken && items.length > 0 && suggestionsPending
 
   const openResult = (id: string) => {
     openResultFromHistory(id)
@@ -455,47 +438,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
           </button>
         </PremiumCard>
 
-        {items.length > 0 && (suggestionsLoading || suggestions.length > 0) && (
-          <PremiumCard accent="coral" delay={0.22}>
-            <CardHeading icon={IconSparkle} title="Проработать с ИИ в боте" iconClassName="text-[#c98a90]" />
-            <p className="text-sm text-[var(--color-text-secondary)] mb-1 leading-relaxed">
-              На основе твоих тестов — готовые фразы для первого сообщения в чате с поддержкой в боте:
-            </p>
-            {suggestionsLoading ? (
-              <div className="mb-4">
-                <AiSuggestionsLoading />
-              </div>
-            ) : (
-              <>
-                <p className="text-xs mb-3 text-[var(--color-glow-teal)] font-semibold tracking-wide">
-                  Нажми на фразу — скопируется
-                </p>
-                <ul className="space-y-2 mb-4">
-                  {suggestions.slice(0, 4).map((s, i) => (
-                    <li key={i} className="text-sm flex gap-2 text-[var(--color-text-primary)]">
-                      <span className="text-[var(--color-glow-teal)] shrink-0">•</span>
-                      <button
-                        type="button"
-                        onClick={() => copyQuestionToClipboard(s)}
-                        className="copyable-question text-left flex-1 min-h-[44px] py-2 px-2 -mx-2 rounded-lg hover:bg-white/25 transition-colors"
-                      >
-                        {s}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-            <button
-              type="button"
-              onClick={() => goBackToBot()}
-              className="block w-full py-3 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
-              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-            >
-              Вернуться в бота
-            </button>
-          </PremiumCard>
-        )}
+        {items.length > 0 && <VenusCoachNudgeCard delay={0.22} />}
 
         {!authReady && (
           <p className="text-center text-sm text-[var(--color-text-secondary)] px-4 py-2">Загрузка...</p>

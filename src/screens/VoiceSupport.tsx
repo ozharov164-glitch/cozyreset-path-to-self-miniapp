@@ -11,6 +11,7 @@ import {
   rememberBgVoicePreviewBytes,
   prefetchBgVoicePreviews,
 } from '../api/client'
+import { VenusCoachNudgeCard } from '../components/VenusCoachNudgeCard'
 
 const container = {
   hidden: { opacity: 0 },
@@ -580,7 +581,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
               Напиши, что чувствуешь или о чём хочешь поговорить — ИИ-поддержка ответит тёплым голосом.
             </motion.p>
             <motion.p
-              className="text-[13px] leading-snug text-[var(--color-text-secondary)] mb-5 pl-3 border-l-[3px] border-[var(--color-glow-teal)]/55"
+              className="text-[13px] leading-snug text-[var(--color-text-secondary)] mb-4 pl-3 border-l-[3px] border-[var(--color-glow-teal)]/55"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.16 }}
@@ -588,6 +589,10 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
             >
               Голосовой ответ не сохраняется после выхода из раздела или приложения. Чтобы слушать повторно — сохрани его в Файлы внизу.
             </motion.p>
+
+            <motion.div variants={item} className="mb-5">
+              <VenusCoachNudgeCard variant="voiceSupport" delay={0.06} />
+            </motion.div>
 
             <div className="mb-5">
               <motion.p
