@@ -16,7 +16,21 @@ interface PathCoachProps {
   onBack: () => void
 }
 
-type CoachRow = { id: string; role: 'user' | 'assistant'; content: string }
+type CoachUserRow = { id: string; role: 'user'; content: string }
+type CoachAssistantRow = {
+  id: string
+  role: 'assistant'
+  content: string
+  coachActions?: PathCoachAction[]
+  voiceSupportSuggestion?: string | null
+  /** Скрыть чипы и блок голоса после перехода в другой раздел из этого ответа */
+  coachAttachmentsDismissed?: boolean
+}
+type CoachRow = CoachUserRow | CoachAssistantRow
+
+function isAssistantRow(r: CoachRow): r is CoachAssistantRow {
+  return r.role === 'assistant'
+}
 
 function rowId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
@@ -30,7 +44,8 @@ function toRowsFromServer(messages: PathCoachChatMessage[]): CoachRow[] {
   }))
 }
 
-function applyCoachAction(a: PathCoachAction): void {
+/** true — выполнен переход в другой раздел (чипы этого ответа можно скрыть) */
+function applyCoachAction(a: PathCoachAction): boolean {
   const type =
     {
       openNeuroArena: 'open_neuro_arena',
@@ -51,48 +66,47 @@ function applyCoachAction(a: PathCoachAction): void {
         /* ignore */
       }
       setScreen('catalog')
-      break
+      return true
     case 'open_statistics':
       setScreen('statistics')
-      break
+      return true
     case 'open_self_realization':
       setScreen('selfRealization')
-      break
+      return true
     case 'open_voice_support':
       setScreen('voiceSupport')
-      break
+      return true
     case 'open_therapy_map':
       setScreen('therapyMap')
-      break
+      return true
     case 'open_specialist_brief':
       setScreen('specialistBrief')
-      break
+      return true
     case 'open_heart_rhythm': {
       const backend = getBackendUrl()
       const token = useAuthStore.getState().appSaveToken
       const gameUrl = `${backend}/heart-rhythm/${token ? `?token=${encodeURIComponent(token)}` : ''}`
       window.location.href = gameUrl
-      break
+      return true
     }
     case 'open_neuro_arena':
       setScreen('neuroArena')
-      break
+      return true
     case 'open_test': {
       const id = (a.testId || '').trim()
-      if (id) {
-        useAppStore.getState().setPathCoachReturnAfterTest(true)
-        try {
-          sessionStorage.setItem('pts_vcoach_return', '1')
-        } catch {
-          /* ignore */
-        }
-        setCurrentTest(id)
-        setScreen('test')
+      if (!id) return false
+      useAppStore.getState().setPathCoachReturnAfterTest(true)
+      try {
+        sessionStorage.setItem('pts_vcoach_return', '1')
+      } catch {
+        /* ignore */
       }
-      break
+      setCurrentTest(id)
+      setScreen('test')
+      return true
     }
     default:
-      break
+      return false
   }
 }
 
@@ -104,9 +118,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
   const [loading, setLoading] = useState(false)
   const [bootLoading, setBootLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [lastActions, setLastActions] = useState<PathCoachAction[]>([])
-  const [voiceSupportSuggestion, setVoiceSupportSuggestion] = useState<string | null>(null)
-  const [voiceCopied, setVoiceCopied] = useState(false)
+  const [voiceCopiedForId, setVoiceCopiedForId] = useState<string | null>(null)
   const [introOpen, setIntroOpen] = useState(true)
   const [waitSec, setWaitSec] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -120,7 +132,17 @@ export function PathCoach({ onBack }: PathCoachProps) {
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages, lastActions, loading, scrollToBottom])
+  }, [messages, loading, scrollToBottom])
+
+  const dismissCoachAttachments = useCallback((assistantMessageId: string) => {
+    setMessages((rows) =>
+      rows.map((r) =>
+        r.id === assistantMessageId && isAssistantRow(r)
+          ? { ...r, coachAttachmentsDismissed: true }
+          : r,
+      ),
+    )
+  }, [])
 
   useEffect(() => {
     void import('../components/NeuroArena/NeuroArenaScreen')
@@ -141,7 +163,6 @@ export function PathCoach({ onBack }: PathCoachProps) {
       if (r.status === 'ok') {
         const rows = toRowsFromServer(r.messages)
         setMessages(rows)
-        setLastActions([])
         if (rows.length > 0) setIntroOpen(false)
         // Ingest + LLM на сервере часто 6–15 с — один refetch не хватает; опрашиваем историю до появления новой реплики.
         let pendingVenusReturn = false
@@ -164,7 +185,6 @@ export function PathCoach({ onBack }: PathCoachProps) {
             if (cancelled || r2.status !== 'ok') return
             const rows2 = toRowsFromServer(r2.messages)
             setMessages(rows2)
-            setLastActions([])
             if (rows2.length > 0) setIntroOpen(false)
             if (rows2.length > baselineLen || polls >= maxPolls) {
               if (catchUpIntervalId !== undefined) {
@@ -206,18 +226,22 @@ export function PathCoach({ onBack }: PathCoachProps) {
     if (!text || loading) return
     setError(null)
     setDraft('')
-    setVoiceSupportSuggestion(null)
-    setVoiceCopied(false)
-    const userRow: CoachRow = { id: rowId('u'), role: 'user', content: text }
+    const userRow: CoachUserRow = { id: rowId('u'), role: 'user', content: text }
     setMessages((m) => [...m, userRow])
-    setLastActions([])
     setLoading(true)
     const r = await apiPathCoachSend(text)
     setLoading(false)
     if (r.status === 'ok') {
-      setMessages((m) => [...m, { id: rowId('a'), role: 'assistant', content: r.reply }])
-      setLastActions(r.actions || [])
-      setVoiceSupportSuggestion(r.voiceSupportSuggestion?.trim() || null)
+      const vs = r.voiceSupportSuggestion?.trim() || null
+      const acts = r.actions || []
+      const assistantRow: CoachAssistantRow = {
+        id: rowId('a'),
+        role: 'assistant',
+        content: r.reply,
+        ...(acts.length > 0 ? { coachActions: acts } : {}),
+        ...(vs ? { voiceSupportSuggestion: vs } : {}),
+      }
+      setMessages((m) => [...m, assistantRow])
       setIntroOpen(false)
     } else {
       setMessages((m) => m.filter((x) => x.id !== userRow.id))
@@ -235,7 +259,6 @@ export function PathCoach({ onBack }: PathCoachProps) {
     const r = await apiPathCoachReset()
     if ('ok' in r && r.ok) {
       setMessages([])
-      setLastActions([])
       setIntroOpen(true)
       useAppStore.getState().setPathCoachReturnAfterTest(false)
       try {
@@ -365,17 +388,134 @@ export function PathCoach({ onBack }: PathCoachProps) {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ type: 'spring', stiffness: 320, damping: 26 }}
-                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  className={
+                    msg.role === 'user'
+                      ? 'flex justify-end w-full'
+                      : 'flex flex-col items-stretch gap-2.5 w-full max-w-[min(100%,420px)]'
+                  }
                 >
                   <div
-                    className={`max-w-[92%] rounded-2xl px-3.5 py-3 shadow-sm border ${
+                    className={`rounded-2xl px-3.5 py-3 shadow-sm border ${
                       msg.role === 'user'
-                        ? 'bg-gradient-to-br from-[#5ad4c4]/35 to-white/50 border-white/50 text-[var(--color-text-primary)]'
-                        : 'bg-white/55 border-white/60 text-[var(--color-text-primary)] backdrop-blur-sm'
+                        ? 'max-w-[92%] ml-auto bg-gradient-to-br from-[#5ad4c4]/35 to-white/50 border-white/50 text-[var(--color-text-primary)]'
+                        : 'max-w-[92%] self-start bg-white/55 border-white/60 text-[var(--color-text-primary)] backdrop-blur-sm'
                     }`}
                   >
                     <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
                   </div>
+                  {isAssistantRow(msg) && !msg.coachAttachmentsDismissed && (
+                    <>
+                      {!!msg.voiceSupportSuggestion?.trim() && (
+                        <motion.div
+                          className="rounded-2xl border border-[#d8c8ec]/90 bg-white/60 px-3.5 py-3 backdrop-blur-sm shadow-[0_2px_14px_rgba(55,40,95,0.06)] max-w-[92%] self-start"
+                          initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+                        >
+                          <p className="text-xs font-semibold text-[var(--color-text-primary)] mb-1.5">
+                            Промпт для «Голосовой поддержки» в боте
+                          </p>
+                          <p className="text-[11px] text-[var(--color-text-secondary)] leading-snug mb-2 opacity-90">
+                            Скопируй целиком в бот — это запрос к голосовому ИИ под твоё состояние, не второй чат с
+                            Венерой.
+                          </p>
+                          <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-wrap break-words mb-3 select-text">
+                            {msg.voiceSupportSuggestion}
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const t = msg.voiceSupportSuggestion ?? ''
+                                void navigator.clipboard?.writeText(t).then(
+                                  () => {
+                                    setVoiceCopiedForId(msg.id)
+                                    window.setTimeout(() => setVoiceCopiedForId((cur) => (cur === msg.id ? null : cur)), 2000)
+                                  },
+                                  () => {},
+                                )
+                              }}
+                              className="px-3 py-2 rounded-xl text-sm font-semibold bg-gradient-to-br from-[#a088cc] via-[#8465b3] to-[#6a4d96] text-white shadow-sm active:scale-[0.98]"
+                              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                            >
+                              {voiceCopiedForId === msg.id ? '✓ Скопировано' : 'Скопировать'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                dismissCoachAttachments(msg.id)
+                                useAppStore.getState().setScreen('voiceSupport')
+                              }}
+                              className="px-3 py-2 rounded-xl text-sm font-semibold border border-[#c4b0dc] bg-white/70 text-[#3a2d4a] active:scale-[0.98]"
+                              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                            >
+                              Открыть голос
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+                      {!!msg.coachActions?.length && (
+                        <motion.div
+                          className="flex flex-wrap gap-2.5"
+                          role="group"
+                          aria-label="Предложения ИИ-Венеры"
+                          initial="hidden"
+                          animate="visible"
+                          variants={
+                            reduceMotion
+                              ? { hidden: {}, visible: {} }
+                              : {
+                                  hidden: {},
+                                  visible: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } },
+                                }
+                          }
+                        >
+                          {msg.coachActions.map((a, idx) => (
+                            <motion.button
+                              key={`${msg.id}-${a.type}-${a.testId ?? ''}-${idx}-${a.label.slice(0, 24)}`}
+                              type="button"
+                              variants={
+                                reduceMotion
+                                  ? { hidden: {}, visible: {} }
+                                  : {
+                                      hidden: { opacity: 0, y: 14, scale: 0.92, filter: 'blur(5px)' },
+                                      visible: {
+                                        opacity: 1,
+                                        y: 0,
+                                        scale: 1,
+                                        filter: 'blur(0px)',
+                                        transition: { type: 'spring', stiffness: 380, damping: 26, mass: 0.85 },
+                                      },
+                                    }
+                              }
+                              whileHover={reduceMotion ? {} : { scale: 1.02, y: -1 }}
+                              whileTap={reduceMotion ? {} : { scale: 0.96 }}
+                              onClick={() => {
+                                if (applyCoachAction(a)) dismissCoachAttachments(msg.id)
+                              }}
+                              className="relative isolate overflow-hidden px-4 py-2.5 rounded-2xl text-sm font-semibold text-[#3a2d4a] bg-gradient-to-br from-white via-[#faf7ff] to-[#ede4f7] border border-[#d2c2e6] shadow-[0_2px_14px_rgba(55,40,95,0.08)] active:opacity-[0.96] [transform:translateZ(0)]"
+                              style={{
+                                touchAction: 'manipulation',
+                                WebkitTapHighlightColor: 'transparent',
+                                WebkitFontSmoothing: 'antialiased',
+                              }}
+                            >
+                              <span className="relative z-10">{a.label}</span>
+                              {!reduceMotion && (
+                                <motion.span
+                                  className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-white/45 to-transparent skew-x-[-14deg]"
+                                  initial={{ x: '-120%', opacity: 0 }}
+                                  animate={{ x: '120%', opacity: [0, 0.9, 0] }}
+                                  transition={{ duration: 1.1, delay: 0.15 + idx * 0.06, ease: 'easeInOut' }}
+                                  aria-hidden
+                                />
+                              )}
+                            </motion.button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </>
+                  )}
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -412,110 +552,6 @@ export function PathCoach({ onBack }: PathCoachProps) {
             <p className="text-sm text-[var(--color-text-secondary)] text-center py-8 px-2 leading-relaxed">
               Напиши первое сообщение — ИИ-Венера ответит с опорой на твои тесты и активность в приложении.
             </p>
-          )}
-
-          {voiceSupportSuggestion && !loading && (
-            <motion.div
-              className="mt-4 rounded-2xl border border-[#d8c8ec]/90 bg-white/60 px-3.5 py-3 backdrop-blur-sm shadow-[0_2px_14px_rgba(55,40,95,0.06)]"
-              initial={reduceMotion ? false : { opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ type: 'spring', stiffness: 320, damping: 28 }}
-            >
-              <p className="text-xs font-semibold text-[var(--color-text-primary)] mb-1.5">
-                Промпт для «Голосовой поддержки» в боте
-              </p>
-              <p className="text-[11px] text-[var(--color-text-secondary)] leading-snug mb-2 opacity-90">
-                Скопируй целиком в бот — это запрос к голосовому ИИ под твоё состояние, не второй чат с Венерой.
-              </p>
-              <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-wrap break-words mb-3 select-text">
-                {voiceSupportSuggestion}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    void navigator.clipboard?.writeText(voiceSupportSuggestion).then(
-                      () => {
-                        setVoiceCopied(true)
-                        window.setTimeout(() => setVoiceCopied(false), 2000)
-                      },
-                      () => {},
-                    )
-                  }}
-                  className="px-3 py-2 rounded-xl text-sm font-semibold bg-gradient-to-br from-[#a088cc] via-[#8465b3] to-[#6a4d96] text-white shadow-sm active:scale-[0.98]"
-                  style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-                >
-                  {voiceCopied ? '✓ Скопировано' : 'Скопировать'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => useAppStore.getState().setScreen('voiceSupport')}
-                  className="px-3 py-2 rounded-xl text-sm font-semibold border border-[#c4b0dc] bg-white/70 text-[#3a2d4a] active:scale-[0.98]"
-                  style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-                >
-                  Открыть голос
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          {lastActions.length > 0 && !loading && (
-            <motion.div
-              className="mt-4 flex flex-wrap gap-2.5"
-              role="group"
-              aria-label="Предложения ИИ-Венеры"
-              initial="hidden"
-              animate="visible"
-              variants={
-                reduceMotion
-                  ? { hidden: {}, visible: {} }
-                  : {
-                      hidden: {},
-                      visible: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } },
-                    }
-              }
-            >
-              {lastActions.map((a, idx) => (
-                <motion.button
-                  key={`${a.type}-${a.testId ?? ''}-${idx}-${a.label.slice(0, 24)}`}
-                  type="button"
-                  variants={
-                    reduceMotion
-                      ? { hidden: {}, visible: {} }
-                      : {
-                          hidden: { opacity: 0, y: 14, scale: 0.92, filter: 'blur(5px)' },
-                          visible: {
-                            opacity: 1,
-                            y: 0,
-                            scale: 1,
-                            filter: 'blur(0px)',
-                            transition: { type: 'spring', stiffness: 380, damping: 26, mass: 0.85 },
-                          },
-                        }
-                  }
-                  whileHover={reduceMotion ? {} : { scale: 1.02, y: -1 }}
-                  whileTap={reduceMotion ? {} : { scale: 0.96 }}
-                  onClick={() => applyCoachAction(a)}
-                  className="relative isolate overflow-hidden px-4 py-2.5 rounded-2xl text-sm font-semibold text-[#3a2d4a] bg-gradient-to-br from-white via-[#faf7ff] to-[#ede4f7] border border-[#d2c2e6] shadow-[0_2px_14px_rgba(55,40,95,0.08)] active:opacity-[0.96] [transform:translateZ(0)]"
-                  style={{
-                    touchAction: 'manipulation',
-                    WebkitTapHighlightColor: 'transparent',
-                    WebkitFontSmoothing: 'antialiased',
-                  }}
-                >
-                  <span className="relative z-10">{a.label}</span>
-                  {!reduceMotion && (
-                    <motion.span
-                      className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-white/45 to-transparent skew-x-[-14deg]"
-                      initial={{ x: '-120%', opacity: 0 }}
-                      animate={{ x: '120%', opacity: [0, 0.9, 0] }}
-                      transition={{ duration: 1.1, delay: 0.15 + idx * 0.06, ease: 'easeInOut' }}
-                      aria-hidden
-                    />
-                  )}
-                </motion.button>
-              ))}
-            </motion.div>
           )}
 
           {error && (
