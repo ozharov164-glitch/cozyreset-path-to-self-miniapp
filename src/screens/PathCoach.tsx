@@ -16,6 +16,24 @@ interface PathCoachProps {
   onBack: () => void
 }
 
+const PTS_VENUS_RESULT_PENDING = 'pts_venus_result_pending'
+
+function readPendingVenusResultCatchUp(): boolean {
+  try {
+    return sessionStorage.getItem(PTS_VENUS_RESULT_PENDING) === '1'
+  } catch {
+    return false
+  }
+}
+
+function clearPendingVenusResultCatchUp(): void {
+  try {
+    sessionStorage.removeItem(PTS_VENUS_RESULT_PENDING)
+  } catch {
+    /* ignore */
+  }
+}
+
 type CoachUserRow = { id: string; role: 'user'; content: string }
 type CoachAssistantRow = {
   id: string
@@ -121,6 +139,9 @@ export function PathCoach({ onBack }: PathCoachProps) {
   const [voiceCopiedForId, setVoiceCopiedForId] = useState<string | null>(null)
   const [introOpen, setIntroOpen] = useState(true)
   const [waitSec, setWaitSec] = useState(0)
+  /** Ожидание появления разбора Венеры после теста / «Ритма сердца» (серверный ingest). */
+  const [resultCatchUpLoading, setResultCatchUpLoading] = useState(false)
+  const [catchUpWaitSec, setCatchUpWaitSec] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
@@ -132,7 +153,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages, loading, scrollToBottom])
+  }, [messages, loading, resultCatchUpLoading, scrollToBottom])
 
   const dismissCoachAttachments = useCallback((assistantMessageId: string) => {
     setMessages((rows) =>
@@ -164,20 +185,33 @@ export function PathCoach({ onBack }: PathCoachProps) {
         const rows = toRowsFromServer(r.messages)
         setMessages(rows)
         if (rows.length > 0) setIntroOpen(false)
-        // Ingest + LLM на сервере часто 6–15 с — один refetch не хватает; опрашиваем историю до появления новой реплики.
-        let pendingVenusReturn = false
+        // Ingest + LLM на сервере часто 6–25 с — опрашиваем историю до новой реплики ассистента.
+        let pendingVcoachReturn = false
         try {
-          pendingVenusReturn = sessionStorage.getItem('pts_vcoach_return') === '1'
-          if (pendingVenusReturn) {
+          pendingVcoachReturn = sessionStorage.getItem('pts_vcoach_return') === '1'
+          if (pendingVcoachReturn) {
             sessionStorage.removeItem('pts_vcoach_return')
           }
         } catch {
           /* ignore */
         }
-        if (pendingVenusReturn) {
+        const pendingResult = readPendingVenusResultCatchUp()
+        const fromZustandBack = useAppStore.getState().pathCoachReturnAfterTest
+        const shouldCatchUp = pendingResult || pendingVcoachReturn || fromZustandBack
+
+        if (shouldCatchUp) {
+          setResultCatchUpLoading(true)
           const baselineLen = rows.length
           let polls = 0
-          const maxPolls = 16
+          const maxPolls = 18
+          const finishCatchUp = () => {
+            if (catchUpIntervalId !== undefined) {
+              window.clearInterval(catchUpIntervalId)
+              catchUpIntervalId = undefined
+            }
+            clearPendingVenusResultCatchUp()
+            if (!cancelled) setResultCatchUpLoading(false)
+          }
           const runPoll = async () => {
             if (cancelled) return
             polls += 1
@@ -187,10 +221,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
             setMessages(rows2)
             if (rows2.length > 0) setIntroOpen(false)
             if (rows2.length > baselineLen || polls >= maxPolls) {
-              if (catchUpIntervalId !== undefined) {
-                window.clearInterval(catchUpIntervalId)
-                catchUpIntervalId = undefined
-              }
+              finishCatchUp()
             }
           }
           catchUpStartId = window.setTimeout(() => {
@@ -220,6 +251,15 @@ export function PathCoach({ onBack }: PathCoachProps) {
     const t = window.setInterval(() => setWaitSec((s) => s + 1), 1000)
     return () => window.clearInterval(t)
   }, [loading])
+
+  useEffect(() => {
+    if (!resultCatchUpLoading) {
+      setCatchUpWaitSec(0)
+      return
+    }
+    const t = window.setInterval(() => setCatchUpWaitSec((s) => s + 1), 1000)
+    return () => window.clearInterval(t)
+  }, [resultCatchUpLoading])
 
   const send = async () => {
     const text = draft.trim()
@@ -546,9 +586,46 @@ export function PathCoach({ onBack }: PathCoachProps) {
                 </p>
               </motion.div>
             )}
+
+            {resultCatchUpLoading && !loading && (
+              <motion.div
+                className="flex flex-col gap-2 justify-start"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                <div
+                  className="rounded-2xl px-4 py-3 bg-white/45 border border-[#d8c8ec]/70 flex items-center gap-2 w-fit max-w-[92%]"
+                  role="status"
+                  aria-live="polite"
+                  aria-busy="true"
+                >
+                  <span className="inline-flex gap-1" aria-hidden>
+                    {[0, 1, 2].map((d) => (
+                      <motion.span
+                        key={d}
+                        className="w-2 h-2 rounded-full bg-[#9d82c9]"
+                        animate={reduceMotion ? {} : { y: [0, -5, 0], opacity: [0.5, 1, 0.5] }}
+                        transition={{ repeat: Infinity, duration: 0.9, delay: d * 0.12 }}
+                      />
+                    ))}
+                  </span>
+                  <span className="text-sm text-[var(--color-text-secondary)]">
+                    ИИ-Венера анализирует ваш результат…
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--color-text-secondary)] leading-snug px-1">
+                  Собираем разбор по твоему тесту или сессии «Ритм сердца» — обычно 10–40 сек.
+                  {catchUpWaitSec >= 22 ? ` Уже ${catchUpWaitSec} сек — подожди ещё чуть-чуть.` : ''}
+                </p>
+              </motion.div>
+            )}
           </div>
 
-          {!bootLoading && isPremium === true && messages.length === 0 && !loading && (
+          {!bootLoading &&
+            isPremium === true &&
+            messages.length === 0 &&
+            !loading &&
+            !resultCatchUpLoading && (
             <p className="text-sm text-[var(--color-text-secondary)] text-center py-8 px-2 leading-relaxed">
               Напиши первое сообщение — ИИ-Венера ответит с опорой на твои тесты и активность в приложении.
             </p>

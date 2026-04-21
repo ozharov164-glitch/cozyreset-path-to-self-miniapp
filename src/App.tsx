@@ -38,14 +38,28 @@ function AppContent() {
   const [connectionDiag, setConnectionDiag] = useState<{ search: string; backend: string; initDataLength: number } | null>(null)
 
   useEffect(() => {
-    const hash = (window.location.hash || '').replace(/^#/, '').trim().toLowerCase()
-    if (hash === 'pathcoach' || hash === 'path-coach' || hash === 'venus') {
-      useAppStore.getState().setScreen('pathCoach')
-      try {
-        window.history.replaceState(null, '', window.location.pathname + window.location.search)
-      } catch {
-        /* ignore */
+    try {
+      const url = new URL(window.location.href)
+      if (url.searchParams.get('venusPending') === '1') {
+        try {
+          sessionStorage.setItem('pts_venus_result_pending', '1')
+        } catch {
+          /* ignore */
+        }
+        url.searchParams.delete('venusPending')
       }
+      const hashNorm = (url.hash || '').replace(/^#/, '').trim().toLowerCase()
+      if (hashNorm === 'pathcoach' || hashNorm === 'path-coach' || hashNorm === 'venus') {
+        useAppStore.getState().setScreen('pathCoach')
+        url.hash = ''
+      }
+      const next = url.pathname + url.search + url.hash
+      const cur = window.location.pathname + window.location.search + window.location.hash
+      if (next !== cur) {
+        window.history.replaceState(null, '', next)
+      }
+    } catch {
+      /* ignore invalid URL */
     }
     if (window.Telegram?.WebApp) {
       document.documentElement.classList.add('tg-mini-app')

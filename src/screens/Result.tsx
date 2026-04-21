@@ -24,6 +24,15 @@ function readVenCoachStored(): boolean {
   }
 }
 
+/** PathCoach опрашивает историю, пока на сервере не появится разбор после теста / «Ритма сердца». */
+function setPendingVenusAnalysisFlag(): void {
+  try {
+    sessionStorage.setItem('pts_venus_result_pending', '1')
+  } catch {
+    /* ignore */
+  }
+}
+
 /** Краткое описание результата по среднему баллу — в духе поддержки и тематики бота. */
 function getScoreDescription(avg: number, _testTitle: string): string {
   if (avg <= 2.5) {
@@ -124,6 +133,7 @@ export function Result({ onBack }: ResultProps) {
         if ('id' in res && res.id) {
           setLastSavedResultId(res.id)
           setSaved(true)
+          setPendingVenusAnalysisFlag()
           queryClient.invalidateQueries({ queryKey: ['test-history'] })
         } else {
           const err = 'error' in res ? String(res.error) : ''
@@ -154,9 +164,6 @@ export function Result({ onBack }: ResultProps) {
 
   useEffect(() => {
     if (!saved || !lastSavedResultId || !displayTest?.title) return
-    // Флаг в zustand или метка в sessionStorage — иначе при «Вернуться к Венере» сброс zustand рвёт ingest до вызова API.
-    const cameFromVenus = pathCoachReturnZustand || readVenCoachStored()
-    if (!cameFromVenus) return
     const key = lastSavedResultId
     if (coachIngestSentRef.current === key) return
     coachIngestSentRef.current = key
@@ -168,7 +175,7 @@ export function Result({ onBack }: ResultProps) {
     }).catch(() => {
       coachIngestSentRef.current = null
     })
-  }, [saved, pathCoachReturnZustand, lastSavedResultId, displayTest?.title, avgRounded])
+  }, [saved, lastSavedResultId, displayTest?.title, avgRounded])
 
   const openBot = () => {
     goBackToBot()
@@ -177,6 +184,7 @@ export function Result({ onBack }: ResultProps) {
   const goToPathCoach = () => {
     setOpenResultId(null)
     resetTest()
+    setPendingVenusAnalysisFlag()
     setScreen('pathCoach')
     setPathCoachReturnAfterTest(false)
     // pts_vcoach_return не трогаем здесь — снимает PathCoach после загрузки истории, чтобы не сорвать ingest.
@@ -211,6 +219,7 @@ export function Result({ onBack }: ResultProps) {
         if ('id' in res && res.id) {
           setLastSavedResultId(res.id)
           setSaved(true)
+          setPendingVenusAnalysisFlag()
           queryClient.invalidateQueries({ queryKey: ['test-history'] })
         } else {
           setError(!getInitDataString()?.length
