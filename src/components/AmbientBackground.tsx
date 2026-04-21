@@ -1,12 +1,20 @@
 /**
  * Фон «Путь к себе»: лавандовый градиент, аврора и мягкие орбы (CSS + лёгкий motion).
+ * В Telegram WebView движущийся fixed-фон + смена экранов даёт заметный джиттер — там орбы статичны.
  */
 import { motion, useReducedMotion } from 'framer-motion'
 
+function isTelegramMiniAppShell(): boolean {
+  if (typeof document === 'undefined') return false
+  return document.documentElement.classList.contains('tg-mini-app')
+}
+
 export function AmbientBackground() {
   const reduce = useReducedMotion()
+  const tgShell = typeof window !== 'undefined' && isTelegramMiniAppShell()
+  const staticOrbs = reduce || tgShell
 
-  const float = reduce
+  const float = staticOrbs
     ? undefined
     : {
         animate: {
@@ -20,7 +28,7 @@ export function AmbientBackground() {
         },
       }
 
-  const floatSlow = reduce
+  const floatSlow = staticOrbs
     ? undefined
     : {
         animate: {
@@ -34,7 +42,7 @@ export function AmbientBackground() {
         },
       }
 
-  const floatCream = reduce
+  const floatCream = staticOrbs
     ? undefined
     : {
         animate: {
@@ -49,7 +57,10 @@ export function AmbientBackground() {
       }
 
   return (
-    <div className="pts-ambient fixed inset-0 z-0 pointer-events-none" aria-hidden>
+    <div
+      className="pts-ambient fixed inset-0 z-0 pointer-events-none [contain:paint] isolate transform-gpu"
+      aria-hidden
+    >
       <div className="pts-ambient__base" />
       <div className="pts-ambient__aurora" />
       <motion.div className="pts-ambient__orb-wrap pts-ambient__orb-wrap--rose" {...float}>

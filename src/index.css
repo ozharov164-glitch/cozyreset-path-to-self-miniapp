@@ -90,9 +90,10 @@ html, body {
   min-height: 100dvh;
 }
 
-/* Подложка: в Telegram с тёмной темой body был прозрачным — визуально «чёрный экран» */
+/* Подложка + стабильный gutter полосы прокрутки (меньше скачка при смене экранов) */
 html.pts-app {
   background-color: var(--tg-theme-bg-color, #ede6f8);
+  scrollbar-gutter: stable;
 }
 
 html.pts-app body {
@@ -131,6 +132,20 @@ body {
 /* Фон приложения: лаванда, «аврора», мягкие орбы */
 .pts-ambient {
   overflow: hidden;
+}
+
+/* Telegram WebView: дрейф авроры + смена страниц часто дают визуальный «тремор» всего экрана */
+html.tg-mini-app .pts-ambient__aurora {
+  animation: none;
+  transform: translate(-1%, -1%) scale(1) rotate(0deg);
+  opacity: 0.4;
+}
+
+/* В TG отключаем бесконечный блик на «обводках» табов и ghost-кнопках — меньше постоянных repaints */
+html.tg-mini-app .pts-btn-shimmer::before,
+html.tg-mini-app .btn-ghost::before {
+  animation: none !important;
+  opacity: 0 !important;
 }
 
 .pts-ambient__base {

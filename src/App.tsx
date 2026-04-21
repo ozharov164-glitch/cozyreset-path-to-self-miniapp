@@ -129,7 +129,7 @@ function AppContent() {
           <div>initData length: {connectionDiag.initDataLength}</div>
         </div>
       )}
-      <div className="relative z-10 pointer-events-auto min-h-screen flex flex-col">
+      <div className="relative z-10 pointer-events-auto min-h-screen flex flex-col isolate [transform:translateZ(0)]">
         {screen === 'catalog' && <Catalog onBack={() => setScreen('dashboard')} />}
         {screen === 'test' && (
           <TestFlow
