@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { apiStatistics, type ApiStatisticsResult, type StatsPeriod } from '../api/client'
 import { useAuthStore } from '../store/authStore'
@@ -35,7 +35,13 @@ export function StatisticsPage({ onBack }: StatisticsPageProps) {
     },
     enabled: appAuthReady,
     staleTime: 45_000,
-    placeholderData: keepPreviousData,
+    // keepPreviousData для смены периода показывал графики/KPI прошлого окна — выглядело как «битые» данные.
+    placeholderData: (previousData, query) => {
+      if (!previousData || previousData.status !== 'ok') return undefined
+      const keyPeriod = query?.queryKey[1]
+      if (keyPeriod === undefined || previousData.stats.period !== keyPeriod) return undefined
+      return previousData
+    },
     refetchOnMount: 'always',
     retry: 2,
     retryDelay: (attempt) => 280 * (attempt + 1),
