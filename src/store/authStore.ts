@@ -27,7 +27,11 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: STORAGE_KEY,
-      partialize: (s) => ({ appSaveToken: s.appSaveToken, isInitialized: s.isInitialized }),
+      partialize: (s) => ({
+        appSaveToken: s.appSaveToken,
+        isInitialized: s.isInitialized,
+        isPremium: s.isPremium,
+      }),
     }
   )
 )

@@ -179,7 +179,12 @@ export function PathCoach({ onBack }: PathCoachProps) {
     let catchUpIntervalId: number | undefined
     ;(async () => {
       setBootLoading(true)
-      const r = await apiPathCoachHistory()
+      let r: Awaited<ReturnType<typeof apiPathCoachHistory>>
+      try {
+        r = await apiPathCoachHistory()
+      } finally {
+        setBootLoading(false)
+      }
       if (cancelled) return
       if (r.status === 'ok') {
         const rows = toRowsFromServer(r.messages)
@@ -234,10 +239,11 @@ export function PathCoach({ onBack }: PathCoachProps) {
       } else {
         setError(r.error || 'Не удалось загрузить историю')
       }
-      setBootLoading(false)
     })()
     return () => {
       cancelled = true
+      setBootLoading(false)
+      setResultCatchUpLoading(false)
       if (catchUpStartId !== undefined) window.clearTimeout(catchUpStartId)
       if (catchUpIntervalId !== undefined) window.clearInterval(catchUpIntervalId)
     }
@@ -272,12 +278,18 @@ export function PathCoach({ onBack }: PathCoachProps) {
     const r = await apiPathCoachSend(text)
     setLoading(false)
     if (r.status === 'ok') {
+      const replyText = (r.reply || '').trim()
+      if (!replyText) {
+        setMessages((m) => m.filter((x) => x.id !== userRow.id))
+        setError('Пустой ответ сервера — попробуй ещё раз или зайди чуть позже.')
+        return
+      }
       const vs = r.voiceSupportSuggestion?.trim() || null
       const acts = r.actions || []
       const assistantRow: CoachAssistantRow = {
         id: rowId('a'),
         role: 'assistant',
-        content: r.reply,
+        content: replyText,
         ...(acts.length > 0 ? { coachActions: acts } : {}),
         ...(vs ? { voiceSupportSuggestion: vs } : {}),
       }

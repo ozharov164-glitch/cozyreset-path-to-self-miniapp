@@ -198,15 +198,50 @@ function setTokenPersist(token: string | null): void {
   }
 }
 
+/**
+ * Уже есть app_save_token, но ensureAuth раньше выходил без /mini-app/init — isPremium оставался null
+ * (persist не хранил премиум / холодный старт). Подтягиваем флаг премиума тем же init, что и у WebApp.
+ */
+async function syncMiniAppPremiumFromInitIfPossible(): Promise<void> {
+  const backend = getBackendUrl()
+  const initData = getInitDataString()
+  if (!backend || !initData) return
+  try {
+    const res = await fetch(`${backend}/mini-app/init`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ initData }),
+    })
+    if (!res.ok) return
+    const data = (await res.json()) as { isPremium?: boolean; app_save_token?: string }
+    if (typeof data.isPremium === 'boolean') {
+      useAuthStore.getState().setPremium(data.isPremium)
+    }
+    const newer = data.app_save_token?.trim()
+    if (newer) setTokenPersist(newer)
+  } catch {
+    /* ignore */
+  }
+}
+
 // Приоритет: токен в store/session → hash → start_token из URL → initData
 export async function ensureAuth(): Promise<string | null> {
   const token = getStoredToken()
-  if (token) return token
+  if (token) {
+    useAuthStore.getState().setInitialized(true)
+    if (useAuthStore.getState().isPremium === null) {
+      await syncMiniAppPremiumFromInitIfPossible()
+    }
+    return token
+  }
 
   const fromHash = getTokenFromHash()
   if (fromHash) {
     setTokenPersist(fromHash)
     useAuthStore.getState().setInitialized(true)
+    if (useAuthStore.getState().isPremium === null) {
+      await syncMiniAppPremiumFromInitIfPossible()
+    }
     return fromHash
   }
 

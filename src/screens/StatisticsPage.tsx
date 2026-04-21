@@ -35,11 +35,10 @@ export function StatisticsPage({ onBack }: StatisticsPageProps) {
     },
     enabled: appAuthReady,
     staleTime: 45_000,
-    // keepPreviousData для смены периода показывал графики/KPI прошлого окна — выглядело как «битые» данные.
-    placeholderData: (previousData, query) => {
+    // TanStack v5 передаёт во 2-й аргумент lastQueryWithDefinedData, не текущий query — сравниваем с выбранным периодом из state.
+    placeholderData: (previousData) => {
       if (!previousData || previousData.status !== 'ok') return undefined
-      const keyPeriod = query?.queryKey[1]
-      if (keyPeriod === undefined || previousData.stats.period !== keyPeriod) return undefined
+      if (previousData.stats.period !== period) return undefined
       return previousData
     },
     refetchOnMount: 'always',
@@ -87,6 +86,9 @@ export function StatisticsPage({ onBack }: StatisticsPageProps) {
         </motion.p>
 
         <PeriodSelector period={period} onChange={setPeriod} />
+        <p className="text-[11px] text-[var(--color-text-secondary)]/90 text-center -mt-3 mb-4 leading-snug px-1">
+          Карточки ниже и графики — за выбранный период. «Дней с ботом» — с момента регистрации.
+        </p>
 
         <AnimatePresence mode="wait">
           {needPremium && (
