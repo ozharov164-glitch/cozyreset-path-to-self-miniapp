@@ -661,7 +661,7 @@ function telegramFirstNameForCoach(): string | undefined {
 export async function apiPathCoachSend(
   message: string,
 ): Promise<
-  | { status: 'ok'; reply: string; actions: PathCoachAction[] }
+  | { status: 'ok'; reply: string; actions: PathCoachAction[]; voiceSupportSuggestion?: string }
   | { error: string; code?: string; premium_required?: boolean; status?: number }
 > {
   const firstName = telegramFirstNameForCoach()
@@ -703,7 +703,11 @@ export async function apiPathCoachSend(
         return { type, label, testId }
       })
       .filter((a) => a.type && a.label)
-    return { status: 'ok', reply: data.reply, actions }
+    const vs =
+      typeof data.voiceSupportSuggestion === 'string' && data.voiceSupportSuggestion.trim()
+        ? data.voiceSupportSuggestion.trim()
+        : undefined
+    return { status: 'ok', reply: data.reply, actions, ...(vs ? { voiceSupportSuggestion: vs } : {}) }
   }
   return { error: 'Некорректный ответ', status: res.status }
 }

@@ -96,6 +96,8 @@ export function PathCoach({ onBack }: PathCoachProps) {
   const [bootLoading, setBootLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [lastActions, setLastActions] = useState<PathCoachAction[]>([])
+  const [voiceSupportSuggestion, setVoiceSupportSuggestion] = useState<string | null>(null)
+  const [voiceCopied, setVoiceCopied] = useState(false)
   const [introOpen, setIntroOpen] = useState(true)
   const [waitSec, setWaitSec] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -191,6 +193,8 @@ export function PathCoach({ onBack }: PathCoachProps) {
     if (!text || loading) return
     setError(null)
     setDraft('')
+    setVoiceSupportSuggestion(null)
+    setVoiceCopied(false)
     const userRow: CoachRow = { id: rowId('u'), role: 'user', content: text }
     setMessages((m) => [...m, userRow])
     setLastActions([])
@@ -200,6 +204,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
     if (r.status === 'ok') {
       setMessages((m) => [...m, { id: rowId('a'), role: 'assistant', content: r.reply }])
       setLastActions(r.actions || [])
+      setVoiceSupportSuggestion(r.voiceSupportSuggestion?.trim() || null)
       setIntroOpen(false)
     } else {
       setMessages((m) => m.filter((x) => x.id !== userRow.id))
@@ -380,11 +385,11 @@ export function PathCoach({ onBack }: PathCoachProps) {
                       />
                     ))}
                   </span>
-                  <span className="text-sm text-[var(--color-text-secondary)]">ИИ-Венера отвечает…</span>
+                  <span className="text-sm text-[var(--color-text-secondary)]">ИИ-Венера анализирует запрос…</span>
                 </div>
                 <p className="text-xs text-[var(--color-text-secondary)] leading-snug px-1">
                   Ответ собирается с учётом твоего прогресса — обычно 10–50 сек.
-                  {waitSec >= 18 ? ` Уже ${waitSec} сек — модель иногда дольше думает.` : ''}
+                  {waitSec >= 18 ? ` Уже ${waitSec} сек — подожди ещё чуть-чуть.` : ''}
                 </p>
               </motion.div>
             )}
@@ -394,6 +399,48 @@ export function PathCoach({ onBack }: PathCoachProps) {
             <p className="text-sm text-[var(--color-text-secondary)] text-center py-8 px-2 leading-relaxed">
               Напиши первое сообщение — ИИ-Венера ответит с опорой на твои тесты и активность в приложении.
             </p>
+          )}
+
+          {voiceSupportSuggestion && !loading && (
+            <motion.div
+              className="mt-4 rounded-2xl border border-[#d8c8ec]/90 bg-white/60 px-3.5 py-3 backdrop-blur-sm shadow-[0_2px_14px_rgba(55,40,95,0.06)]"
+              initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+            >
+              <p className="text-xs font-semibold text-[var(--color-text-primary)] mb-1.5">
+                Текст для «Голосовой поддержки» в боте
+              </p>
+              <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-wrap break-words mb-3 select-text">
+                {voiceSupportSuggestion}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(voiceSupportSuggestion).then(
+                      () => {
+                        setVoiceCopied(true)
+                        window.setTimeout(() => setVoiceCopied(false), 2000)
+                      },
+                      () => {},
+                    )
+                  }}
+                  className="px-3 py-2 rounded-xl text-sm font-semibold bg-gradient-to-br from-[#a088cc] via-[#8465b3] to-[#6a4d96] text-white shadow-sm active:scale-[0.98]"
+                  style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                >
+                  {voiceCopied ? '✓ Скопировано' : 'Скопировать'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => useAppStore.getState().setScreen('voiceSupport')}
+                  className="px-3 py-2 rounded-xl text-sm font-semibold border border-[#c4b0dc] bg-white/70 text-[#3a2d4a] active:scale-[0.98]"
+                  style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                >
+                  Открыть голос
+                </button>
+              </div>
+            </motion.div>
           )}
 
           {lastActions.length > 0 && !loading && (
