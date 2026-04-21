@@ -31,9 +31,18 @@ function toRowsFromServer(messages: PathCoachChatMessage[]): CoachRow[] {
 }
 
 function applyCoachAction(a: PathCoachAction): void {
+  const type =
+    {
+      openNeuroArena: 'open_neuro_arena',
+      open_neuroArena: 'open_neuro_arena',
+      'open_neuro-arena': 'open_neuro_arena',
+      openNeuro_arena: 'open_neuro_arena',
+      neuro_arena: 'open_neuro_arena',
+      open_neuroarena: 'open_neuro_arena',
+    }[a.type.trim()] ?? a.type.trim()
   const setScreen = useAppStore.getState().setScreen
   const setCurrentTest = useAppStore.getState().setCurrentTest
-  switch (a.type) {
+  switch (type) {
     case 'open_catalog':
       useAppStore.getState().setPathCoachReturnAfterTest(false)
       try {
@@ -112,6 +121,10 @@ export function PathCoach({ onBack }: PathCoachProps) {
   useEffect(() => {
     scrollToBottom()
   }, [messages, lastActions, loading, scrollToBottom])
+
+  useEffect(() => {
+    void import('../components/NeuroArena/NeuroArenaScreen')
+  }, [])
 
   useEffect(() => {
     if (isPremium !== true) {

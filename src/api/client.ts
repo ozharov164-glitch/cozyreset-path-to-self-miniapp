@@ -621,6 +621,20 @@ export async function apiNeuroArenaSessionEnd(payload: {
 
 export type PathCoachAction = { type: string; label: string; testId?: string }
 
+/** Совпадает с алиасами на бэкенде (llm_service): иначе кнопка не переключит экран. */
+function canonicalPathCoachActionType(raw: string): string {
+  const t = raw.trim()
+  const aliases: Record<string, string> = {
+    openNeuroArena: 'open_neuro_arena',
+    open_neuroArena: 'open_neuro_arena',
+    'open_neuro-arena': 'open_neuro_arena',
+    openNeuro_arena: 'open_neuro_arena',
+    neuro_arena: 'open_neuro_arena',
+    open_neuroarena: 'open_neuro_arena',
+  }
+  return aliases[t] ?? t
+}
+
 export type PathCoachChatMessage = { role: 'user' | 'assistant'; content: string }
 
 export async function apiPathCoachHistory(): Promise<
@@ -697,7 +711,7 @@ export async function apiPathCoachSend(
     const actions: PathCoachAction[] = raw
       .map((a) => {
         const o = a as Record<string, unknown>
-        const type = typeof o.type === 'string' ? o.type : ''
+        const type = typeof o.type === 'string' ? canonicalPathCoachActionType(o.type) : ''
         const label = typeof o.label === 'string' ? o.label : ''
         const testId = typeof o.testId === 'string' ? o.testId : undefined
         return { type, label, testId }
