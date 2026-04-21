@@ -670,7 +670,12 @@ function canonicalPathCoachActionType(raw: string): string {
   return aliases[t] ?? t
 }
 
-export type PathCoachChatMessage = { role: 'user' | 'assistant'; content: string }
+export type PathCoachChatMessage = {
+  id?: number
+  role: 'user' | 'assistant'
+  content: string
+  created_at?: string
+}
 
 export async function apiPathCoachHistory(): Promise<
   { status: 'ok'; messages: PathCoachChatMessage[] } | { error: string; premium_required?: boolean; status?: number }
@@ -690,11 +695,21 @@ export async function apiPathCoachHistory(): Promise<
     }
   }
   if (data.status === 'ok' && Array.isArray(data.messages)) {
-    const messages = (data.messages as { role?: string; content?: string }[])
-      .map((m) => ({
-        role: (m.role === 'assistant' ? 'assistant' : 'user') as 'user' | 'assistant',
-        content: typeof m.content === 'string' ? m.content : '',
-      }))
+    const messages = (data.messages as Record<string, unknown>[])
+      .map((m) => {
+        const rawId = m.id
+        let id: number | undefined
+        if (typeof rawId === 'number' && Number.isFinite(rawId)) id = rawId
+        else if (typeof rawId === 'string' && /^\d+$/.test(rawId)) id = parseInt(rawId, 10)
+        const content = typeof m.content === 'string' ? m.content : ''
+        const created_at = typeof m.created_at === 'string' ? m.created_at : undefined
+        return {
+          ...(id !== undefined ? { id } : {}),
+          role: (m.role === 'assistant' ? 'assistant' : 'user') as 'user' | 'assistant',
+          content,
+          ...(created_at ? { created_at } : {}),
+        } as PathCoachChatMessage
+      })
       .filter((m) => m.content.trim())
     return { status: 'ok', messages }
   }

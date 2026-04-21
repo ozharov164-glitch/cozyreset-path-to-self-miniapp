@@ -190,6 +190,14 @@ export function Result({ onBack }: ResultProps) {
     // pts_vcoach_return не трогаем здесь — снимает PathCoach после загрузки истории, чтобы не сорвать ingest.
   }
 
+  /** Из просмотра старого результата — без ожидания нового ingest (иначе пустой catch-up). */
+  const goToPathCoachFromHistory = () => {
+    setOpenResultId(null)
+    resetTest()
+    setPathCoachReturnAfterTest(false)
+    setScreen('pathCoach')
+  }
+
   const handleBack = () => {
     setOpenResultId(null)
     resetTest()
@@ -484,7 +492,7 @@ export function Result({ onBack }: ResultProps) {
                       </li>
                     </ul>
                     <div className="mt-4 pt-1">
-                      <VenusCoachNudgeCard className="!mb-0 shadow-none" />
+                      <VenusCoachNudgeCard className="!mb-0 shadow-none" onOpenCoach={goToPathCoach} />
                     </div>
                   </motion.div>
                   <button type="button" onClick={openBot} className="w-full py-3.5 px-4 rounded-xl btn-primary font-semibold">
@@ -508,7 +516,7 @@ export function Result({ onBack }: ResultProps) {
 
           {!saving && !saved && !error && isViewingHistory && (
             <div className="space-y-3">
-              <VenusCoachNudgeCard />
+              <VenusCoachNudgeCard onOpenCoach={goToPathCoachFromHistory} />
               <p className="text-center text-sm text-[var(--color-text-secondary)]">
                 Продолжить путь — в боте или в чате с Венерой в приложении.
               </p>

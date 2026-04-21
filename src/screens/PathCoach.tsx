@@ -5,6 +5,7 @@ import {
   apiPathCoachReset,
   apiPathCoachSend,
   getBackendUrl,
+  syncPremiumFromInit,
   type PathCoachAction,
   type PathCoachChatMessage,
 } from '../api/client'
@@ -54,12 +55,22 @@ function rowId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
 
+function contentKeySuffix(content: string): string {
+  const s = content.slice(0, 96)
+  let h = 0
+  for (let j = 0; j < s.length; j++) h = (h * 33 + s.charCodeAt(j)) >>> 0
+  return `${h}-${content.length}`
+}
+
 function toRowsFromServer(messages: PathCoachChatMessage[]): CoachRow[] {
-  return messages.map((m, i) => ({
-    id: `srv-${i}-${m.content.length}`,
-    role: m.role,
-    content: m.content,
-  }))
+  return messages.map((m, i) => {
+    const sid = m.id
+    const id =
+      typeof sid === 'number' && Number.isFinite(sid)
+        ? `pc-${sid}`
+        : `pc-${i}-${m.role}-${contentKeySuffix(m.content)}`
+    return { id, role: m.role, content: m.content }
+  })
 }
 
 /** true — выполнен переход в другой раздел (чипы этого ответа можно скрыть) */
@@ -169,8 +180,14 @@ export function PathCoach({ onBack }: PathCoachProps) {
     void import('../components/NeuroArena/NeuroArenaScreen')
   }, [])
 
+  /** Пока isPremium=null, не блокируем историю — иначе после результата теста экран «пустой». */
   useEffect(() => {
-    if (isPremium !== true) {
+    if (useAuthStore.getState().isPremium !== null) return
+    void syncPremiumFromInit()
+  }, [])
+
+  useEffect(() => {
+    if (isPremium === false) {
       setBootLoading(false)
       return
     }
@@ -187,6 +204,9 @@ export function PathCoach({ onBack }: PathCoachProps) {
       }
       if (cancelled) return
       if (r.status === 'ok') {
+        if (useAuthStore.getState().isPremium === null) {
+          useAuthStore.getState().setPremium(true)
+        }
         const rows = toRowsFromServer(r.messages)
         setMessages(rows)
         if (rows.length > 0) setIntroOpen(false)
@@ -209,10 +229,23 @@ export function PathCoach({ onBack }: PathCoachProps) {
           const baselineLen = rows.length
           let polls = 0
           const maxPolls = 18
-          const finishCatchUp = () => {
+          const finishCatchUp = async () => {
+            if (cancelled) return
             if (catchUpIntervalId !== undefined) {
               window.clearInterval(catchUpIntervalId)
               catchUpIntervalId = undefined
+            }
+            if (!cancelled) {
+              try {
+                const r3 = await apiPathCoachHistory()
+                if (!cancelled && r3.status === 'ok') {
+                  const fresh = toRowsFromServer(r3.messages)
+                  setMessages(fresh)
+                  if (fresh.length > 0) setIntroOpen(false)
+                }
+              } catch {
+                /* ignore */
+              }
             }
             clearPendingVenusResultCatchUp()
             if (!cancelled) setResultCatchUpLoading(false)
@@ -226,7 +259,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
             setMessages(rows2)
             if (rows2.length > 0) setIntroOpen(false)
             if (rows2.length > baselineLen || polls >= maxPolls) {
-              finishCatchUp()
+              void finishCatchUp()
             }
           }
           catchUpStartId = window.setTimeout(() => {
@@ -235,6 +268,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
           }, 700)
         }
       } else if ('premium_required' in r && r.premium_required) {
+        useAuthStore.getState().setPremium(false)
         setError('Нужен премиум — оформи подписку в боте 💛')
       } else {
         setError(r.error || 'Не удалось загрузить историю')
@@ -354,7 +388,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
       </motion.header>
 
       <div
-        className={`flex-1 flex flex-col min-h-0 max-w-[420px] mx-auto w-full px-3 ${isPremium === true ? '' : 'pb-[max(16px,env(safe-area-inset-bottom,0px))]'}`}
+        className={`flex-1 flex flex-col min-h-0 max-w-[420px] mx-auto w-full px-3 ${isPremium !== false ? '' : 'pb-[max(16px,env(safe-area-inset-bottom,0px))]'}`}
       >
         {isPremium === true && (
           <div className="shrink-0 mb-2">
@@ -406,7 +440,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
           </div>
         )}
 
-        {isPremium !== true && (
+        {isPremium === false && (
           <PremiumCard accent="coral" delay={0.05} className="shrink-0 !mb-2">
             <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
               Чат с ИИ-Венерой доступен с премиум-подпиской — так мы безопасно подставляем твою статистику в контекст
@@ -415,7 +449,13 @@ export function PathCoach({ onBack }: PathCoachProps) {
           </PremiumCard>
         )}
 
-        {bootLoading && isPremium === true && (
+        {isPremium === null && !bootLoading && !error && (
+          <p className="text-sm text-center text-[var(--color-text-secondary)] py-4 shrink-0">
+            Проверяем доступ к чату…
+          </p>
+        )}
+
+        {bootLoading && isPremium !== false && (
           <div className="flex justify-center py-8 shrink-0">
             <motion.div
               className="w-10 h-10 rounded-full border-2 border-[var(--color-glow-teal)] border-t-transparent"

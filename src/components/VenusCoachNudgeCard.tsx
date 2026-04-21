@@ -8,12 +8,26 @@ type VenusCoachNudgeCardProps = {
   className?: string
   /** Компактная подсказка на экране «Голосовая поддержка» */
   variant?: 'default' | 'voiceSupport'
+  /**
+   * Полный переход в ИИ-Венеру с экрана результата (сброс теста, pts_venus_result_pending, навигация).
+   * Без этого только setScreen — чат не ждёт разбор и кажется «мёртвым».
+   */
+  onOpenCoach?: () => void
 }
 
 /**
  * Призыв открыть ИИ-Венеру вместо устаревших «фраз для чата с поддержкой в боте».
  */
-export function VenusCoachNudgeCard({ delay = 0, className = '', variant = 'default' }: VenusCoachNudgeCardProps) {
+export function VenusCoachNudgeCard({
+  delay = 0,
+  className = '',
+  variant = 'default',
+  onOpenCoach,
+}: VenusCoachNudgeCardProps) {
+  const openCoach = () => {
+    if (onOpenCoach) onOpenCoach()
+    else useAppStore.getState().setScreen('pathCoach')
+  }
   if (variant === 'voiceSupport') {
     return (
       <PremiumCard accent="mint" delay={delay} className={`!p-4 !mb-4 ${className}`.trim()}>
@@ -38,7 +52,7 @@ export function VenusCoachNudgeCard({ delay = 0, className = '', variant = 'defa
         </div>
         <button
           type="button"
-          onClick={() => useAppStore.getState().setScreen('pathCoach')}
+          onClick={openCoach}
           className="w-full py-2.5 px-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-br from-[#5ad4c4] via-[#3db8a8] to-[#2a9d8f] shadow-[0_6px_20px_rgba(45,130,118,0.28),inset_0_1px_0_rgba(255,255,255,0.25)] active:scale-[0.98] transition-transform"
           style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
         >
@@ -72,7 +86,7 @@ export function VenusCoachNudgeCard({ delay = 0, className = '', variant = 'defa
       </div>
       <button
         type="button"
-        onClick={() => useAppStore.getState().setScreen('pathCoach')}
+        onClick={openCoach}
         className="w-full py-3.5 px-4 rounded-xl font-semibold text-white min-h-[48px] bg-gradient-to-br from-[#a088cc] via-[#8465b3] to-[#6a4d96] shadow-[0_8px_28px_rgba(75,48,115,0.35),inset_0_1px_0_rgba(255,255,255,0.22)] active:scale-[0.98] transition-transform"
         style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
       >
