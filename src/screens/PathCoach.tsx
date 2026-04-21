@@ -409,7 +409,10 @@ export function PathCoach({ onBack }: PathCoachProps) {
               transition={{ type: 'spring', stiffness: 320, damping: 28 }}
             >
               <p className="text-xs font-semibold text-[var(--color-text-primary)] mb-1.5">
-                Текст для «Голосовой поддержки» в боте
+                Промпт для «Голосовой поддержки» в боте
+              </p>
+              <p className="text-[11px] text-[var(--color-text-secondary)] leading-snug mb-2 opacity-90">
+                Скопируй целиком в бот — это запрос к голосовому ИИ под твоё состояние, не второй чат с Венерой.
               </p>
               <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-wrap break-words mb-3 select-text">
                 {voiceSupportSuggestion}
