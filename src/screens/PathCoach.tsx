@@ -257,6 +257,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
         if (lastRW && isAssistantRow(lastRW) && lastRW.createdAt) {
           lastCreated = Date.parse(lastRW.createdAt) || 0
         }
+        /* Только если ответ ассистента новее метки ожидания (иначе ложно «уже есть» старый разбор). */
         const alreadyHaveIngestAssistant =
           pendingResult &&
           sinceMs > 0 &&
@@ -264,7 +265,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
           isAssistantRow(lastRW) &&
           (lastRW.content?.length ?? 0) > 48 &&
           lastCreated > 0 &&
-          lastCreated >= sinceMs - 12_000
+          lastCreated >= sinceMs
 
         if (alreadyHaveIngestAssistant) {
           clearPendingVenusResultCatchUp()

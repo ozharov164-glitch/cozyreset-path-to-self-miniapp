@@ -40,6 +40,15 @@ function AppContent() {
   useEffect(() => {
     try {
       const url = new URL(window.location.href)
+      const attachHeart = url.searchParams.get('attachHeartSession')?.trim()
+      if (attachHeart && /^\d+$/.test(attachHeart)) {
+        try {
+          sessionStorage.setItem('pts_attach_heart_session_id', attachHeart)
+        } catch {
+          /* ignore */
+        }
+        url.searchParams.delete('attachHeartSession')
+      }
       if (url.searchParams.get('venusPending') === '1') {
         try {
           sessionStorage.setItem('pts_venus_result_pending', '1')
