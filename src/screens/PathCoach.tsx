@@ -58,6 +58,23 @@ function rowId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
 
+function sleepMs(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+/** Пока фон не записал venus_* в БД, attach отдаёт reason=no_cache — короткие повторы (ритм сердца / тест). */
+async function pathCoachAttachCachedWithNoCacheRetry(kind: 'test' | 'heart', id: string): Promise<void> {
+  const maxAttempts = 10
+  const delayMs = 2000
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const res = await apiPathCoachAttachCached({ kind, id })
+    if (res.status !== 'ok') return
+    if (res.attached) return
+    if (res.reason !== 'no_cache') return
+    if (attempt < maxAttempts - 1) await sleepMs(delayMs)
+  }
+}
+
 function contentKeySuffix(content: string): string {
   const s = content.slice(0, 96)
   let h = 0
@@ -221,8 +238,8 @@ export function PathCoach({ onBack }: PathCoachProps) {
           const hid = sessionStorage.getItem('pts_attach_heart_session_id')
           if (tid) sessionStorage.removeItem('pts_attach_test_result_id')
           if (hid) sessionStorage.removeItem('pts_attach_heart_session_id')
-          if (tid) await apiPathCoachAttachCached({ kind: 'test', id: tid })
-          if (hid) await apiPathCoachAttachCached({ kind: 'heart', id: hid })
+          if (tid) await pathCoachAttachCachedWithNoCacheRetry('test', tid)
+          if (hid) await pathCoachAttachCachedWithNoCacheRetry('heart', hid)
           if (tid || hid) {
             const rAttach = await apiPathCoachHistory()
             if (!cancelled && rAttach.status === 'ok') {
