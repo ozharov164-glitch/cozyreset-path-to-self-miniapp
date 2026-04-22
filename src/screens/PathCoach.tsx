@@ -55,6 +55,28 @@ type CoachAssistantRow = {
 }
 type CoachRow = CoachUserRow | CoachAssistantRow
 
+/** Выделение в ответе ассистента → вопрос по цитате (см. панель над полем ввода). */
+type PhraseQuoteBar = { text: string; preview: string }
+
+function findPhraseQuoteFromSelection(): PhraseQuoteBar | null {
+  if (typeof window === 'undefined') return null
+  const sel = window.getSelection()
+  if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return null
+  let raw = sel.toString()
+  raw = raw.replace(/\u00a0/g, ' ').replace(/\r\n/g, '\n').trim()
+  raw = raw.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n')
+  if (raw.length < 4) return null
+  const max = 560
+  const text = raw.length > max ? `${raw.slice(0, max - 1).trim()}…` : raw
+  const range = sel.getRangeAt(0)
+  const root = range.commonAncestorContainer
+  const el = root.nodeType === Node.ELEMENT_NODE ? (root as Element) : root.parentElement
+  const host = el?.closest?.('[data-pathcoach-assistant-text="1"]')
+  if (!host) return null
+  const preview = text.length > 96 ? `${text.slice(0, 93).trim()}…` : text
+  return { text, preview }
+}
+
 function isAssistantRow(r: CoachRow): r is CoachAssistantRow {
   return r.role === 'assistant'
 }
@@ -217,14 +239,54 @@ export function PathCoach({ onBack }: PathCoachProps) {
   /** Ожидание появления разбора Венеры после теста / «Ритма сердца» (серверный ingest). */
   const [resultCatchUpLoading, setResultCatchUpLoading] = useState(false)
   const [catchUpWaitSec, setCatchUpWaitSec] = useState(0)
+  const [phraseQuoteBar, setPhraseQuoteBar] = useState<PhraseQuoteBar | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const draftInputRef = useRef<HTMLTextAreaElement>(null)
+  const phraseBarRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {
       bottomRef.current?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'end' })
     })
   }, [reduceMotion])
+
+  const applyPhraseQuoteToDraft = useCallback(() => {
+    if (!phraseQuoteBar) return
+    const block = `Про выделенный фрагмент:\n«${phraseQuoteBar.text}»\n\n`
+    setDraft((d) => {
+      const t = d.trim()
+      if (!t) return `${block}Мой вопрос: `
+      return `${block}${t}`
+    })
+    setPhraseQuoteBar(null)
+    try {
+      window.getSelection()?.removeAllRanges()
+    } catch {
+      /* ignore */
+    }
+    requestAnimationFrame(() => {
+      draftInputRef.current?.focus()
+      const el = draftInputRef.current
+      if (el) {
+        const n = el.value.length
+        el.setSelectionRange(n, n)
+      }
+    })
+  }, [phraseQuoteBar])
+
+  const handleChatPointerUp = useCallback(() => {
+    window.requestAnimationFrame(() => {
+      const q = findPhraseQuoteFromSelection()
+      if (!q) return
+      try {
+        window.getSelection()?.removeAllRanges()
+      } catch {
+        /* ignore */
+      }
+      setPhraseQuoteBar(q)
+    })
+  }, [])
 
   useEffect(() => {
     scrollToBottom()
@@ -461,6 +523,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
   const send = async () => {
     const text = draft.trim()
     if (!text || loading) return
+    setPhraseQuoteBar(null)
     setError(null)
     setDraft('')
     const userRow: CoachUserRow = { id: rowId('u'), role: 'user', content: text }
@@ -588,6 +651,19 @@ export function PathCoach({ onBack }: PathCoachProps) {
                           обезличенных сводок). Это отдельный канал от поддержки в боте и не заменяет работу со
                           специалистом.
                         </p>
+                        <div
+                          className="mt-3 rounded-2xl border border-[#bfe8dc]/90 bg-gradient-to-br from-white/85 via-[#f4fffc]/90 to-[#e2f7f1]/95 px-3.5 py-3 shadow-[0_2px_16px_rgba(45,120,100,0.07)]"
+                          role="note"
+                        >
+                          <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[#2a6b5c] mb-1.5">
+                            Выделение в ответе Венеры
+                          </p>
+                          <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
+                            Зажми и выдели слова, фразу или целое предложение в её сообщении — появится панель над
+                            полем ввода. Нажми «Спросить про это»: вопрос уйдёт вместе с цитатой, и Венера ответит уже
+                            про выбранный смысл, а не про весь текст целиком.
+                          </p>
+                        </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -625,7 +701,8 @@ export function PathCoach({ onBack }: PathCoachProps) {
 
         <div
           ref={scrollRef}
-          className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain pb-5 [-webkit-overflow-scrolling:touch]"
+          onPointerUp={handleChatPointerUp}
+          className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain pb-5 [-webkit-overflow-scrolling:touch] [&_.pathcoach-venus-select::selection]:bg-[rgba(90,212,196,0.48)] [&_.pathcoach-venus-select::selection]:text-[#142422] [&_.pathcoach-venus-select::-moz-selection]:bg-[rgba(90,212,196,0.48)] [&_.pathcoach-venus-select::-moz-selection]:text-[#142422]"
         >
           <div className="space-y-3">
             <AnimatePresence initial={false}>
@@ -649,7 +726,16 @@ export function PathCoach({ onBack }: PathCoachProps) {
                         : 'max-w-[92%] self-start bg-white/55 border-white/60 text-[var(--color-text-primary)] backdrop-blur-sm'
                     }`}
                   >
-                    <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
+                    {msg.role === 'assistant' ? (
+                      <div
+                        data-pathcoach-assistant-text="1"
+                        className="pathcoach-venus-select text-[15px] leading-relaxed whitespace-pre-wrap break-words select-text cursor-text [user-select:text] [-webkit-user-select:text]"
+                      >
+                        {msg.content}
+                      </div>
+                    ) : (
+                      <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
+                    )}
                   </div>
                   {isAssistantRow(msg) && !msg.coachAttachmentsDismissed && (
                     <>
@@ -863,6 +949,51 @@ export function PathCoach({ onBack }: PathCoachProps) {
           />
           <div className="pts-pathcoach-dock-grain z-[1]" aria-hidden />
           <div className="relative z-[2] max-w-[420px] mx-auto w-full pl-[max(12px,env(safe-area-inset-left,0px))] pr-[max(12px,env(safe-area-inset-right,0px))] pt-4 pb-[max(0.9rem,calc(env(safe-area-inset-bottom,0px)+0.55rem))]">
+            {phraseQuoteBar && (
+              <div
+                ref={phraseBarRef}
+                data-phrase-quote-bar="1"
+                className="mb-2.5 rounded-2xl border border-[#c9e0d8]/95 bg-gradient-to-br from-white/92 via-[#f6fffb]/95 to-[#e6f5ef]/95 px-3 py-2.5 shadow-[0_4px_22px_rgba(40,95,80,0.1)] backdrop-blur-sm"
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[#2d6b5c] mb-1">
+                  Вопрос по выделению
+                </p>
+                <p className="text-xs text-[var(--color-text-secondary)] leading-snug mb-2">
+                  Ниже — фрагмент из ответа Венеры. Допиши вопрос в поле или нажми «Спросить про это» — мы подставим
+                  цитату в начало сообщения.
+                </p>
+                <div className="rounded-xl border border-[#b8dfd4]/90 bg-white/55 px-2.5 py-2 mb-2.5">
+                  <p className="text-sm text-[#1f3530] leading-relaxed whitespace-pre-wrap break-words font-medium">
+                    «{phraseQuoteBar.preview}»
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => applyPhraseQuoteToDraft()}
+                    className="min-h-[40px] px-3.5 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-br from-[#5ad4c4] via-[#3db9a8] to-[#2a9d8d] shadow-[0_2px_12px_rgba(42,157,141,0.35)] active:scale-[0.97]"
+                    style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                  >
+                    Спросить про это
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPhraseQuoteBar(null)
+                      try {
+                        window.getSelection()?.removeAllRanges()
+                      } catch {
+                        /* ignore */
+                      }
+                    }}
+                    className="min-h-[40px] px-3 py-2 rounded-xl text-sm font-semibold border border-[#b8c9c4] bg-white/75 text-[#3a4f4a] active:scale-[0.98]"
+                    style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                  >
+                    Закрыть
+                  </button>
+                </div>
+              </div>
+            )}
             <div
               className="flex gap-2 items-end rounded-[1.4rem] border border-[#e4daf0]/90 px-2 py-2 transition-[box-shadow,border-color,background] duration-300 ease-out focus-within:border-[#d2c4e8] focus-within:shadow-[0_0_0_1px_rgba(200,185,225,0.35),inset_0_1px_0_rgba(255,255,255,0.6)]"
               style={{
@@ -874,6 +1005,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
               }}
             >
               <textarea
+                ref={draftInputRef}
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder="Напиши, что происходит…"
