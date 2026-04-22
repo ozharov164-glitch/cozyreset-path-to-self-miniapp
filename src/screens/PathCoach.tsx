@@ -4,6 +4,7 @@ import {
   apiPathCoachHistory,
   apiPathCoachReset,
   apiPathCoachSend,
+  apiPathCoachAttachCached,
   getBackendUrl,
   syncPremiumFromInit,
   type PathCoachAction,
@@ -30,6 +31,7 @@ function readPendingVenusResultCatchUp(): boolean {
 function clearPendingVenusResultCatchUp(): void {
   try {
     sessionStorage.removeItem(PTS_VENUS_RESULT_PENDING)
+    sessionStorage.removeItem('pts_venus_pending_since')
   } catch {
     /* ignore */
   }
@@ -40,6 +42,7 @@ type CoachAssistantRow = {
   id: string
   role: 'assistant'
   content: string
+  createdAt?: string
   coachActions?: PathCoachAction[]
   voiceSupportSuggestion?: string | null
   /** Скрыть чипы и блок голоса после перехода в другой раздел из этого ответа */
@@ -69,7 +72,12 @@ function toRowsFromServer(messages: PathCoachChatMessage[]): CoachRow[] {
       typeof sid === 'number' && Number.isFinite(sid)
         ? `pc-${sid}`
         : `pc-${i}-${m.role}-${contentKeySuffix(m.content)}`
-    return { id, role: m.role, content: m.content }
+    if (m.role === 'assistant') {
+      const row: CoachAssistantRow = { id, role: 'assistant', content: m.content }
+      if (m.created_at) row.createdAt = m.created_at
+      return row
+    }
+    return { id, role: 'user', content: m.content }
   })
 }
 
@@ -207,9 +215,25 @@ export function PathCoach({ onBack }: PathCoachProps) {
         if (useAuthStore.getState().isPremium === null) {
           useAuthStore.getState().setPremium(true)
         }
-        const rows = toRowsFromServer(r.messages)
-        setMessages(rows)
-        if (rows.length > 0) setIntroOpen(false)
+        let rowsWorking = toRowsFromServer(r.messages)
+        try {
+          const tid = sessionStorage.getItem('pts_attach_test_result_id')
+          const hid = sessionStorage.getItem('pts_attach_heart_session_id')
+          if (tid) sessionStorage.removeItem('pts_attach_test_result_id')
+          if (hid) sessionStorage.removeItem('pts_attach_heart_session_id')
+          if (tid) await apiPathCoachAttachCached({ kind: 'test', id: tid })
+          if (hid) await apiPathCoachAttachCached({ kind: 'heart', id: hid })
+          if (tid || hid) {
+            const rAttach = await apiPathCoachHistory()
+            if (!cancelled && rAttach.status === 'ok') {
+              rowsWorking = toRowsFromServer(rAttach.messages)
+            }
+          }
+        } catch {
+          /* ignore */
+        }
+        setMessages(rowsWorking)
+        if (rowsWorking.length > 0) setIntroOpen(false)
         // Ingest + LLM на сервере часто 6–25 с — опрашиваем историю до новой реплики ассистента.
         let pendingVcoachReturn = false
         try {
@@ -222,11 +246,36 @@ export function PathCoach({ onBack }: PathCoachProps) {
         }
         const pendingResult = readPendingVenusResultCatchUp()
         const fromZustandBack = useAppStore.getState().pathCoachReturnAfterTest
-        const shouldCatchUp = pendingResult || pendingVcoachReturn || fromZustandBack
+        let sinceMs = 0
+        try {
+          sinceMs = parseInt(sessionStorage.getItem('pts_venus_pending_since') || '0', 10) || 0
+        } catch {
+          sinceMs = 0
+        }
+        const lastRW = rowsWorking[rowsWorking.length - 1]
+        let lastCreated = 0
+        if (lastRW && isAssistantRow(lastRW) && lastRW.createdAt) {
+          lastCreated = Date.parse(lastRW.createdAt) || 0
+        }
+        const alreadyHaveIngestAssistant =
+          pendingResult &&
+          sinceMs > 0 &&
+          lastRW &&
+          isAssistantRow(lastRW) &&
+          (lastRW.content?.length ?? 0) > 48 &&
+          lastCreated > 0 &&
+          lastCreated >= sinceMs - 12_000
+
+        if (alreadyHaveIngestAssistant) {
+          clearPendingVenusResultCatchUp()
+        }
+
+        const shouldCatchUp =
+          !alreadyHaveIngestAssistant && (pendingResult || pendingVcoachReturn || fromZustandBack)
 
         if (shouldCatchUp) {
           setResultCatchUpLoading(true)
-          const baselineLen = rows.length
+          const baselineLen = rowsWorking.length
           let polls = 0
           const maxPolls = 18
           const finishCatchUp = async () => {
@@ -265,7 +314,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
           catchUpStartId = window.setTimeout(() => {
             void runPoll()
             catchUpIntervalId = window.setInterval(() => void runPoll(), 2200)
-          }, 700)
+          }, 350)
         }
       } else if ('premium_required' in r && r.premium_required) {
         useAuthStore.getState().setPremium(false)

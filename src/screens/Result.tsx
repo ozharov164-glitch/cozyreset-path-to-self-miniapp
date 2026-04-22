@@ -28,6 +28,7 @@ function readVenCoachStored(): boolean {
 function setPendingVenusAnalysisFlag(): void {
   try {
     sessionStorage.setItem('pts_venus_result_pending', '1')
+    sessionStorage.setItem('pts_venus_pending_since', String(Date.now() - 2500))
   } catch {
     /* ignore */
   }
@@ -172,6 +173,7 @@ export function Result({ onBack }: ResultProps) {
       testTitle: displayTest.title,
       avgRounded,
       narrative,
+      resultId: lastSavedResultId,
     }).catch(() => {
       coachIngestSentRef.current = null
     })
@@ -190,11 +192,29 @@ export function Result({ onBack }: ResultProps) {
     // pts_vcoach_return не трогаем здесь — снимает PathCoach после загрузки истории, чтобы не сорвать ingest.
   }
 
-  /** Из просмотра старого результата — без ожидания нового ingest (иначе пустой catch-up). */
-  const goToPathCoachFromHistory = () => {
+  /** Из истории: подгрузить сохранённый разбор Венеры или запустить ingest с resultId. */
+  const goToPathCoachFromHistory = async () => {
+    const rid = openResultId
+    const va = (loadedResult?.venusAnalysis ?? '').trim()
     setOpenResultId(null)
     resetTest()
     setPathCoachReturnAfterTest(false)
+    try {
+      if (va && rid) {
+        sessionStorage.setItem('pts_attach_test_result_id', rid)
+      } else if (rid && displayTest?.title) {
+        setPendingVenusAnalysisFlag()
+        const narrative = getScoreDescription(avgRounded, displayTest.title)
+        await apiPathCoachIngestTestResult({
+          testTitle: displayTest.title,
+          avgRounded,
+          narrative,
+          resultId: rid,
+        })
+      }
+    } catch {
+      /* ignore */
+    }
     setScreen('pathCoach')
   }
 
@@ -516,7 +536,16 @@ export function Result({ onBack }: ResultProps) {
 
           {!saving && !saved && !error && isViewingHistory && (
             <div className="space-y-3">
-              <VenusCoachNudgeCard onOpenCoach={goToPathCoachFromHistory} />
+              <VenusCoachNudgeCard
+                onOpenCoach={() => void goToPathCoachFromHistory()}
+                heading={loadedResult?.venusAnalysis ? 'Открыть анализ ИИ-Венеры' : undefined}
+                bodyText={
+                  loadedResult?.venusAnalysis
+                    ? 'Разбор уже сохранён — откроется в чате с Венерой без нового запроса к ИИ.'
+                    : undefined
+                }
+                buttonLabel={loadedResult?.venusAnalysis ? 'Открыть анализ' : undefined}
+              />
               <p className="text-center text-sm text-[var(--color-text-secondary)]">
                 Продолжить путь — в боте или в чате с Венерой в приложении.
               </p>

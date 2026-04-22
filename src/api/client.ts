@@ -783,6 +783,8 @@ export async function apiPathCoachIngestTestResult(payload: {
   testTitle: string
   avgRounded: number
   narrative: string
+  /** id строки test_results — кэш разбора Венеры и дедупликация без лишних вызовов LLM */
+  resultId?: string | null
 }): Promise<{ status: 'ok'; ingested: boolean } | { error: string; status?: number }> {
   const firstName = telegramFirstNameForCoach()
   const controller = new AbortController()
@@ -797,6 +799,7 @@ export async function apiPathCoachIngestTestResult(payload: {
         testTitle: payload.testTitle.trim().slice(0, 200),
         avgRounded: payload.avgRounded,
         narrative: payload.narrative.trim().slice(0, 2400),
+        ...(payload.resultId ? { resultId: String(payload.resultId).trim() } : {}),
         ...(firstName ? { firstName } : {}),
       }),
     })
@@ -817,6 +820,41 @@ export async function apiPathCoachIngestTestResult(payload: {
   }
   if (data.status === 'ok' && data.ingested === true) {
     return { status: 'ok', ingested: true }
+  }
+  return { error: 'Некорректный ответ', status: res.status }
+}
+
+/** Подставить в чат Венеры сохранённый разбор по тесту или сессии «Ритм сердца» (без OpenRouter). */
+export async function apiPathCoachAttachCached(payload: {
+  kind: 'test' | 'heart'
+  id: string
+}): Promise<
+  | { status: 'ok'; attached: boolean; reason?: string }
+  | { error: string; status?: number }
+> {
+  const res = await fetchWithAuth('/mini-app/path-coach', {
+    method: 'POST',
+    body: JSON.stringify({
+      attachCachedKind: payload.kind,
+      attachCachedId: payload.id.trim(),
+    }),
+  })
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>
+  if (res.status === 403) {
+    return { error: 'premium', status: 403 }
+  }
+  if (!res.ok) {
+    return {
+      error: typeof data.error === 'string' ? data.error : 'Ошибка',
+      status: res.status,
+    }
+  }
+  if (data.status === 'ok') {
+    return {
+      status: 'ok',
+      attached: data.attached === true,
+      ...(typeof data.reason === 'string' ? { reason: data.reason } : {}),
+    }
   }
   return { error: 'Некорректный ответ', status: res.status }
 }
@@ -853,6 +891,7 @@ export async function apiTestResult(id: string): Promise<{
   answers: number[]
   dimensions?: Record<string, number>
   completedAt: string
+  venusAnalysis?: string | null
 } | null> {
   const token = useAuthStore.getState().appSaveToken || (await ensureAuth())
   const backend = getBackendUrl()
@@ -867,7 +906,15 @@ export async function apiTestResult(id: string): Promise<{
   }
   if (!res.ok) return null
   const data = await res.json()
-  return data as { id: string; testId: string; testTitle: string; answers: number[]; dimensions?: Record<string, number>; completedAt: string }
+  return data as {
+    id: string
+    testId: string
+    testTitle: string
+    answers: number[]
+    dimensions?: Record<string, number>
+    completedAt: string
+    venusAnalysis?: string | null
+  }
 }
 
 export type AiMovie = {

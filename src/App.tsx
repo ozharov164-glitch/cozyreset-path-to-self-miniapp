@@ -43,6 +43,7 @@ function AppContent() {
       if (url.searchParams.get('venusPending') === '1') {
         try {
           sessionStorage.setItem('pts_venus_result_pending', '1')
+          sessionStorage.setItem('pts_venus_pending_since', String(Date.now() - 2500))
         } catch {
           /* ignore */
         }

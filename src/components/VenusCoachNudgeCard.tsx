@@ -8,6 +8,10 @@ type VenusCoachNudgeCardProps = {
   className?: string
   /** Компактная подсказка на экране «Голосовая поддержка» */
   variant?: 'default' | 'voiceSupport'
+  /** Переопределение заголовка (например «Открыть анализ», если разбор уже сохранён) */
+  heading?: string
+  bodyText?: string
+  buttonLabel?: string
   /**
    * Полный переход в ИИ-Венеру с экрана результата (сброс теста, pts_venus_result_pending, навигация).
    * Без этого только setScreen — чат не ждёт разбор и кажется «мёртвым».
@@ -22,6 +26,9 @@ export function VenusCoachNudgeCard({
   delay = 0,
   className = '',
   variant = 'default',
+  heading,
+  bodyText,
+  buttonLabel,
   onOpenCoach,
 }: VenusCoachNudgeCardProps) {
   const openCoach = () => {
@@ -76,11 +83,11 @@ export function VenusCoachNudgeCard({
         <div className="min-w-0 flex-1">
           <h3 className="font-display text-base font-bold text-[var(--color-text-primary)] tracking-tight mb-1 flex items-center gap-2">
             <IconSparkle className="w-5 h-5 shrink-0 text-[#9d82c9]" aria-hidden />
-            Проработать с ИИ-Венерой
+            {heading ?? 'Проработать с ИИ-Венерой'}
           </h3>
           <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-            Венера видит твои тесты, самореализацию и нейро-арену — можно мягко разобрать переживания и собрать текст
-            для голоса, без отдельных заготовок для чата в боте.
+            {bodyText ??
+              'Венера видит твои тесты, самореализацию и нейро-арену — можно мягко разобрать переживания и собрать текст для голоса, без отдельных заготовок для чата в боте.'}
           </p>
         </div>
       </div>
@@ -90,7 +97,7 @@ export function VenusCoachNudgeCard({
         className="w-full py-3.5 px-4 rounded-xl font-semibold text-white min-h-[48px] bg-gradient-to-br from-[#a088cc] via-[#8465b3] to-[#6a4d96] shadow-[0_8px_28px_rgba(75,48,115,0.35),inset_0_1px_0_rgba(255,255,255,0.22)] active:scale-[0.98] transition-transform"
         style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
       >
-        Открыть ИИ-Венеру
+        {buttonLabel ?? 'Открыть ИИ-Венеру'}
       </button>
     </PremiumCard>
   )
