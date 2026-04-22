@@ -6,6 +6,8 @@ import {
   apiPathCoachSend,
   apiPathCoachAttachCached,
   getBackendUrl,
+  isUsingPageOriginAsBackend,
+  loadBackendConfig,
   syncPremiumFromInit,
   type PathCoachAction,
   type PathCoachChatMessage,
@@ -240,6 +242,21 @@ export function PathCoach({ onBack }: PathCoachProps) {
     let catchUpStartId: number | undefined
     let catchUpIntervalId: number | undefined
     ;(async () => {
+      await loadBackendConfig()
+      if (!getBackendUrl()) {
+        setBootLoading(false)
+        setError(
+          'Не удалось определить адрес сервера. Закройте мини-приложение и откройте «Путь к Себе» из бота ещё раз.',
+        )
+        return
+      }
+      if (isUsingPageOriginAsBackend()) {
+        setBootLoading(false)
+        setError(
+          'Сервер ещё не подключён (часто после перехода с «Ритма сердца»). Закройте мини-приложение и откройте «Путь к Себе» или Венеру по кнопке из бота.',
+        )
+        return
+      }
       setBootLoading(true)
       let r: Awaited<ReturnType<typeof apiPathCoachHistory>>
       try {

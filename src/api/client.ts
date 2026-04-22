@@ -79,9 +79,18 @@ export async function loadBackendConfig(): Promise<void> {
 export function getBackendUrl(): string {
   if (backendUrlOverride) return backendUrlOverride
   const fromEnv = import.meta.env.VITE_BOT_BACKEND_URL
-  if (fromEnv && typeof fromEnv === 'string') return fromEnv.replace(/\/$/, '')
+  if (fromEnv && typeof fromEnv === 'string' && fromEnv.trim()) return fromEnv.replace(/\/$/, '')
   if (typeof window !== 'undefined' && window.location?.origin) return window.location.origin
   return ''
+}
+
+/** true — API пойдёт на origin страницы (GitHub Pages и т.п.), т.е. backend ещё не задан — чат «мёртвый». */
+export function isUsingPageOriginAsBackend(): boolean {
+  if (typeof window === 'undefined') return false
+  if (backendUrlOverride) return false
+  const fromEnv = import.meta.env.VITE_BOT_BACKEND_URL
+  if (fromEnv && typeof fromEnv === 'string' && fromEnv.trim()) return false
+  return true
 }
 
 /** Сырые MP3 образцов TTS в памяти — подгружаются параллельно при старте и при открытии «Голос». */
