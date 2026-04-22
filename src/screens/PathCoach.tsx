@@ -64,8 +64,8 @@ function sleepMs(ms: number): Promise<void> {
 
 /** Пока фон не записал venus_* в БД, attach отдаёт reason=no_cache — короткие повторы (ритм сердца / тест). */
 async function pathCoachAttachCachedWithNoCacheRetry(kind: 'test' | 'heart', id: string): Promise<void> {
-  const maxAttempts = 10
-  const delayMs = 2000
+  const maxAttempts = 15
+  const delayMs = 2500
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const res = await apiPathCoachAttachCached({ kind, id })
     if (res.status !== 'ok') return
@@ -269,20 +269,15 @@ export function PathCoach({ onBack }: PathCoachProps) {
         } catch {
           sinceMs = 0
         }
-        const lastRW = rowsWorking[rowsWorking.length - 1]
-        let lastCreated = 0
-        if (lastRW && isAssistantRow(lastRW) && lastRW.createdAt) {
-          lastCreated = Date.parse(lastRW.createdAt) || 0
-        }
-        /* Только если ответ ассистента новее метки ожидания (иначе ложно «уже есть» старый разбор). */
+        /* Любая реплика ассистента новее метки — уже подтянули разбор (последняя строка может быть user). */
         const alreadyHaveIngestAssistant =
           pendingResult &&
           sinceMs > 0 &&
-          lastRW &&
-          isAssistantRow(lastRW) &&
-          (lastRW.content?.length ?? 0) > 48 &&
-          lastCreated > 0 &&
-          lastCreated >= sinceMs
+          rowsWorking.some((row) => {
+            if (!isAssistantRow(row)) return false
+            const t = row.createdAt ? Date.parse(row.createdAt) || 0 : 0
+            return t > 0 && t >= sinceMs && (row.content?.length ?? 0) > 48
+          })
 
         if (alreadyHaveIngestAssistant) {
           clearPendingVenusResultCatchUp()
@@ -295,7 +290,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
           setResultCatchUpLoading(true)
           const baselineLen = rowsWorking.length
           let polls = 0
-          const maxPolls = 18
+          const maxPolls = 28
           const finishCatchUp = async () => {
             if (cancelled) return
             if (catchUpIntervalId !== undefined) {
@@ -325,14 +320,23 @@ export function PathCoach({ onBack }: PathCoachProps) {
             const rows2 = toRowsFromServer(r2.messages)
             setMessages(rows2)
             if (rows2.length > 0) setIntroOpen(false)
-            if (rows2.length > baselineLen || polls >= maxPolls) {
+            const gotNewAssistantSinceMark = rows2.some((row) => {
+              if (!isAssistantRow(row)) return false
+              const t = row.createdAt ? Date.parse(row.createdAt) || 0 : 0
+              return t >= sinceMs && (row.content?.length ?? 0) > 48
+            })
+            if (
+              rows2.length > baselineLen ||
+              gotNewAssistantSinceMark ||
+              polls >= maxPolls
+            ) {
               void finishCatchUp()
             }
           }
           catchUpStartId = window.setTimeout(() => {
             void runPoll()
-            catchUpIntervalId = window.setInterval(() => void runPoll(), 2200)
-          }, 350)
+            catchUpIntervalId = window.setInterval(() => void runPoll(), 2000)
+          }, 300)
         }
       } else if ('premium_required' in r && r.premium_required) {
         useAuthStore.getState().setPremium(false)
