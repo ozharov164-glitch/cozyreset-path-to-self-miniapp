@@ -62,6 +62,18 @@ function sleepMs(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+/** Naive ISO от сервера (UTC) без Z — иначе Date.parse в браузере трактует как локальное время и ломает catch-up. */
+function parseCoachCreatedAtUtcMs(iso: string | undefined): number {
+  if (!iso) return 0
+  let s = iso.trim().replace(' ', 'T')
+  if (!s) return 0
+  const hasTz =
+    /[zZ]$/.test(s) || /[+-]\d\d:\d\d$/.test(s) || /[+-]\d\d\d\d$/.test(s) || /[+-]\d\d:\d\d:\d\d$/.test(s)
+  if (!hasTz) s += 'Z'
+  const t = Date.parse(s)
+  return Number.isFinite(t) ? t : 0
+}
+
 /** Пока фон не записал venus_* в БД, attach отдаёт reason=no_cache — короткие повторы (ритм сердца / тест). */
 async function pathCoachAttachCachedWithNoCacheRetry(kind: 'test' | 'heart', id: string): Promise<void> {
   const maxAttempts = 15
@@ -91,7 +103,15 @@ function toRowsFromServer(messages: PathCoachChatMessage[]): CoachRow[] {
         : `pc-${i}-${m.role}-${contentKeySuffix(m.content)}`
     if (m.role === 'assistant') {
       const row: CoachAssistantRow = { id, role: 'assistant', content: m.content }
-      if (m.created_at) row.createdAt = m.created_at
+      if (m.created_at) {
+        const raw = m.created_at.trim().replace(' ', 'T')
+        const hasTz =
+          /[zZ]$/.test(raw) ||
+          /[+-]\d\d:\d\d$/.test(raw) ||
+          /[+-]\d\d\d\d$/.test(raw) ||
+          /[+-]\d\d:\d\d:\d\d$/.test(raw)
+        row.createdAt = hasTz ? raw : `${raw}Z`
+      }
       return row
     }
     return { id, role: 'user', content: m.content }
@@ -275,7 +295,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
           sinceMs > 0 &&
           rowsWorking.some((row) => {
             if (!isAssistantRow(row)) return false
-            const t = row.createdAt ? Date.parse(row.createdAt) || 0 : 0
+            const t = parseCoachCreatedAtUtcMs(row.createdAt)
             return t > 0 && t >= sinceMs && (row.content?.length ?? 0) > 48
           })
 
@@ -322,7 +342,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
             if (rows2.length > 0) setIntroOpen(false)
             const gotNewAssistantSinceMark = rows2.some((row) => {
               if (!isAssistantRow(row)) return false
-              const t = row.createdAt ? Date.parse(row.createdAt) || 0 : 0
+              const t = parseCoachCreatedAtUtcMs(row.createdAt)
               return t >= sinceMs && (row.content?.length ?? 0) > 48
             })
             if (
