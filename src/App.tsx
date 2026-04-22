@@ -49,6 +49,14 @@ function AppContent() {
         }
         url.searchParams.delete('attachHeartSession')
       }
+      if (url.searchParams.get('heartDup') === '1') {
+        try {
+          sessionStorage.setItem('pts_attach_heart_force_dup', '1')
+        } catch {
+          /* ignore */
+        }
+        url.searchParams.delete('heartDup')
+      }
       if (url.searchParams.get('venusPending') === '1') {
         try {
           sessionStorage.setItem('pts_venus_result_pending', '1')

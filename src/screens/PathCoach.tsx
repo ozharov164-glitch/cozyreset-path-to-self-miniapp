@@ -77,11 +77,19 @@ function parseCoachCreatedAtUtcMs(iso: string | undefined): number {
 }
 
 /** Пока фон не записал venus_* в БД, attach отдаёт reason=no_cache — короткие повторы (ритм сердца / тест). */
-async function pathCoachAttachCachedWithNoCacheRetry(kind: 'test' | 'heart', id: string): Promise<void> {
+async function pathCoachAttachCachedWithNoCacheRetry(
+  kind: 'test' | 'heart',
+  id: string,
+  opts?: { forceDuplicate?: boolean },
+): Promise<void> {
   const maxAttempts = 15
   const delayMs = 2500
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const res = await apiPathCoachAttachCached({ kind, id })
+    const res = await apiPathCoachAttachCached({
+      kind,
+      id,
+      ...(kind === 'heart' && opts?.forceDuplicate && attempt === 0 ? { forceDuplicate: true } : {}),
+    })
     if (res.status !== 'ok') return
     if (res.attached) return
     if (res.reason !== 'no_cache') return
@@ -273,10 +281,23 @@ export function PathCoach({ onBack }: PathCoachProps) {
         try {
           const tid = sessionStorage.getItem('pts_attach_test_result_id')
           const hid = sessionStorage.getItem('pts_attach_heart_session_id')
+          let heartForceDup = false
+          try {
+            heartForceDup = sessionStorage.getItem('pts_attach_heart_force_dup') === '1'
+          } catch {
+            /* ignore */
+          }
           if (tid) sessionStorage.removeItem('pts_attach_test_result_id')
-          if (hid) sessionStorage.removeItem('pts_attach_heart_session_id')
+          if (hid) {
+            sessionStorage.removeItem('pts_attach_heart_session_id')
+            try {
+              sessionStorage.removeItem('pts_attach_heart_force_dup')
+            } catch {
+              /* ignore */
+            }
+          }
           if (tid) await pathCoachAttachCachedWithNoCacheRetry('test', tid)
-          if (hid) await pathCoachAttachCachedWithNoCacheRetry('heart', hid)
+          if (hid) await pathCoachAttachCachedWithNoCacheRetry('heart', hid, { forceDuplicate: heartForceDup })
           if (tid || hid) {
             const rAttach = await apiPathCoachHistory()
             if (!cancelled && rAttach.status === 'ok') {

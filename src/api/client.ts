@@ -837,6 +837,8 @@ export async function apiPathCoachIngestTestResult(payload: {
 export async function apiPathCoachAttachCached(payload: {
   kind: 'test' | 'heart'
   id: string
+  /** Сессия «Ритм сердца»: снова вставить разбор в чат (из истории), даже если такой текст уже недавно был. */
+  forceDuplicate?: boolean
 }): Promise<
   | { status: 'ok'; attached: boolean; reason?: string }
   | { error: string; status?: number }
@@ -846,6 +848,7 @@ export async function apiPathCoachAttachCached(payload: {
     body: JSON.stringify({
       attachCachedKind: payload.kind,
       attachCachedId: payload.id.trim(),
+      ...(payload.kind === 'heart' && payload.forceDuplicate ? { attachCachedForce: true } : {}),
     }),
   })
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>
