@@ -5,9 +5,12 @@ import {
   apiPathCoachReset,
   apiPathCoachSend,
   apiPathCoachAttachCached,
+  ensureAuth,
   getBackendUrl,
+  getInitDataString,
   isUsingPageOriginAsBackend,
   loadBackendConfig,
+  refreshInitData,
   syncPremiumFromInit,
   type PathCoachAction,
   type PathCoachChatMessage,
@@ -62,6 +65,12 @@ function rowId(prefix: string): string {
 
 function sleepMs(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function hasMiniAppAuthContext(): boolean {
+  const t = useAuthStore.getState().appSaveToken?.trim()
+  if (t) return true
+  return !!getInitDataString().trim()
 }
 
 /** Naive ISO от сервера (UTC) без Z — иначе Date.parse в браузере трактует как локальное время и ломает catch-up. */
@@ -241,8 +250,9 @@ export function PathCoach({ onBack }: PathCoachProps) {
     void syncPremiumFromInit()
   }, [])
 
+  /** Не зависим от isPremium — иначе null→true снимает эффект, обрывает bootstrap, чат пустой до перезахода. */
   useEffect(() => {
-    if (isPremium === false) {
+    if (useAuthStore.getState().isPremium === false) {
       setBootLoading(false)
       return
     }
@@ -263,6 +273,20 @@ export function PathCoach({ onBack }: PathCoachProps) {
         setError(
           'Сервер ещё не подключён (часто после перехода с «Ритма сердца»). Закройте мини-приложение и откройте «Путь к Себе» или Венеру по кнопке из бота.',
         )
+        return
+      }
+      refreshInitData()
+      await ensureAuth()
+      for (const ms of [120, 280, 500, 900, 1400]) {
+        if (cancelled) return
+        if (hasMiniAppAuthContext()) break
+        await sleepMs(ms)
+        refreshInitData()
+        await ensureAuth()
+      }
+      if (cancelled) return
+      if (useAuthStore.getState().isPremium === false) {
+        setBootLoading(false)
         return
       }
       setBootLoading(true)
@@ -410,6 +434,10 @@ export function PathCoach({ onBack }: PathCoachProps) {
       if (catchUpStartId !== undefined) window.clearTimeout(catchUpStartId)
       if (catchUpIntervalId !== undefined) window.clearInterval(catchUpIntervalId)
     }
+  }, [])
+
+  useEffect(() => {
+    if (isPremium === false) setBootLoading(false)
   }, [isPremium])
 
   useEffect(() => {
