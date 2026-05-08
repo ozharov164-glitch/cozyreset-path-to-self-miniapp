@@ -397,6 +397,21 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
           </button>
 
           <div className="border-t border-white/35 pt-5 mt-5">
+            <CardHeading icon={IconPulse} title="Чек-ины" iconClassName="text-[#5c7caf]" />
+            <p className="text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
+              Утренний и вечерний формат в приложении: отметка состояния, короткая заметка и история твоего ритма.
+            </p>
+            <button
+              type="button"
+              onClick={() => useAppStore.getState().setScreen('checkins')}
+              className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            >
+              Открыть чек-ины
+            </button>
+          </div>
+
+          <div className="border-t border-white/35 pt-5 mt-5">
             <CardHeading icon={IconHeartLine} title="Ритм Сердца" iconClassName="text-[#c97a8a]" />
             <p className="text-sm text-[var(--color-text-secondary)] mb-5 leading-relaxed">
               Тап в такт дыханию — 90 секунд, затем комментарий от ИИ и короткая мелодия.

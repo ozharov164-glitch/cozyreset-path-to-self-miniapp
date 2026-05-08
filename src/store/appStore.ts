@@ -7,6 +7,7 @@ export type Screen =
   | 'result'
   | 'history'
   | 'voiceSupport'
+  | 'checkins'
   | 'selfRealization'
   | 'statistics'
   | 'specialistBrief'

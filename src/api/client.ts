@@ -475,6 +475,93 @@ export async function apiTestHistory(): Promise<{ items: Array<{ id: string; tes
   return data as { items: Array<{ id: string; testId: string; testTitle: string; completedAt: string }> }
 }
 
+export type CheckinType = 'morning' | 'evening'
+export type CheckinItem = {
+  checkinType: CheckinType
+  mood: string
+  note: string
+  createdAt: string
+}
+
+export async function apiCheckinStatus(): Promise<
+  | { status: 'ok'; today: { morning: boolean; evening: boolean }; items: CheckinItem[] }
+  | { error: string; status?: number }
+> {
+  try {
+    const res = await fetchWithAuth('/mini-app/checkin-status', { method: 'POST', body: '{}' })
+    const data = (await res.json().catch(() => ({}))) as {
+      status?: string
+      today?: { morning?: boolean; evening?: boolean }
+      items?: Array<{ checkinType?: string; mood?: string; note?: string; createdAt?: string }>
+      error?: string
+    }
+    if (!res.ok || data.status !== 'ok') {
+      return { error: data.error || 'Ошибка загрузки чек-инов', status: res.status }
+    }
+    const rows = Array.isArray(data.items) ? data.items : []
+    const items: CheckinItem[] = rows
+      .map((x) => {
+        const ct = x.checkinType === 'morning' ? 'morning' : x.checkinType === 'evening' ? 'evening' : null
+        if (!ct) return null
+        return {
+          checkinType: ct,
+          mood: typeof x.mood === 'string' ? x.mood : '',
+          note: typeof x.note === 'string' ? x.note : '',
+          createdAt: typeof x.createdAt === 'string' ? x.createdAt : '',
+        } as CheckinItem
+      })
+      .filter((v): v is CheckinItem => !!v)
+    return {
+      status: 'ok',
+      today: {
+        morning: !!data.today?.morning,
+        evening: !!data.today?.evening,
+      },
+      items,
+    }
+  } catch {
+    return { error: 'Нет связи с сервером', status: 0 }
+  }
+}
+
+export async function apiCheckinSave(payload: {
+  checkinType: CheckinType
+  mood: string
+  note?: string
+}): Promise<
+  | { status: 'ok'; today: { morning: boolean; evening: boolean } }
+  | { error: string; status?: number; alreadyDone?: boolean }
+> {
+  try {
+    const res = await fetchWithAuth('/mini-app/checkin-save', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+    const data = (await res.json().catch(() => ({}))) as {
+      status?: string
+      today?: { morning?: boolean; evening?: boolean }
+      error?: string
+      already_done?: boolean
+    }
+    if (!res.ok || data.status !== 'ok') {
+      return {
+        error: data.error || 'Ошибка сохранения чек-ина',
+        status: res.status,
+        alreadyDone: !!data.already_done,
+      }
+    }
+    return {
+      status: 'ok',
+      today: {
+        morning: !!data.today?.morning,
+        evening: !!data.today?.evening,
+      },
+    }
+  } catch {
+    return { error: 'Нет связи с сервером', status: 0 }
+  }
+}
+
 /** Если в сессии уже есть token, но isPremium ещё не подтянут — один запрос /mini-app/init по initData. */
 export async function syncPremiumFromInit(): Promise<void> {
   const backend = getBackendUrl()

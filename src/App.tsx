@@ -15,6 +15,7 @@ import { TestFlow } from './screens/TestFlow'
 import { Result } from './screens/Result'
 import { History } from './screens/History'
 import { VoiceSupport } from './screens/VoiceSupport'
+import { Checkins } from './screens/Checkins'
 import { SelfRealization } from './screens/SelfRealization'
 import { StatisticsPage } from './screens/StatisticsPage'
 import { SpecialistBrief } from './screens/SpecialistBrief'
@@ -165,6 +166,7 @@ function AppContent() {
         {screen === 'result' && <Result onBack={() => setScreen('dashboard')} />}
         {screen === 'history' && <History onBack={() => setScreen('dashboard')} />}
         {screen === 'voiceSupport' && <VoiceSupport onBack={() => setScreen('dashboard')} />}
+        {screen === 'checkins' && <Checkins onBack={() => setScreen('dashboard')} />}
         {screen === 'selfRealization' && <SelfRealization onBack={() => setScreen('dashboard')} />}
         {screen === 'statistics' && <StatisticsPage onBack={() => setScreen('dashboard')} />}
         {screen === 'specialistBrief' && <SpecialistBrief onBack={() => setScreen('dashboard')} />}
