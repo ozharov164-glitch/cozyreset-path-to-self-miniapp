@@ -188,7 +188,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
             Привет, {userName}!
           </h2>
           <p className="text-[15px] text-[var(--color-text-secondary)] mb-5 leading-relaxed">
-            Здесь — срез твоего состояния. Каждый тест помогает тебе.
+            Это основной продукт «Путь к себе»: начни бесплатно и двигайся в своём темпе.
           </p>
           <button
             type="button"
@@ -199,6 +199,21 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
             Каталог тестов
           </button>
         </PremiumCard>
+
+        {isPremium === false && (
+          <PremiumCard accent="rose" delay={0.015}>
+            <h3 className="font-display text-base font-bold text-[var(--color-text-primary)] mb-2 tracking-tight">
+              Free сейчас
+            </h3>
+            <p className="text-sm text-[var(--color-text-secondary)] mb-3 leading-relaxed">
+              Базовый доступ уже открыт: тесты, часть практик и вход в ключевые разделы.
+            </p>
+            <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
+              С Премиумом открывается полная глубина: расширенный ИИ‑коуч, полная аналитика и PDF‑модули.
+              Оформление — в боте через «💰 Тарифы и подписка».
+            </p>
+          </PremiumCard>
+        )}
 
         {authReady && appSaveToken && (
           <PremiumCard accent="lavender" delay={0.03}>
@@ -451,7 +466,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
           animate={{ opacity: 1 }}
           transition={{ delay: reduceMotion ? 0 : 0.45, duration: 0.5 }}
         >
-          Глубже работа с состоянием — в боте: поддержка, практики и ежедневная забота о себе.
+          Бот теперь помогает с подпиской, отзывами, поддержкой, рефералами и новостями проекта.
         </motion.p>
       </div>
     </div>
