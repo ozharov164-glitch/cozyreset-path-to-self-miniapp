@@ -165,22 +165,14 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
             куда перейти в приложении. Это не психотерапия и не медицинская консультация, а поддержка в понятном,
             взрослом темпе.
           </p>
-          {isPremium === true ? (
-            <button
-              type="button"
-              onClick={() => useAppStore.getState().setScreen('pathCoach')}
-              className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
-              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-            >
-              Открыть чат
-            </button>
-          ) : isPremium === false ? (
-            <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-              С премиумом — оформи в боте 💛
-            </p>
-          ) : (
-            <p className="text-sm text-[var(--color-text-secondary)]">Проверяем доступ…</p>
-          )}
+          <button
+            type="button"
+            onClick={() => useAppStore.getState().setScreen('pathCoach')}
+            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+          >
+            Открыть чат
+          </button>
         </PremiumCard>
 
         <PremiumCard accent="coral" delay={0}>
@@ -209,8 +201,11 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
               Базовый доступ уже открыт: тесты, часть практик и вход в ключевые разделы.
             </p>
             <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-              С Премиумом открывается полная глубина: расширенный ИИ‑коуч, полная аналитика и PDF‑модули.
-              Оформление — в боте через «💰 Тарифы и подписка».
+              В free: 1 генерация «К специалисту», 1 генерация «Карта терапии» и 10 сообщений ИИ‑Венере за 3 дня.
+              <br />
+              <span className="inline-block mt-2 px-2.5 py-1 rounded-full bg-white/70 border border-[var(--color-lavender)]/50 text-xs font-semibold text-[var(--color-text-primary)]">
+                Полный режим — с Премиум
+              </span>
             </p>
           </PremiumCard>
         )}
@@ -221,22 +216,14 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
             <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
               Ответь на короткую анкету — ИИ поможет собрать связный текст и скачать PDF для психолога или коуча. 💛
             </p>
-            {isPremium === true ? (
-              <button
-                type="button"
-                onClick={() => useAppStore.getState().setScreen('specialistBrief')}
-                className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
-                style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-              >
-                Заполнить анкету
-              </button>
-            ) : isPremium === false ? (
-              <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-                Доступно с премиум-подпиской — оформи её в боте через «Тарифы» или кнопку в меню 💛
-              </p>
-            ) : (
-              <p className="text-sm text-[var(--color-text-secondary)]">Проверяем доступ…</p>
-            )}
+            <button
+              type="button"
+              onClick={() => useAppStore.getState().setScreen('specialistBrief')}
+              className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            >
+              Заполнить анкету
+            </button>
 
             <div className="border-t border-white/35 pt-5 mt-5">
               <CardHeading icon={IconMapPin} title="Карта терапии" iconClassName="text-[#3d9e8f]" />
@@ -244,22 +231,14 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
                 Темп, границы, опоры и пожелания к формату — связный PDF для специалиста. Не про симптомы, а про то, как
                 тебе спокойнее в процессе.
               </p>
-              {isPremium === true ? (
-                <button
-                  type="button"
-                  onClick={() => useAppStore.getState().setScreen('therapyMap')}
-                  className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
-                  style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-                >
-                  Собрать карту
-                </button>
-              ) : isPremium === false ? (
-                <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-                  Доступно с премиум-подпиской — оформи её в боте 💛
-                </p>
-              ) : (
-                <p className="text-sm text-[var(--color-text-secondary)]">Проверяем доступ…</p>
-              )}
+              <button
+                type="button"
+                onClick={() => useAppStore.getState().setScreen('therapyMap')}
+                className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
+                style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+              >
+                Собрать карту
+              </button>
             </div>
           </PremiumCard>
         )}

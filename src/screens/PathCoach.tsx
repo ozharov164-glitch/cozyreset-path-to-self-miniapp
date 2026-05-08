@@ -347,10 +347,6 @@ export function PathCoach({ onBack }: PathCoachProps) {
         await ensureAuth()
       }
       if (cancelled) return
-      if (useAuthStore.getState().isPremium === false) {
-        setBootLoading(false)
-        return
-      }
       setBootLoading(true)
       let r: Awaited<ReturnType<typeof apiPathCoachHistory>>
       try {
@@ -483,8 +479,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
           }, 300)
         }
       } else if ('premium_required' in r && r.premium_required) {
-        useAuthStore.getState().setPremium(false)
-        setError('Нужен премиум — оформи подписку в боте 💛')
+        setError(r.error || 'Для продолжения нужен Премиум 💛')
       } else {
         setError(r.error || 'Не удалось загрузить историю')
       }
@@ -497,10 +492,6 @@ export function PathCoach({ onBack }: PathCoachProps) {
       if (catchUpIntervalId !== undefined) window.clearInterval(catchUpIntervalId)
     }
   }, [])
-
-  useEffect(() => {
-    if (isPremium === false) setBootLoading(false)
-  }, [isPremium])
 
   useEffect(() => {
     if (!loading) {
@@ -607,77 +598,71 @@ export function PathCoach({ onBack }: PathCoachProps) {
         </button>
       </motion.header>
 
-      <div
-        className={`flex-1 flex flex-col min-h-0 max-w-[420px] mx-auto w-full px-3 ${isPremium !== false ? '' : 'pb-[max(16px,env(safe-area-inset-bottom,0px))]'}`}
-      >
-        {isPremium === true && (
-          <div className="shrink-0 mb-2">
-            <PremiumCard accent="mint" delay={0} className="!mb-2 !p-4">
-              <div className="flex items-start gap-3">
-                <img
-                  src={`${import.meta.env.BASE_URL}ai-venus-avatar.png`}
-                  alt="Иллюстративный образ ИИ-Венеры"
-                  width={48}
-                  height={48}
-                  className="w-12 h-12 shrink-0 rounded-xl object-cover ring-2 ring-white/45 shadow-sm"
-                  decoding="async"
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <h2 className="font-display text-base font-bold text-[var(--color-text-primary)] tracking-tight">
-                      ИИ-Венера
-                    </h2>
-                    <button
-                      type="button"
-                      onClick={() => setIntroOpen((v) => !v)}
-                      className="text-xs font-semibold text-[var(--color-glow-teal)] shrink-0 py-1 px-2 rounded-lg btn-ghost"
-                      style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-                      aria-expanded={introOpen}
-                    >
-                      {introOpen ? 'Свернуть' : 'Подробнее'}
-                    </button>
-                  </div>
-                  <AnimatePresence initial={false}>
-                    {introOpen && (
-                      <motion.div
-                        initial={reduceMotion ? false : { height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={reduceMotion ? undefined : { height: 0, opacity: 0 }}
-                        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                        className="overflow-hidden"
-                      >
-                        <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed mt-2">
-                          Ответы строятся по твоим данным в приложении: тесты, самореализация, нейро-арена (в виде
-                          обезличенных сводок). Это отдельный канал от поддержки в боте и не заменяет работу со
-                          специалистом.
-                        </p>
-                        <div
-                          className="mt-3 rounded-2xl border border-[#bfe8dc]/90 bg-gradient-to-br from-white/85 via-[#f4fffc]/90 to-[#e2f7f1]/95 px-3.5 py-3 shadow-[0_2px_16px_rgba(45,120,100,0.07)]"
-                          role="note"
-                        >
-                          <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[#2a6b5c] mb-1.5">
-                            Выделение в ответе Венеры
-                          </p>
-                          <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
-                            Зажми и выдели слова, фразу или целое предложение в её сообщении — появится панель над
-                            полем ввода. Нажми «Спросить про это»: вопрос уйдёт вместе с цитатой, и Венера ответит уже
-                            про выбранный смысл, а не про весь текст целиком.
-                          </p>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+      <div className="flex-1 flex flex-col min-h-0 max-w-[420px] mx-auto w-full px-3">
+        <div className="shrink-0 mb-2">
+          <PremiumCard accent="mint" delay={0} className="!mb-2 !p-4">
+            <div className="flex items-start gap-3">
+              <img
+                src={`${import.meta.env.BASE_URL}ai-venus-avatar.png`}
+                alt="Иллюстративный образ ИИ-Венеры"
+                width={48}
+                height={48}
+                className="w-12 h-12 shrink-0 rounded-xl object-cover ring-2 ring-white/45 shadow-sm"
+                decoding="async"
+              />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="font-display text-base font-bold text-[var(--color-text-primary)] tracking-tight">
+                    ИИ-Венера
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => setIntroOpen((v) => !v)}
+                    className="text-xs font-semibold text-[var(--color-glow-teal)] shrink-0 py-1 px-2 rounded-lg btn-ghost"
+                    style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                    aria-expanded={introOpen}
+                  >
+                    {introOpen ? 'Свернуть' : 'Подробнее'}
+                  </button>
                 </div>
+                <AnimatePresence initial={false}>
+                  {introOpen && (
+                    <motion.div
+                      initial={reduceMotion ? false : { height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={reduceMotion ? undefined : { height: 0, opacity: 0 }}
+                      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed mt-2">
+                        Ответы строятся по твоим данным в приложении: тесты, самореализация, нейро-арена (в виде
+                        обезличенных сводок). Это отдельный канал от поддержки в боте и не заменяет работу со
+                        специалистом.
+                      </p>
+                      <div
+                        className="mt-3 rounded-2xl border border-[#bfe8dc]/90 bg-gradient-to-br from-white/85 via-[#f4fffc]/90 to-[#e2f7f1]/95 px-3.5 py-3 shadow-[0_2px_16px_rgba(45,120,100,0.07)]"
+                        role="note"
+                      >
+                        <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[#2a6b5c] mb-1.5">
+                          Выделение в ответе Венеры
+                        </p>
+                        <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
+                          Зажми и выдели слова, фразу или целое предложение в её сообщении — появится панель над
+                          полем ввода. Нажми «Спросить про это»: вопрос уйдёт вместе с цитатой, и Венера ответит уже
+                          про выбранный смысл, а не про весь текст целиком.
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-            </PremiumCard>
-          </div>
-        )}
-
-        {isPremium === false && (
-          <PremiumCard accent="coral" delay={0.05} className="shrink-0 !mb-2">
-            <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-              Чат с ИИ-Венерой доступен с премиум-подпиской — так мы безопасно подставляем твою статистику в контекст
-              модели.
+            </div>
+          </PremiumCard>
+        </div>
+        {isPremium === true ? null : (
+          <PremiumCard accent="lavender" delay={0.02} className="shrink-0 !mb-2 !p-3.5">
+            <p className="text-xs font-semibold text-[var(--color-text-secondary)]">
+              Free: до 10 сообщений ИИ‑Венере за 3 дня
             </p>
           </PremiumCard>
         )}
@@ -934,10 +919,8 @@ export function PathCoach({ onBack }: PathCoachProps) {
           <div ref={bottomRef} className="h-4 shrink-0" aria-hidden />
         </div>
       </div>
-      </div>
 
-      {isPremium === true && (
-        <div className="shrink-0 z-20 relative w-full bg-transparent">
+      <div className="shrink-0 z-20 relative w-full bg-transparent">
           {/*
             Без отдельного «лаванда-блока»: виден тот же ambient, что и в чате.
             Низ — цвет последней ступени глобального градиента (#ebe3f9), зерно fixed как у .pts-ambient__grain.
@@ -1033,7 +1016,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }
