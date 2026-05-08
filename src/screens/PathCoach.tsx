@@ -315,10 +315,6 @@ export function PathCoach({ onBack }: PathCoachProps) {
 
   /** Не зависим от isPremium — иначе null→true снимает эффект, обрывает bootstrap, чат пустой до перезахода. */
   useEffect(() => {
-    if (useAuthStore.getState().isPremium === false) {
-      setBootLoading(false)
-      return
-    }
     let cancelled = false
     let catchUpStartId: number | undefined
     let catchUpIntervalId: number | undefined
