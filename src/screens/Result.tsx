@@ -70,6 +70,8 @@ export function Result({ onBack }: ResultProps) {
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [analysisLockText, setAnalysisLockText] = useState<string | null>(null)
+  const [openingCoach, setOpeningCoach] = useState(false)
+  const [savedResultAnalysisAvailable, setSavedResultAnalysisAvailable] = useState<boolean | null>(null)
   const saveStartedRef = useRef(false)
   const lastSaveKeyRef = useRef<string>('')
   const coachIngestSentRef = useRef<string | null>(null)
@@ -107,6 +109,8 @@ export function Result({ onBack }: ResultProps) {
     if (saveKey && saveKey !== lastSaveKeyRef.current) {
       lastSaveKeyRef.current = saveKey
       saveStartedRef.current = false
+      setSavedResultAnalysisAvailable(null)
+      setAnalysisLockText(null)
     }
     if (isViewingHistory || !test || saved || saving || saveStartedRef.current) return
     saveStartedRef.current = true
@@ -180,6 +184,19 @@ export function Result({ onBack }: ResultProps) {
     })
   }, [saved, lastSavedResultId, displayTest?.title, avgRounded])
 
+  useEffect(() => {
+    if (!saved || !lastSavedResultId) return
+    let cancelled = false
+    ;(async () => {
+      const row = await apiTestResult(lastSavedResultId)
+      if (cancelled || !row) return
+      setSavedResultAnalysisAvailable(row.venusAnalysisAvailable !== false)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [saved, lastSavedResultId])
+
   const openBot = () => {
     goBackToBot()
   }
@@ -191,6 +208,39 @@ export function Result({ onBack }: ResultProps) {
     setScreen('pathCoach')
     setPathCoachReturnAfterTest(false)
     // pts_vcoach_return не трогаем здесь — снимает PathCoach после загрузки истории, чтобы не сорвать ingest.
+  }
+
+  const prepareAndOpenPathCoachFromSavedResult = async () => {
+    if (openingCoach) return
+    setOpeningCoach(true)
+    setAnalysisLockText(null)
+    try {
+      const rid = lastSavedResultId
+      if (rid && displayTest?.title) {
+        const availability = await apiTestResult(rid)
+        if (availability && availability.venusAnalysisAvailable === false) {
+          setAnalysisLockText(
+            'Анализ и обсуждение результатов доступны в Премиум. Один пробный разбор в бесплатном режиме уже использован.',
+          )
+          setSavedResultAnalysisAvailable(false)
+          return
+        }
+        const ingestRes = await apiPathCoachIngestTestResult({
+          testTitle: displayTest.title,
+          avgRounded,
+          narrative: getScoreDescription(avgRounded, displayTest.title),
+          resultId: rid,
+        })
+        if ('error' in ingestRes && ingestRes.premium_required) {
+          setAnalysisLockText(ingestRes.error || 'Анализ результатов доступен в Премиум.')
+          setSavedResultAnalysisAvailable(false)
+          return
+        }
+      }
+      goToPathCoach()
+    } finally {
+      setOpeningCoach(false)
+    }
   }
 
   /** Из истории: подгрузить сохранённый разбор Венеры или запустить ingest с resultId. */
@@ -450,29 +500,40 @@ export function Result({ onBack }: ResultProps) {
                         Краткий итог теста и твой средний балл уже добавлены в диалог с Венерой — можно сразу продолжить
                         разбор там, без отдельных фраз для чата в боте.
                       </motion.p>
+                      {savedResultAnalysisAvailable === false ? (
+                        <div
+                          className="rounded-2xl p-4 relative overflow-hidden mb-4"
+                          style={{
+                            background: 'linear-gradient(145deg, rgba(255,255,255,0.78) 0%, rgba(239,232,251,0.7) 100%)',
+                            border: '1px solid rgba(155,130,200,0.34)',
+                          }}
+                        >
+                          <div className="absolute inset-0 pointer-events-none backdrop-blur-[2px]" />
+                          <div className="relative z-10 flex items-start gap-3">
+                            <div className="w-11 h-11 rounded-xl flex items-center justify-center border border-[rgba(173,141,214,0.55)] bg-white/80 shadow-md">
+                              <span style={{ fontSize: 22 }}>🔒</span>
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                                Анализ и обсуждение результатов — в Премиум
+                              </p>
+                              <p className="text-sm mt-1 text-[var(--color-text-secondary)]">
+                                В бесплатном режиме доступен 1 пробный разбор теста. Лимит уже использован.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ) : null}
                       <div className="space-y-3">
                         <motion.button
                           type="button"
-                          onClick={async () => {
-                            const rid = lastSavedResultId
-                            if (rid && displayTest?.title) {
-                              const ingestRes = await apiPathCoachIngestTestResult({
-                                testTitle: displayTest.title,
-                                avgRounded,
-                                narrative: getScoreDescription(avgRounded, displayTest.title),
-                                resultId: rid,
-                              })
-                              if ('error' in ingestRes && ingestRes.premium_required) {
-                                setAnalysisLockText(ingestRes.error || 'Анализ результатов доступен в Премиум.')
-                                return
-                              }
-                            }
-                            goToPathCoach()
-                          }}
+                          onClick={() => void prepareAndOpenPathCoachFromSavedResult()}
+                          disabled={openingCoach || savedResultAnalysisAvailable === false}
                           className="w-full py-3.5 px-4 rounded-2xl font-semibold text-white min-h-[52px]"
                           style={{
                             background: 'linear-gradient(135deg, #9d82c9 0%, #7352a0 42%, #5c4385 100%)',
                             boxShadow: '0 10px 32px rgba(80,55,120,0.4), inset 0 1px 0 rgba(255,255,255,0.22)',
+                            opacity: openingCoach || savedResultAnalysisAvailable === false ? 0.55 : 1,
                           }}
                           initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -484,7 +545,7 @@ export function Result({ onBack }: ResultProps) {
                           whileTap={reduceMotion ? {} : { scale: 0.98 }}
                           whileHover={reduceMotion ? {} : { scale: 1.02, y: -1 }}
                         >
-                          Вернуться к Венере
+                          {openingCoach ? 'Подготавливаю анализ…' : 'Вернуться к Венере'}
                         </motion.button>
                         <motion.button
                           type="button"

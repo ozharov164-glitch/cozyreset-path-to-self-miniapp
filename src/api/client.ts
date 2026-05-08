@@ -487,7 +487,10 @@ export async function apiCheckinRitual(payload: {
   checkinType: CheckinType
   mood: string
   note?: string
-}): Promise<{ status: 'ok'; ritual: string; premium: boolean } | { error: string; status?: number }> {
+}): Promise<
+  | { status: 'ok'; ritual: string; premium: boolean; dailyLimit?: number; dailyUsed?: number }
+  | { error: string; status?: number; dailyLimit?: number; dailyUsed?: number }
+> {
   try {
     const res = await fetchWithAuth('/mini-app/checkin-ritual', {
       method: 'POST',
@@ -498,14 +501,23 @@ export async function apiCheckinRitual(payload: {
       ritual?: string
       premium?: boolean
       error?: string
+      dailyLimit?: number
+      dailyUsed?: number
     }
     if (!res.ok || data.status !== 'ok' || typeof data.ritual !== 'string') {
-      return { error: data.error || 'Не удалось собрать ритуал', status: res.status }
+      return {
+        error: data.error || 'Не удалось собрать ритуал',
+        status: res.status,
+        dailyLimit: typeof data.dailyLimit === 'number' ? data.dailyLimit : undefined,
+        dailyUsed: typeof data.dailyUsed === 'number' ? data.dailyUsed : undefined,
+      }
     }
     return {
       status: 'ok',
       ritual: data.ritual,
       premium: !!data.premium,
+      dailyLimit: typeof data.dailyLimit === 'number' ? data.dailyLimit : undefined,
+      dailyUsed: typeof data.dailyUsed === 'number' ? data.dailyUsed : undefined,
     }
   } catch {
     return { error: 'Нет связи с сервером', status: 0 }

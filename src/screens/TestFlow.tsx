@@ -12,7 +12,9 @@ const SCALE = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 export function TestFlow({ onBack }: TestFlowProps) {
   const currentTestId = useAppStore((s) => s.currentTestId)
   const currentQuestionIndex = useAppStore((s) => s.currentQuestionIndex)
-  const addAnswer = useAppStore((s) => s.addAnswer)
+  const answers = useAppStore((s) => s.answers)
+  const setAnswers = useAppStore((s) => s.setAnswers)
+  const setQuestionIndex = useAppStore((s) => s.setQuestionIndex)
   const setScreen = useAppStore((s) => s.setScreen)
 
   const test = TESTS.find((t) => t.id === currentTestId)
@@ -39,8 +41,15 @@ export function TestFlow({ onBack }: TestFlowProps) {
   }, [n, total, questionPart])
 
   const handleAnswer = (value: number) => {
-    addAnswer(value)
-    if (isLast) setScreen('result')
+    // Обновляем шаг теста детерминированно: на некоторых iOS WebView onClick мог
+    // сработать, но индекс вопроса не продвигался через addAnswer.
+    const nextAnswers = [...answers, value]
+    setAnswers(nextAnswers)
+    if (isLast) {
+      setScreen('result')
+      return
+    }
+    setQuestionIndex(currentQuestionIndex + 1)
   }
 
   return (

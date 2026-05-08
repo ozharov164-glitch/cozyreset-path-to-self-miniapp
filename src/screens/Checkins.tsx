@@ -35,6 +35,8 @@ export function Checkins({ onBack }: CheckinsProps) {
   const [ritual, setRitual] = useState<string | null>(null)
   const [ritualLoading, setRitualLoading] = useState(false)
   const [ritualError, setRitualError] = useState<string | null>(null)
+  const [ritualDailyLimit, setRitualDailyLimit] = useState<number | null>(null)
+  const [ritualDailyUsed, setRitualDailyUsed] = useState<number | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['checkin-status'],
@@ -69,6 +71,10 @@ export function Checkins({ onBack }: CheckinsProps) {
 
   const generateRitual = useCallback(async () => {
     if (ritualLoading) return
+    if (ritualDailyLimit !== null && ritualDailyUsed !== null && ritualDailyUsed >= ritualDailyLimit) {
+      setRitualError(`Лимит ритуалов на сегодня исчерпан (${ritualDailyLimit}). Возвращайся завтра 💛`)
+      return
+    }
     setRitualError(null)
     setRitualLoading(true)
     try {
@@ -78,14 +84,21 @@ export function Checkins({ onBack }: CheckinsProps) {
         note: note.trim() || undefined,
       })
       if ('error' in res) {
+        if (typeof res.dailyLimit === 'number') setRitualDailyLimit(res.dailyLimit)
+        if (typeof res.dailyUsed === 'number') setRitualDailyUsed(res.dailyUsed)
         setRitualError(res.error)
         return
       }
+      if (typeof res.dailyLimit === 'number') setRitualDailyLimit(res.dailyLimit)
+      if (typeof res.dailyUsed === 'number') setRitualDailyUsed(res.dailyUsed)
       setRitual(res.ritual)
     } finally {
       setRitualLoading(false)
     }
-  }, [ritualLoading, checkinType, mood, note])
+  }, [ritualLoading, ritualDailyLimit, ritualDailyUsed, checkinType, mood, note])
+
+  const ritualLimitReached =
+    ritualDailyLimit !== null && ritualDailyUsed !== null && ritualDailyUsed >= ritualDailyLimit
 
   const entries = !data || 'error' in data ? [] : data.items
   const todayProgress = !data || 'error' in data ? 0 : Number(data.today.morning) + Number(data.today.evening)
@@ -288,11 +301,16 @@ export function Checkins({ onBack }: CheckinsProps) {
             <button
               type="button"
               onClick={() => void generateRitual()}
-              disabled={ritualLoading}
+              disabled={ritualLoading || ritualLimitReached}
               className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold disabled:opacity-60"
             >
-              {ritualLoading ? 'Собираю ритуал…' : 'Подобрать ритуал'}
+              {ritualLoading ? 'Собираю ритуал…' : ritualLimitReached ? 'Лимит на сегодня достигнут' : 'Подобрать ритуал'}
             </button>
+            {ritualDailyLimit !== null && ritualDailyUsed !== null ? (
+              <p className="mt-2 text-xs text-[var(--color-text-secondary)]">
+                Попыток сегодня: {Math.min(ritualDailyUsed, ritualDailyLimit)}/{ritualDailyLimit}
+              </p>
+            ) : null}
             {ritualError ? <p className="mt-3 text-sm text-rose-600">{ritualError}</p> : null}
             {ritual ? (
               <motion.div
