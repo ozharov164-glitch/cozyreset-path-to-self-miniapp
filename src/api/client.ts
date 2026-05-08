@@ -881,7 +881,7 @@ export async function apiPathCoachIngestTestResult(payload: {
   narrative: string
   /** id строки test_results — кэш разбора Венеры и дедупликация без лишних вызовов LLM */
   resultId?: string | null
-}): Promise<{ status: 'ok'; ingested: boolean } | { error: string; status?: number }> {
+}): Promise<{ status: 'ok'; ingested: boolean } | { error: string; status?: number; premium_required?: boolean }> {
   const firstName = telegramFirstNameForCoach()
   const controller = new AbortController()
   const timeoutId = window.setTimeout(() => controller.abort(), PATH_COACH_INGEST_TIMEOUT_MS)
@@ -908,6 +908,13 @@ export async function apiPathCoachIngestTestResult(payload: {
     window.clearTimeout(timeoutId)
   }
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>
+  if (res.status === 403) {
+    return {
+      error: typeof data.error === 'string' ? data.error : 'Доступно в Премиум',
+      status: 403,
+      premium_required: !!data.premium_required,
+    }
+  }
   if (res.status === 429) {
     return { error: typeof data.error === 'string' ? data.error : 'Слишком много запросов', status: 429 }
   }
@@ -991,6 +998,9 @@ export async function apiTestResult(id: string): Promise<{
   dimensions?: Record<string, number>
   completedAt: string
   venusAnalysis?: string | null
+  venusAnalysisAvailable?: boolean
+  venusAnalysisTrialUsed?: boolean
+  venusAnalysisTrialTotal?: number
 } | null> {
   const token = useAuthStore.getState().appSaveToken || (await ensureAuth())
   const backend = getBackendUrl()
@@ -1013,6 +1023,9 @@ export async function apiTestResult(id: string): Promise<{
     dimensions?: Record<string, number>
     completedAt: string
     venusAnalysis?: string | null
+    venusAnalysisAvailable?: boolean
+    venusAnalysisTrialUsed?: boolean
+    venusAnalysisTrialTotal?: number
   }
 }
 

@@ -69,6 +69,7 @@ export function Result({ onBack }: ResultProps) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [analysisLockText, setAnalysisLockText] = useState<string | null>(null)
   const saveStartedRef = useRef(false)
   const lastSaveKeyRef = useRef<string>('')
   const coachIngestSentRef = useRef<string | null>(null)
@@ -196,6 +197,11 @@ export function Result({ onBack }: ResultProps) {
   const goToPathCoachFromHistory = async () => {
     const rid = openResultId
     const va = (loadedResult?.venusAnalysis ?? '').trim()
+    const analysisAvailable = loadedResult?.venusAnalysisAvailable !== false
+    if (!analysisAvailable) {
+      setAnalysisLockText('Анализ и обсуждение результатов доступны в Премиум. Один пробный разбор в бесплатном режиме уже использован.')
+      return
+    }
     setOpenResultId(null)
     resetTest()
     setPathCoachReturnAfterTest(false)
@@ -205,12 +211,16 @@ export function Result({ onBack }: ResultProps) {
       } else if (rid && displayTest?.title) {
         setPendingVenusAnalysisFlag()
         const narrative = getScoreDescription(avgRounded, displayTest.title)
-        await apiPathCoachIngestTestResult({
+        const ingestRes = await apiPathCoachIngestTestResult({
           testTitle: displayTest.title,
           avgRounded,
           narrative,
           resultId: rid,
         })
+        if ('error' in ingestRes && ingestRes.premium_required) {
+          setAnalysisLockText(ingestRes.error || 'Анализ результатов доступен в Премиум.')
+          return
+        }
       }
     } catch {
       /* ignore */
@@ -443,7 +453,22 @@ export function Result({ onBack }: ResultProps) {
                       <div className="space-y-3">
                         <motion.button
                           type="button"
-                          onClick={goToPathCoach}
+                          onClick={async () => {
+                            const rid = lastSavedResultId
+                            if (rid && displayTest?.title) {
+                              const ingestRes = await apiPathCoachIngestTestResult({
+                                testTitle: displayTest.title,
+                                avgRounded,
+                                narrative: getScoreDescription(avgRounded, displayTest.title),
+                                resultId: rid,
+                              })
+                              if ('error' in ingestRes && ingestRes.premium_required) {
+                                setAnalysisLockText(ingestRes.error || 'Анализ результатов доступен в Премиум.')
+                                return
+                              }
+                            }
+                            goToPathCoach()
+                          }}
                           className="w-full py-3.5 px-4 rounded-2xl font-semibold text-white min-h-[52px]"
                           style={{
                             background: 'linear-gradient(135deg, #9d82c9 0%, #7352a0 42%, #5c4385 100%)',
@@ -484,6 +509,30 @@ export function Result({ onBack }: ResultProps) {
                   </motion.div>
               ) : (
                 <>
+                  {analysisLockText ? (
+                    <motion.div
+                      className="rounded-2xl p-4 relative overflow-hidden"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      style={{
+                        background: 'linear-gradient(145deg, rgba(255,255,255,0.78) 0%, rgba(239,232,251,0.7) 100%)',
+                        border: '1px solid rgba(155,130,200,0.34)',
+                      }}
+                    >
+                      <div className="absolute inset-0 pointer-events-none backdrop-blur-[2px]" />
+                      <div className="relative z-10 flex items-start gap-3">
+                        <div className="w-11 h-11 rounded-xl flex items-center justify-center border border-[rgba(173,141,214,0.55)] bg-white/80 shadow-md">
+                          <span style={{ fontSize: 22 }}>🔒</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                            Анализ и обсуждение результатов — в Премиум
+                          </p>
+                          <p className="text-sm mt-1 text-[var(--color-text-secondary)]">{analysisLockText}</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ) : null}
                   <motion.div
                     className="rounded-2xl p-4"
                     initial={{ y: 8 }}
@@ -511,9 +560,15 @@ export function Result({ onBack }: ResultProps) {
                         <span>Твоя дорога к себе продолжается в боте — открой его и сделай следующий шаг.</span>
                       </li>
                     </ul>
-                    <div className="mt-4 pt-1">
-                      <VenusCoachNudgeCard className="!mb-0 shadow-none" onOpenCoach={goToPathCoach} />
-                    </div>
+                    {analysisLockText ? (
+                      <div className="mt-4 pt-1 opacity-55 blur-[1.5px] pointer-events-none">
+                        <VenusCoachNudgeCard className="!mb-0 shadow-none" onOpenCoach={goToPathCoach} />
+                      </div>
+                    ) : (
+                      <div className="mt-4 pt-1">
+                        <VenusCoachNudgeCard className="!mb-0 shadow-none" onOpenCoach={goToPathCoach} />
+                      </div>
+                    )}
                   </motion.div>
                   <button type="button" onClick={openBot} className="w-full py-3.5 px-4 rounded-xl btn-primary font-semibold">
                     Вернуться в бота
@@ -536,16 +591,41 @@ export function Result({ onBack }: ResultProps) {
 
           {!saving && !saved && !error && isViewingHistory && (
             <div className="space-y-3">
-              <VenusCoachNudgeCard
-                onOpenCoach={() => void goToPathCoachFromHistory()}
-                heading={loadedResult?.venusAnalysis ? 'Открыть анализ ИИ-Венеры' : undefined}
-                bodyText={
-                  loadedResult?.venusAnalysis
-                    ? 'Разбор уже сохранён — откроется в чате с Венерой без нового запроса к ИИ.'
-                    : undefined
-                }
-                buttonLabel={loadedResult?.venusAnalysis ? 'Открыть анализ' : undefined}
-              />
+              {loadedResult?.venusAnalysisAvailable === false ? (
+                <div
+                  className="rounded-2xl p-4 relative overflow-hidden"
+                  style={{
+                    background: 'linear-gradient(145deg, rgba(255,255,255,0.78) 0%, rgba(239,232,251,0.7) 100%)',
+                    border: '1px solid rgba(155,130,200,0.34)',
+                  }}
+                >
+                  <div className="absolute inset-0 pointer-events-none backdrop-blur-[2px]" />
+                  <div className="relative z-10 flex items-start gap-3">
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center border border-[rgba(173,141,214,0.55)] bg-white/80 shadow-md">
+                      <span style={{ fontSize: 22 }}>🔒</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                        Анализ и обсуждение результатов — в Премиум
+                      </p>
+                      <p className="text-sm mt-1 text-[var(--color-text-secondary)]">
+                        В бесплатном режиме доступен 1 пробный разбор теста. Лимит уже использован.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <VenusCoachNudgeCard
+                  onOpenCoach={() => void goToPathCoachFromHistory()}
+                  heading={loadedResult?.venusAnalysis ? 'Открыть анализ ИИ-Венеры' : undefined}
+                  bodyText={
+                    loadedResult?.venusAnalysis
+                      ? 'Разбор уже сохранён — откроется в чате с Венерой без нового запроса к ИИ.'
+                      : undefined
+                  }
+                  buttonLabel={loadedResult?.venusAnalysis ? 'Открыть анализ' : undefined}
+                />
+              )}
               <p className="text-center text-sm text-[var(--color-text-secondary)]">
                 Продолжить путь — в боте или в чате с Венерой в приложении.
               </p>
