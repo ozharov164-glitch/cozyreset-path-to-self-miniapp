@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion, useReducedMotion } from 'framer-motion'
-import { apiCheckinSave, apiCheckinStatus, type CheckinType } from '../api/client'
+import { apiCheckinRitual, apiCheckinSave, apiCheckinStatus, type CheckinType } from '../api/client'
 import { PremiumCard } from '../components/PremiumCard'
 
 interface CheckinsProps {
@@ -32,6 +32,9 @@ export function Checkins({ onBack }: CheckinsProps) {
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [ritual, setRitual] = useState<string | null>(null)
+  const [ritualLoading, setRitualLoading] = useState(false)
+  const [ritualError, setRitualError] = useState<string | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['checkin-status'],
@@ -63,6 +66,26 @@ export function Checkins({ onBack }: CheckinsProps) {
       setSaving(false)
     }
   }, [saving, doneToday, checkinType, mood, note, queryClient])
+
+  const generateRitual = useCallback(async () => {
+    if (ritualLoading) return
+    setRitualError(null)
+    setRitualLoading(true)
+    try {
+      const res = await apiCheckinRitual({
+        checkinType,
+        mood,
+        note: note.trim() || undefined,
+      })
+      if ('error' in res) {
+        setRitualError(res.error)
+        return
+      }
+      setRitual(res.ritual)
+    } finally {
+      setRitualLoading(false)
+    }
+  }, [ritualLoading, checkinType, mood, note])
 
   const entries = !data || 'error' in data ? [] : data.items
   const todayProgress = !data || 'error' in data ? 0 : Number(data.today.morning) + Number(data.today.evening)
@@ -240,6 +263,51 @@ export function Checkins({ onBack }: CheckinsProps) {
               ))}
             </ul>
           )}
+        </PremiumCard>
+
+        <PremiumCard accent="rose" delay={0.06} className="relative overflow-hidden">
+          {!reduceMotion && (
+            <motion.div
+              className="absolute -inset-[55px] opacity-65 pointer-events-none"
+              style={{
+                background:
+                  'radial-gradient(circle at 18% 22%, rgba(255,198,208,0.35), transparent 58%), radial-gradient(circle at 82% 10%, rgba(184,164,224,0.35), transparent 48%), radial-gradient(circle at 70% 88%, rgba(125,211,192,0.22), transparent 52%)',
+                filter: 'blur(10px)',
+              }}
+              animate={{ rotate: [0, 9, 0] }}
+              transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          )}
+          <div className="relative z-10">
+            <h3 className="font-display text-base font-bold text-[var(--color-text-primary)] mb-2 tracking-tight">
+              Ритуал для себя
+            </h3>
+            <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
+              Как в старом формате бота: ИИ собирает мягкий ритуал под твой чек-ин, настроение и заметку.
+            </p>
+            <button
+              type="button"
+              onClick={() => void generateRitual()}
+              disabled={ritualLoading}
+              className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold disabled:opacity-60"
+            >
+              {ritualLoading ? 'Собираю ритуал…' : 'Подобрать ритуал'}
+            </button>
+            {ritualError ? <p className="mt-3 text-sm text-rose-600">{ritualError}</p> : null}
+            {ritual ? (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.22 }}
+                className="mt-4 rounded-2xl border border-[var(--color-lavender)]/40 bg-white/75 p-4 shadow-[0_10px_22px_rgba(82,68,115,0.09)]"
+              >
+                <div className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] mb-2">
+                  Твой ритуал на сейчас
+                </div>
+                <p className="text-sm leading-relaxed whitespace-pre-wrap text-[var(--color-text-primary)]">{ritual}</p>
+              </motion.div>
+            ) : null}
+          </div>
         </PremiumCard>
       </div>
     </div>

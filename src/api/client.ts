@@ -483,6 +483,35 @@ export type CheckinItem = {
   createdAt: string
 }
 
+export async function apiCheckinRitual(payload: {
+  checkinType: CheckinType
+  mood: string
+  note?: string
+}): Promise<{ status: 'ok'; ritual: string; premium: boolean } | { error: string; status?: number }> {
+  try {
+    const res = await fetchWithAuth('/mini-app/checkin-ritual', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+    const data = (await res.json().catch(() => ({}))) as {
+      status?: string
+      ritual?: string
+      premium?: boolean
+      error?: string
+    }
+    if (!res.ok || data.status !== 'ok' || typeof data.ritual !== 'string') {
+      return { error: data.error || 'Не удалось собрать ритуал', status: res.status }
+    }
+    return {
+      status: 'ok',
+      ritual: data.ritual,
+      premium: !!data.premium,
+    }
+  } catch {
+    return { error: 'Нет связи с сервером', status: 0 }
+  }
+}
+
 export async function apiCheckinStatus(): Promise<
   | { status: 'ok'; today: { morning: boolean; evening: boolean }; items: CheckinItem[] }
   | { error: string; status?: number }
