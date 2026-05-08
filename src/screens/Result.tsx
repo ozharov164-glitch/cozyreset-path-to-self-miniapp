@@ -238,6 +238,10 @@ export function Result({ onBack }: ResultProps) {
         }
       }
       goToPathCoach()
+    } catch {
+      // Если сеть/ингест упали, всё равно открываем Венеру:
+      // PathCoach сам догонит историю и не блокирует пользователя.
+      goToPathCoach()
     } finally {
       setOpeningCoach(false)
     }

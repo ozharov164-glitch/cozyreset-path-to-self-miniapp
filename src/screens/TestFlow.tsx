@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { TESTS } from '../data/tests'
 import { useAppStore } from '../store/appStore'
@@ -16,6 +16,7 @@ export function TestFlow({ onBack }: TestFlowProps) {
   const setAnswers = useAppStore((s) => s.setAnswers)
   const setQuestionIndex = useAppStore((s) => s.setQuestionIndex)
   const setScreen = useAppStore((s) => s.setScreen)
+  const [answering, setAnswering] = useState(false)
 
   const test = TESTS.find((t) => t.id === currentTestId)
   if (!test) {
@@ -40,7 +41,14 @@ export function TestFlow({ onBack }: TestFlowProps) {
     }
   }, [n, total, questionPart])
 
+  useEffect(() => {
+    // После смены вопроса снова разрешаем клик по шкале.
+    setAnswering(false)
+  }, [currentQuestionIndex])
+
   const handleAnswer = (value: number) => {
+    if (answering) return
+    setAnswering(true)
     // Обновляем шаг теста детерминированно: на некоторых iOS WebView onClick мог
     // сработать, но индекс вопроса не продвигался через addAnswer.
     const nextAnswers = [...answers, value]
@@ -115,6 +123,7 @@ export function TestFlow({ onBack }: TestFlowProps) {
                 key={num}
                 type="button"
                 onClick={() => handleAnswer(num)}
+                disabled={answering}
                 className="pts-btn-shimmer flex-1 min-w-[52px] py-3.5 px-3 rounded-xl font-bold text-[var(--color-text-primary)] transition-colors"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -125,6 +134,7 @@ export function TestFlow({ onBack }: TestFlowProps) {
                   background: 'linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(248,252,251,0.9) 100%)',
                   border: '2px solid rgba(125,211,192,0.4)',
                   boxShadow: '0 2px 12px rgba(30,43,31,0.06), inset 0 1px 0 rgba(255,255,255,0.9)',
+                  opacity: answering ? 0.72 : 1,
                 }}
               >
                 {num}
