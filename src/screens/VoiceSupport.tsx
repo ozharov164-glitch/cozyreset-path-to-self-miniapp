@@ -581,6 +581,14 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
               Напиши, что чувствуешь или о чём хочешь поговорить — ИИ-поддержка ответит тёплым голосом.
             </motion.p>
             <motion.p
+              className="inline-flex items-center text-[11px] font-semibold leading-none px-2.5 py-1.5 rounded-full border border-[var(--color-lavender)]/45 bg-white/65 text-[var(--color-text-primary)] mb-3"
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.14, type: 'spring', stiffness: 280, damping: 28 }}
+            >
+              Бесплатно: 2 голосовых ответа в неделю
+            </motion.p>
+            <motion.p
               className="text-[13px] leading-snug text-[var(--color-text-secondary)] mb-4 pl-3 border-l-[3px] border-[var(--color-glow-teal)]/55"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

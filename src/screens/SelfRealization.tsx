@@ -14,6 +14,7 @@ import {
   type SelfRealizationCuratedDay,
   type SelfRealizationTrackSync,
 } from '../api/client'
+import { useAuthStore } from '../store/authStore'
 
 const DIRECTIONS = [
   {
@@ -353,6 +354,8 @@ function ChatLoadingBubble({ label }: { label: string }) {
 
 export function SelfRealization({ onBack }: SelfRealizationProps) {
   const reduceMotion = useReducedMotion()
+  const isPremium = useAuthStore((s) => s.isPremium)
+  const isFreeLocked = isPremium === false
   const [selectedDirection, setSelectedDirection] = useState<Direction | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([])
@@ -489,6 +492,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
   }, [selectedDirection])
 
   const compileDay = useCallback(async () => {
+    if (isFreeLocked) return
     const context = inputText.trim()
     if (!selectedDirection || context.length < 12 || loadingReply) return
 
@@ -529,9 +533,10 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
       { role: 'assistant', content: result.reply, blocks: dayBlocks },
     ])
     setLoadingReply(false)
-  }, [selectedDirection, inputText, loadingReply, selectedDifficulties])
+  }, [selectedDirection, inputText, loadingReply, selectedDifficulties, isFreeLocked])
 
   const submitCompleteStep = useCallback(async () => {
+    if (isFreeLocked) return
     const report = completeReport.trim()
     if (!selectedDirection || report.length < 3 || completeLoading) return
     setError(null)
@@ -554,9 +559,10 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
       { role: 'user', content: `Отчёт о задании: ${report}` },
       { role: 'assistant', content: result.reply },
     ])
-  }, [selectedDirection, completeReport, completeLoading])
+  }, [selectedDirection, completeReport, completeLoading, isFreeLocked])
 
   const submitAdvance = useCallback(async () => {
+    if (isFreeLocked) return
     if (!selectedDirection || advanceLoading) return
 
     setError(null)
@@ -587,7 +593,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
       setAdvanceLoading(false)
       setError((e as any)?.message || 'Ошибка перехода к следующему этапу')
     }
-  }, [advanceLoading, selectedDirection])
+  }, [advanceLoading, selectedDirection, isFreeLocked])
 
   // На следующий день старые сообщения из истории НЕ должны считаться "контентом" текущего этапа:
   // опираемся на серверный dayPackage (cache дня для текущего displayStep).
@@ -645,6 +651,16 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
 
         <div className="flex-1 flex flex-col min-h-0 max-w-[440px] mx-auto w-full px-4 py-4">
           <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-3 pr-1 pt-2 pb-8 min-h-0 scroll-smooth">
+            {isFreeLocked && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={reduceMotion ? { duration: 0.2 } : srSpring}
+                className="rounded-2xl border border-[var(--color-lavender)]/45 bg-white/70 px-4 py-3 text-sm text-[var(--color-text-secondary)]"
+              >
+                Режим ознакомления «Бесплатно»: структура направления открыта, рабочие действия — в Премиум.
+              </motion.div>
+            )}
             {historyLoading && <ChatLoadingBubble label="ИИ готовит старт…" />}
 
             {track?.awaitingNextDay && (
@@ -746,7 +762,33 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
             <div ref={chatEndRef} />
           </div>
 
-          <motion.div layout className="flex-shrink-0 pt-3 space-y-3">
+          <motion.div layout className="flex-shrink-0 pt-3 space-y-3 relative">
+            {isFreeLocked && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center">
+                <div className="rounded-2xl px-4 py-3 border border-[var(--color-lavender)]/45 bg-white/80 backdrop-blur-sm shadow-lg">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-12 h-12 rounded-xl flex items-center justify-center"
+                      style={{
+                        background:
+                          'linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(228,214,247,0.95) 58%, rgba(196,168,231,0.95) 100%)',
+                        boxShadow:
+                          '0 10px 24px rgba(104,76,148,0.28), inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -1px 0 rgba(137,101,183,0.32)',
+                        border: '1px solid rgba(173,141,214,0.55)',
+                      }}
+                      aria-hidden
+                    >
+                      <span style={{ fontSize: 24, filter: 'drop-shadow(0 2px 3px rgba(73,48,108,0.35))' }}>🔒</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--color-text-primary)]">Действия заблокированы</p>
+                      <p className="text-xs text-[var(--color-text-secondary)]">Для запуска этапов нужен Премиум</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className={isFreeLocked ? 'pointer-events-none select-none blur-[2px] opacity-55' : ''}>
             <AnimatePresence>
               {completeOpen && (
                 <motion.div
@@ -909,6 +951,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
                 {error && <p className="text-sm text-amber-700 text-center">{error}</p>}
               </>
             )}
+            </div>
           </motion.div>
         </div>
       </div>

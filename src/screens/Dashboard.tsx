@@ -195,13 +195,13 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
         {isPremium === false && (
           <PremiumCard accent="rose" delay={0.015}>
             <h3 className="font-display text-base font-bold text-[var(--color-text-primary)] mb-2 tracking-tight">
-              Free сейчас
+              Бесплатно сейчас
             </h3>
             <p className="text-sm text-[var(--color-text-secondary)] mb-3 leading-relaxed">
               Базовый доступ уже открыт: тесты, часть практик и вход в ключевые разделы.
             </p>
             <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-              В free: 1 генерация «К специалисту», 1 генерация «Карта терапии» и 10 сообщений ИИ‑Венере за 3 дня.
+              В режиме «Бесплатно»: 1 генерация «К специалисту», 1 генерация «Карта терапии» и 10 сообщений ИИ‑Венере за 3 дня.
               <br />
               <span className="inline-block mt-2 px-2.5 py-1 rounded-full bg-white/70 border border-[var(--color-lavender)]/50 text-xs font-semibold text-[var(--color-text-primary)]">
                 Полный режим — с Премиум

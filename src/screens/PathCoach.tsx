@@ -662,7 +662,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
         {isPremium === true ? null : (
           <PremiumCard accent="lavender" delay={0.02} className="shrink-0 !mb-2 !p-3.5">
             <p className="text-xs font-semibold text-[var(--color-text-secondary)]">
-              Free: до 10 сообщений ИИ‑Венере за 3 дня
+              Бесплатно: до 10 сообщений ИИ‑Венере за 3 дня
             </p>
           </PremiumCard>
         )}
