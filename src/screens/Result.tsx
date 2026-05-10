@@ -225,21 +225,12 @@ export function Result({ onBack }: ResultProps) {
           setSavedResultAnalysisAvailable(false)
           return
         }
-        const ingestRes = await apiPathCoachIngestTestResult({
-          testTitle: displayTest.title,
-          avgRounded,
-          narrative: getScoreDescription(avgRounded, displayTest.title),
-          resultId: rid,
-        })
-        if ('error' in ingestRes && ingestRes.premium_required) {
-          setAnalysisLockText(ingestRes.error || 'Анализ результатов доступен в Премиум.')
-          setSavedResultAnalysisAvailable(false)
-          return
-        }
       }
+      // Ingest уже запускается useEffect после сохранения результата.
+      // Здесь не дублируем запрос и не блокируем переход — открываем Венеру сразу.
       goToPathCoach()
     } catch {
-      // Если сеть/ингест упали, всё равно открываем Венеру:
+      // Если сеть/проверка статуса упали, всё равно открываем Венеру:
       // PathCoach сам догонит историю и не блокирует пользователя.
       goToPathCoach()
     } finally {
