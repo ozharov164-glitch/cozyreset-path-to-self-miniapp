@@ -7,8 +7,8 @@ export function WelcomeFingerprintBadge() {
       src={fingerprintBadge}
       alt=""
       className="pts-welcome-fingerprint"
-      width={32}
-      height={32}
+      width={36}
+      height={36}
       decoding="async"
       loading="eager"
       fetchPriority="high"
@@ -22,8 +22,8 @@ export function WelcomePathJourneyArt() {
       src={pathJourneyArt}
       alt=""
       className="pts-welcome-hero__art"
-      width={120}
-      height={120}
+      width={136}
+      height={136}
       decoding="async"
       loading="eager"
     />

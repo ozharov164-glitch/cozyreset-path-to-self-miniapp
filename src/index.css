@@ -862,6 +862,7 @@ html.tg-mini-app .btn-ghost:active {
 }
 
 .pts-dashboard-welcome {
+  padding: 1.45rem 1.35rem 1.4rem;
   background: linear-gradient(
     160deg,
     rgba(252, 248, 255, 0.98) 0%,
@@ -873,21 +874,21 @@ html.tg-mini-app .btn-ghost:active {
 
 .pts-welcome-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 7.5rem;
-  column-gap: 0.5rem;
-  row-gap: 0.65rem;
+  grid-template-columns: minmax(0, 1fr) 8.75rem;
+  column-gap: 1rem;
+  row-gap: 0.8rem;
   align-items: start;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
 .pts-welcome-fingerprint {
   grid-column: 1;
   grid-row: 1;
   display: block;
-  width: 2rem;
-  height: 2rem;
-  min-width: 2rem;
-  min-height: 2rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
   object-fit: contain;
   pointer-events: none;
   user-select: none;
@@ -897,14 +898,18 @@ html.tg-mini-app .btn-ghost:active {
   grid-column: 1;
   grid-row: 2;
   margin: 0;
+  font-size: 1.3125rem;
+  line-height: 1.28;
 }
 
 .pts-welcome-hero__text {
   grid-column: 1;
   grid-row: 3;
   margin: 0;
-  max-width: 17.5rem;
-  padding-right: 0.25rem;
+  max-width: none;
+  padding-right: 0.5rem;
+  font-size: 0.95rem;
+  line-height: 1.55;
 }
 
 .pts-welcome-hero__art {
@@ -912,11 +917,11 @@ html.tg-mini-app .btn-ghost:active {
   grid-row: 1 / span 3;
   align-self: center;
   justify-self: end;
-  width: 7.5rem;
-  min-width: 7.5rem;
+  width: 8.75rem;
+  min-width: 8.75rem;
   height: auto;
-  margin-top: -0.1rem;
-  margin-right: -0.15rem;
+  margin-top: 0;
+  margin-right: 0;
   object-fit: contain;
   pointer-events: none;
   user-select: none;
@@ -925,12 +930,14 @@ html.tg-mini-app .btn-ghost:active {
 
 @media (min-width: 380px) {
   .pts-welcome-hero {
-    grid-template-columns: minmax(0, 1fr) 8.25rem;
-    row-gap: 0.7rem;
+    grid-template-columns: minmax(0, 1fr) 9.5rem;
+    column-gap: 1.1rem;
+    row-gap: 0.85rem;
   }
 
   .pts-welcome-hero__art {
-    width: 8.25rem;
+    width: 9.5rem;
+    min-width: 9.5rem;
   }
 }
 

@@ -356,10 +356,10 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
         <PremiumCard accent="coral" delay={0.04} className="pts-dashboard-welcome">
           <div className="pts-welcome-hero">
             <WelcomeFingerprintBadge />
-            <h2 className="pts-welcome-hero__title font-display text-xl font-bold text-[var(--color-text-primary)] tracking-tight leading-snug">
+            <h2 className="pts-welcome-hero__title font-display font-bold text-[var(--color-text-primary)] tracking-tight">
               Привет, {userName} 👋
             </h2>
-            <p className="pts-welcome-hero__text text-[15px] text-[var(--color-text-secondary)] leading-relaxed">
+            <p className="pts-welcome-hero__text text-[var(--color-text-secondary)]">
               Это основной продукт «Путь к себе»: начни бесплатно и двигайся в своём темпе.
             </p>
             <WelcomePathJourneyArt />
