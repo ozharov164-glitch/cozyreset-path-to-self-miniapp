@@ -6,6 +6,7 @@ import { apiTestHistory, apiStatistics, getBackendUrl, syncPremiumFromInit, type
 import { useAppStore } from '../store/appStore'
 import { goBackToBot } from '../utils/telegram'
 import { PremiumCard } from '../components/PremiumCard'
+import { WelcomeFingerprintBadge, WelcomePathJourneyArt } from '../components/dashboard/WelcomeHeroVisuals'
 import { VenusCoachNudgeCard } from '../components/VenusCoachNudgeCard'
 import {
   IconChart,
@@ -108,21 +109,6 @@ function IconShieldSoft({ className = '' }: { className?: string }) {
   )
 }
 
-function WelcomeFingerprintMark() {
-  return (
-    <span className="pts-welcome-fingerprint" aria-hidden>
-      <svg width={18} height={18} viewBox="0 0 24 24" fill="none" aria-hidden>
-        <path
-          d="M12 11a3 3 0 013 3v2.5M9.5 9.5a5.5 5.5 0 0110 4.5v2.5M7 8.5a8 8 0 0114 6.5v1.5M5.5 12a9.5 9.5 0 0113 8.5"
-          stroke="currentColor"
-          strokeWidth={1.55}
-          strokeLinecap="round"
-        />
-      </svg>
-    </span>
-  )
-}
-
 function IconChatBubble({ className = '' }: { className?: string }) {
   return (
     <svg
@@ -180,8 +166,6 @@ function IconChevronRight({ className = '' }: { className?: string }) {
     </svg>
   )
 }
-
-const dashboardPathJourneyArtSrc = `${import.meta.env.BASE_URL}dashboard-path-journey.png`
 
 function DashboardHeroButton({
   label,
@@ -370,21 +354,14 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
 
         <PremiumCard accent="coral" delay={0.04} className="pts-dashboard-welcome">
           <div className="pts-welcome-hero">
-            <WelcomeFingerprintMark />
+            <WelcomeFingerprintBadge />
             <h2 className="pts-welcome-hero__title font-display text-xl font-bold text-[var(--color-text-primary)] tracking-tight leading-snug">
               Привет, {userName} 👋
             </h2>
             <p className="pts-welcome-hero__text text-[15px] text-[var(--color-text-secondary)] leading-relaxed">
               Это основной продукт «Путь к себе»: начни бесплатно и двигайся в своём темпе.
             </p>
-            <img
-              src={dashboardPathJourneyArtSrc}
-              alt=""
-              className="pts-welcome-hero__art"
-              width={152}
-              height={152}
-              decoding="async"
-            />
+            <WelcomePathJourneyArt />
           </div>
           <DashboardHeroButton label="Каталог тестов" leadIcon={IconBookOpen} onClick={onOpenCatalog} />
         </PremiumCard>
