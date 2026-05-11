@@ -427,7 +427,9 @@ export function PathCoach({ onBack }: PathCoachProps) {
           setResultCatchUpLoading(true)
           const baselineLen = rowsWorking.length
           let polls = 0
-          const maxPolls = 28
+          // Снижаем нагрузку на backend/OpenRouter во время catch-up:
+          // оставляем ~60 секунд окна ожидания, но с более редким опросом.
+          const maxPolls = 15
           const finishCatchUp = async () => {
             if (cancelled) return
             if (catchUpIntervalId !== undefined) {
@@ -472,7 +474,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
           }
           catchUpStartId = window.setTimeout(() => {
             void runPoll()
-            catchUpIntervalId = window.setInterval(() => void runPoll(), 2000)
+            catchUpIntervalId = window.setInterval(() => void runPoll(), 4000)
           }, 300)
         }
       } else if ('premium_required' in r && r.premium_required) {

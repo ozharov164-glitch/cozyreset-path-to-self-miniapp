@@ -35,7 +35,7 @@ function setPendingVenusAnalysisFlag(): void {
 }
 
 /** Краткое описание результата по среднему баллу — в духе поддержки и тематики бота. */
-function getScoreDescription(avg: number, _testTitle: string): string {
+function getScoreDescription(avg: number): string {
   if (avg <= 2.5) {
     return 'Уровень низкий. Это хорошая опора, чтобы замечать изменения и бережно поддерживать себя.'
   }
@@ -166,14 +166,14 @@ export function Result({ onBack }: ResultProps) {
   const avg = displayAnswers.length ? displayAnswers.reduce((a, b) => a + b, 0) / displayAnswers.length : 0
   const avgRounded = Math.round(avg * 10) / 10
   const scorePercent = Math.min(100, Math.max(0, (avg / 10) * 100))
-  const description = getScoreDescription(avgRounded, displayTest?.title ?? '')
+  const description = getScoreDescription(avgRounded)
 
   useEffect(() => {
     if (!saved || !lastSavedResultId || !displayTest?.title) return
     const key = lastSavedResultId
     if (coachIngestSentRef.current === key) return
     coachIngestSentRef.current = key
-    const narrative = getScoreDescription(avgRounded, displayTest.title)
+    const narrative = getScoreDescription(avgRounded)
     void apiPathCoachIngestTestResult({
       testTitle: displayTest.title,
       avgRounded,
@@ -256,7 +256,7 @@ export function Result({ onBack }: ResultProps) {
         sessionStorage.setItem('pts_attach_test_result_id', rid)
       } else if (rid && displayTest?.title) {
         setPendingVenusAnalysisFlag()
-        const narrative = getScoreDescription(avgRounded, displayTest.title)
+        const narrative = getScoreDescription(avgRounded)
         const ingestRes = await apiPathCoachIngestTestResult({
           testTitle: displayTest.title,
           avgRounded,
