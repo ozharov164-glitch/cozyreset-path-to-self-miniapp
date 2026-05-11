@@ -108,21 +108,18 @@ function IconShieldSoft({ className = '' }: { className?: string }) {
   )
 }
 
-function IconFingerprint({ className = '' }: { className?: string }) {
+function WelcomeFingerprintMark() {
   return (
-    <svg
-      className={className}
-      width={18}
-      height={18}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.35}
-      strokeLinecap="round"
-      aria-hidden
-    >
-      <path d="M12 11a3 3 0 013 3v1M9.5 9.5a5.5 5.5 0 019 4.5v1M7 8.5a8 8 0 0114 6.5v1M6 12a9.5 9.5 0 0112 8.5" />
-    </svg>
+    <span className="pts-welcome-fingerprint" aria-hidden>
+      <svg width={18} height={18} viewBox="0 0 24 24" fill="none" aria-hidden>
+        <path
+          d="M12 11a3 3 0 013 3v2.5M9.5 9.5a5.5 5.5 0 0110 4.5v2.5M7 8.5a8 8 0 0114 6.5v1.5M5.5 12a9.5 9.5 0 0113 8.5"
+          stroke="currentColor"
+          strokeWidth={1.55}
+          strokeLinecap="round"
+        />
+      </svg>
+    </span>
   )
 }
 
@@ -184,32 +181,7 @@ function IconChevronRight({ className = '' }: { className?: string }) {
   )
 }
 
-function PathJourneyIllustration({ className = '' }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 96 96" fill="none" aria-hidden>
-      <defs>
-        <linearGradient id="ptsPathStroke" x1="18" y1="72" x2="78" y2="24" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#d8b8ff" />
-          <stop offset="1" stopColor="#8f6bc8" />
-        </linearGradient>
-        <linearGradient id="ptsPathPlatform" x1="48" y1="48" x2="48" y2="84" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#c9a8ff" />
-          <stop offset="1" stopColor="#8f6bc8" />
-        </linearGradient>
-      </defs>
-      <ellipse cx="48" cy="80" rx="30" ry="7" fill="rgba(139, 107, 199, 0.16)" />
-      <path
-        d="M20 72C30 58 38 54 48 54C58 54 64 42 76 28"
-        stroke="url(#ptsPathStroke)"
-        strokeWidth="8"
-        strokeLinecap="round"
-      />
-      <path d="M36 70h24l-2 10H38l-2-10z" fill="url(#ptsPathPlatform)" opacity="0.9" />
-      <rect x="70" y="18" width="4" height="30" rx="2" fill="#9b7ad4" />
-      <path d="M74 22h16l-3.5 7 3.5 7H74z" fill="#b58cf0" />
-    </svg>
-  )
-}
+const dashboardPathJourneyArtSrc = `${import.meta.env.BASE_URL}dashboard-path-journey.png`
 
 function DashboardHeroButton({
   label,
@@ -396,22 +368,23 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
           />
         </PremiumCard>
 
-        <PremiumCard accent="coral" delay={0.04}>
-          <div className="flex items-start gap-3 mb-5">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2.5 mb-2">
-                <span className="pts-fingerprint-badge" aria-hidden>
-                  <IconFingerprint />
-                </span>
-                <h2 className="font-display text-xl font-bold text-[var(--color-text-primary)] tracking-tight leading-snug">
-                  Привет, {userName} 👋
-                </h2>
-              </div>
-              <p className="text-[15px] text-[var(--color-text-secondary)] leading-relaxed">
-                Это основной продукт «Путь к себе»: начни бесплатно и двигайся в своём темпе.
-              </p>
-            </div>
-            <PathJourneyIllustration className="pts-path-illustration" />
+        <PremiumCard accent="coral" delay={0.04} className="pts-dashboard-welcome">
+          <div className="pts-welcome-hero">
+            <WelcomeFingerprintMark />
+            <h2 className="pts-welcome-hero__title font-display text-xl font-bold text-[var(--color-text-primary)] tracking-tight leading-snug">
+              Привет, {userName} 👋
+            </h2>
+            <p className="pts-welcome-hero__text text-[15px] text-[var(--color-text-secondary)] leading-relaxed">
+              Это основной продукт «Путь к себе»: начни бесплатно и двигайся в своём темпе.
+            </p>
+            <img
+              src={dashboardPathJourneyArtSrc}
+              alt=""
+              className="pts-welcome-hero__art"
+              width={152}
+              height={152}
+              decoding="async"
+            />
           </div>
           <DashboardHeroButton label="Каталог тестов" leadIcon={IconBookOpen} onClick={onOpenCatalog} />
         </PremiumCard>
