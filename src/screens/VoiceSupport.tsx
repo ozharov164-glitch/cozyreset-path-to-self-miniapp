@@ -239,7 +239,7 @@ export function VoiceSupport({ onBack }: VoiceSupportProps) {
     } catch {
       setBgPreviewPlaying(false)
     }
-  }, [setError])
+  }, [])
 
   const stopTtsPreviewPlayback = useCallback(() => {
     if (ttsPreviewTimerRef.current) {

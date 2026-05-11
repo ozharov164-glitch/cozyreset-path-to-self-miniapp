@@ -83,8 +83,9 @@ function Flower({ position }: { position: [number, number, number] }) {
 }
 
 function Stone({ position }: { position: [number, number, number] }) {
+  const rotationY = ((position[0] * 13.37 + position[2] * 9.91 + 7.11) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2)
   return (
-    <mesh position={position} rotation={[0, Math.random() * Math.PI, 0]}>
+    <mesh position={position} rotation={[0, rotationY, 0]}>
       <dodecahedronGeometry args={[0.12, 0]} />
       <meshStandardMaterial color={FOREST_DARK} roughness={0.9} />
     </mesh>

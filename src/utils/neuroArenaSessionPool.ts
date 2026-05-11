@@ -72,7 +72,7 @@ export function takeUniqueBatchById<T extends { id: string }>(
   const byId = new Map(all.map((x) => [x.id, x]))
   const allIds = all.map((x) => x.id)
 
-  let state = loadPool(storageKey)
+  const state = loadPool(storageKey)
 
   if (state.unused.length === 0) {
     const order = opts?.firstRefillOrder ?? 'reverse'

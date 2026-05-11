@@ -58,7 +58,7 @@ const TRIALS = 22
 export type DotProbeDifficulty = 'easy' | 'medium' | 'hard'
 
 /** Тайминги фаз (мс): чем выше уровень — тем «быстрее конвейер» и короче окно ответа. */
-export const DOT_PROBE_LEVELS: Record<
+const DOT_PROBE_LEVELS: Record<
   DotProbeDifficulty,
   { fix: number; cue: number; blank: number; probe: number; label: string; hint: string }
 > = {
@@ -121,7 +121,7 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
   const [trialIndex, setTrialIndex] = useState(0)
   const trialIdxRef = useRef(0)
   const [sub, setSub] = useState<'fix' | 'cue' | 'blank' | 'probe'>('fix')
-  const [neutralLeft, setNeutralLeft] = useState(true)
+  const [neutralSeed, setNeutralSeed] = useState(0)
   const probeStartRef = useRef(0)
   const answeredRef = useRef(false)
   const rtsRef = useRef<number[]>([])
@@ -148,6 +148,7 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
     rtsRef.current = []
     answeredRef.current = false
     startedAt.current = performance.now()
+    setNeutralSeed(Math.floor(Math.random() * 1000))
     setPhase('playing')
   }, [difficulty])
 
@@ -193,17 +194,14 @@ export function GameDotProbe({ onComplete, onBack }: Props) {
       setTrialIndex(idx + 1)
       setSub('fix')
     },
-    [trials.length, onComplete, trials],
+    [onComplete, trials],
   )
 
   useEffect(() => {
     finishTrialRef.current = finishTrial
   }, [finishTrial])
 
-  useEffect(() => {
-    if (phase !== 'playing') return
-    setNeutralLeft(Math.random() < 0.5)
-  }, [trialIndex, phase])
+  const neutralLeft = ((neutralSeed + trialIndex * 17) % 2) === 0
 
   useEffect(() => {
     if (phase !== 'playing') return

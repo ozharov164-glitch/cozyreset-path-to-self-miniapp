@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { PremiumCard } from '../PremiumCard'
@@ -28,7 +28,7 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
   const isPremium = useAuthStore((s) => s.isPremium)
   const [view, setView] = useState<View>('lobby')
   const [result, setResult] = useState<ResultState | null>(null)
-  const gamesThisVisit = useRef(0)
+  const [gamesThisVisit, setGamesThisVisit] = useState(0)
 
   const {
     data: status,
@@ -61,7 +61,7 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
       game: 'dotprobe' | 'scenarios' | 'memory_matrix',
       payload: DotProbeResult | ScenariosResult | MemoryMatrixResult,
     ) => {
-      gamesThisVisit.current += 1
+      setGamesThisVisit((v) => v + 1)
       setResult({ game, payload, saved: false })
       setView('result')
       const r = await apiNeuroArenaSessionEnd({
@@ -265,7 +265,7 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
             интерпретации и «матрица памяти» — запоминание порядка подсветок в сетке. После каждой сессии — короткая
             обратная связь. Это не диагностика и не лечение.
           </p>
-          {gamesThisVisit.current >= MAX_GAMES_PER_VISIT && (
+          {gamesThisVisit >= MAX_GAMES_PER_VISIT && (
             <p className="text-sm rounded-xl bg-amber-100/45 border border-amber-200/60 px-3 py-2 mb-1 text-amber-950/90">
               Отличная серия. Сделай паузу — глазам и нервной системе полезен отдых.
             </p>
@@ -345,7 +345,7 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
               </div>
               <button
                 type="button"
-                disabled={!canPlayDot || gamesThisVisit.current >= MAX_GAMES_PER_VISIT}
+                disabled={!canPlayDot || gamesThisVisit >= MAX_GAMES_PER_VISIT}
                 onClick={() => setView('dotprobe')}
                 className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold disabled:opacity-45"
               >
@@ -366,7 +366,7 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
               </div>
               <button
                 type="button"
-                disabled={!canPlaySc || gamesThisVisit.current >= MAX_GAMES_PER_VISIT}
+                disabled={!canPlaySc || gamesThisVisit >= MAX_GAMES_PER_VISIT}
                 onClick={() => setView('scenarios')}
                 className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold disabled:opacity-45"
               >
@@ -389,7 +389,7 @@ export function NeuroArenaScreen({ onBack }: { onBack: () => void }) {
               </div>
               <button
                 type="button"
-                disabled={!canPlayMm || gamesThisVisit.current >= MAX_GAMES_PER_VISIT}
+                disabled={!canPlayMm || gamesThisVisit >= MAX_GAMES_PER_VISIT}
                 onClick={() => setView('memorymatrix')}
                 className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold disabled:opacity-45"
               >

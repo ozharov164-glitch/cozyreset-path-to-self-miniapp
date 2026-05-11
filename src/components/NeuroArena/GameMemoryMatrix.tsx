@@ -72,6 +72,7 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
 
   const phraseRowRef = useRef<PhraseRow | null>(null)
   const phraseWordsRef = useRef<string[]>([])
+  const [phraseWords, setPhraseWords] = useState<string[]>([])
   const [phase, setPhase] = useState<Phase>('intro')
   const [gender, setGender] = useState<PhraseGender>(() => loadPhraseGender())
   const [highlight, setHighlight] = useState<number | null>(null)
@@ -89,14 +90,13 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
   /** Краткий тост «строка собрана» (один раз за сессию), игра не останавливается. */
   const [phraseLineToast, setPhraseLineToast] = useState(false)
   const phraseToastDismissRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const [portalReady, setPortalReady] = useState(false)
+  const portalReady = typeof document !== 'undefined'
 
   const highlightMs = reduce ? 720 : 480
   const gapMs = reduce ? 320 : 200
 
   useEffect(() => {
     mountedRef.current = true
-    setPortalReady(typeof document !== 'undefined')
     return () => {
       mountedRef.current = false
       if (phraseToastDismissRef.current) {
@@ -176,6 +176,7 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
     phraseRowRef.current = picked
     const w = wordsForPhrase(picked, gender)
     phraseWordsRef.current = w
+    setPhraseWords(w)
     setPhraseWordCount(w.length)
     setPhraseUnlocked(false)
     if (phraseToastDismissRef.current) {
@@ -271,7 +272,7 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
         inputIndexRef.current = i + 1
       }
     },
-    [canTap, mode, phase, phraseUnlocked, startRoundAfterSuccess],
+    [canTap, mode, phase, phraseUnlocked, reduce, startRoundAfterSuccess],
   )
 
   const statusText =
@@ -318,8 +319,8 @@ export function GameMemoryMatrix({ onComplete, onBack }: Props) {
 
   if (phase === 'endFail') {
     const pref = endFailPrefix.trim()
-    const fullPhrase = phraseWordsRef.current.length
-      ? joinPhraseWords(phraseWordsRef.current)
+    const fullPhrase = phraseWords.length
+      ? joinPhraseWords(phraseWords)
       : ''
     const failScore = phraseUnlocked ? phraseWordCount : failTapIndex
     const line =

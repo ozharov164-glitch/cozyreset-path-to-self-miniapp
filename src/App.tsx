@@ -9,20 +9,56 @@ import {
   prefetchBgVoicePreviews,
 } from './api/client'
 import { AmbientBackground } from './components/AmbientBackground'
-import { Dashboard } from './screens/Dashboard'
-import { Catalog } from './screens/Catalog'
-import { TestFlow } from './screens/TestFlow'
-import { Result } from './screens/Result'
-import { History } from './screens/History'
-import { VoiceSupport } from './screens/VoiceSupport'
-import { Checkins } from './screens/Checkins'
-import { SelfRealization } from './screens/SelfRealization'
-import { StatisticsPage } from './screens/StatisticsPage'
-import { SpecialistBrief } from './screens/SpecialistBrief'
-import { TherapyMap } from './screens/TherapyMap'
-import { PathCoach } from './screens/PathCoach'
 import { useAppStore } from './store/appStore'
 
+const Dashboard = lazy(async () => {
+  const m = await import('./screens/Dashboard')
+  return { default: m.Dashboard }
+})
+const Catalog = lazy(async () => {
+  const m = await import('./screens/Catalog')
+  return { default: m.Catalog }
+})
+const TestFlow = lazy(async () => {
+  const m = await import('./screens/TestFlow')
+  return { default: m.TestFlow }
+})
+const Result = lazy(async () => {
+  const m = await import('./screens/Result')
+  return { default: m.Result }
+})
+const History = lazy(async () => {
+  const m = await import('./screens/History')
+  return { default: m.History }
+})
+const VoiceSupport = lazy(async () => {
+  const m = await import('./screens/VoiceSupport')
+  return { default: m.VoiceSupport }
+})
+const Checkins = lazy(async () => {
+  const m = await import('./screens/Checkins')
+  return { default: m.Checkins }
+})
+const SelfRealization = lazy(async () => {
+  const m = await import('./screens/SelfRealization')
+  return { default: m.SelfRealization }
+})
+const StatisticsPage = lazy(async () => {
+  const m = await import('./screens/StatisticsPage')
+  return { default: m.StatisticsPage }
+})
+const SpecialistBrief = lazy(async () => {
+  const m = await import('./screens/SpecialistBrief')
+  return { default: m.SpecialistBrief }
+})
+const TherapyMap = lazy(async () => {
+  const m = await import('./screens/TherapyMap')
+  return { default: m.TherapyMap }
+})
+const PathCoach = lazy(async () => {
+  const m = await import('./screens/PathCoach')
+  return { default: m.PathCoach }
+})
 const NeuroArenaScreen = lazy(async () => {
   const m = await import('./components/NeuroArena/NeuroArenaScreen')
   return { default: m.NeuroArenaScreen }
@@ -149,43 +185,41 @@ function AppContent() {
         </div>
       )}
       <div className="relative z-10 pointer-events-auto min-h-screen flex flex-col isolate [transform:translateZ(0)]">
-        {screen === 'catalog' && <Catalog onBack={() => setScreen('dashboard')} />}
-        {screen === 'test' && (
-          <TestFlow
-            onBack={() => {
-              const st = useAppStore.getState()
-              if (st.pathCoachReturnAfterTest) {
-                st.setPathCoachReturnAfterTest(false)
-                st.setScreen('pathCoach')
-              } else {
-                st.setScreen('catalog')
-              }
-            }}
-          />
-        )}
-        {screen === 'result' && <Result onBack={() => setScreen('dashboard')} />}
-        {screen === 'history' && <History onBack={() => setScreen('dashboard')} />}
-        {screen === 'voiceSupport' && <VoiceSupport onBack={() => setScreen('dashboard')} />}
-        {screen === 'checkins' && <Checkins onBack={() => setScreen('dashboard')} />}
-        {screen === 'selfRealization' && <SelfRealization onBack={() => setScreen('dashboard')} />}
-        {screen === 'statistics' && <StatisticsPage onBack={() => setScreen('dashboard')} />}
-        {screen === 'specialistBrief' && <SpecialistBrief onBack={() => setScreen('dashboard')} />}
-        {screen === 'therapyMap' && <TherapyMap onBack={() => setScreen('dashboard')} />}
-        {screen === 'pathCoach' && <PathCoach onBack={() => setScreen('dashboard')} />}
-        {screen === 'neuroArena' && (
-          <Suspense
-            fallback={
-              <div className="min-h-[50vh] flex items-center justify-center px-4 text-sm text-[var(--color-text-secondary)]">
-                Загрузка…
-              </div>
-            }
-          >
-            <NeuroArenaScreen onBack={() => setScreen('dashboard')} />
-          </Suspense>
-        )}
-        {screen === 'dashboard' && (
-          <Dashboard onOpenCatalog={() => setScreen('catalog')} onOpenHistory={() => setScreen('history')} />
-        )}
+        <Suspense
+          fallback={
+            <div className="min-h-[50vh] flex items-center justify-center px-4 text-sm text-[var(--color-text-secondary)]">
+              Загрузка…
+            </div>
+          }
+        >
+          {screen === 'catalog' && <Catalog onBack={() => setScreen('dashboard')} />}
+          {screen === 'test' && (
+            <TestFlow
+              onBack={() => {
+                const st = useAppStore.getState()
+                if (st.pathCoachReturnAfterTest) {
+                  st.setPathCoachReturnAfterTest(false)
+                  st.setScreen('pathCoach')
+                } else {
+                  st.setScreen('catalog')
+                }
+              }}
+            />
+          )}
+          {screen === 'result' && <Result onBack={() => setScreen('dashboard')} />}
+          {screen === 'history' && <History onBack={() => setScreen('dashboard')} />}
+          {screen === 'voiceSupport' && <VoiceSupport onBack={() => setScreen('dashboard')} />}
+          {screen === 'checkins' && <Checkins onBack={() => setScreen('dashboard')} />}
+          {screen === 'selfRealization' && <SelfRealization onBack={() => setScreen('dashboard')} />}
+          {screen === 'statistics' && <StatisticsPage onBack={() => setScreen('dashboard')} />}
+          {screen === 'specialistBrief' && <SpecialistBrief onBack={() => setScreen('dashboard')} />}
+          {screen === 'therapyMap' && <TherapyMap onBack={() => setScreen('dashboard')} />}
+          {screen === 'pathCoach' && <PathCoach onBack={() => setScreen('dashboard')} />}
+          {screen === 'neuroArena' && <NeuroArenaScreen onBack={() => setScreen('dashboard')} />}
+          {screen === 'dashboard' && (
+            <Dashboard onOpenCatalog={() => setScreen('catalog')} onOpenHistory={() => setScreen('history')} />
+          )}
+        </Suspense>
       </div>
     </div>
   )

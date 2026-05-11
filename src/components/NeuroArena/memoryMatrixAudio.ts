@@ -91,7 +91,8 @@ function playTapInternal(playbackRate: number): void {
 }
 
 /** Нажатие по ячейке (верно). */
-export function playTapCell(_cellIndex: number): void {
+export function playTapCell(cellIndex?: number): void {
+  void cellIndex
   playTapInternal(1)
 }
 
@@ -101,6 +102,7 @@ export function playTapWrong(): void {
 }
 
 /** Демонстрация: без звука (только подсветка). */
-export function playFlashNote(_cellIndex: number): void {
+export function playFlashNote(cellIndex?: number): void {
+  void cellIndex
   /* намеренно пусто */
 }

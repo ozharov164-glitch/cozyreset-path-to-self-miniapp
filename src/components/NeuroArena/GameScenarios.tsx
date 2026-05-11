@@ -26,6 +26,12 @@ const ROUND_COUNT = 14
 
 const ALL_SCENARIOS = scenariosData.scenarios as ScenarioItem[]
 
+function isPositiveFirst(id: string): boolean {
+  let acc = 0
+  for (let i = 0; i < id.length; i++) acc += id.charCodeAt(i)
+  return acc % 2 === 0
+}
+
 export type ScenariosResult = {
   score: number
   accuracy: number
@@ -54,7 +60,7 @@ export function GameScenarios({ onComplete, onBack }: Props) {
     if (!item) return [] as { positive: boolean; text: string }[]
     const pos = { positive: true, text: item.positive_ending }
     const neg = { positive: false, text: item.negative_ending }
-    return Math.random() < 0.5 ? [pos, neg] : [neg, pos]
+    return isPositiveFirst(item.id) ? [pos, neg] : [neg, pos]
   }, [item])
 
   const finish = useCallback(() => {

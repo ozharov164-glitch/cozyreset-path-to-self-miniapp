@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { TESTS } from '../data/tests'
 import { useAppStore } from '../store/appStore'
@@ -17,16 +17,13 @@ export function TestFlow({ onBack }: TestFlowProps) {
   const setQuestionIndex = useAppStore((s) => s.setQuestionIndex)
   const setScreen = useAppStore((s) => s.setScreen)
   const [answering, setAnswering] = useState(false)
+  const answeringRef = useRef(false)
 
   const test = TESTS.find((t) => t.id === currentTestId)
-  if (!test) {
-    onBack()
-    return null
-  }
-
-  const total = test.questions.length
-  const isLast = currentQuestionIndex === total - 1
-  const currentQ = test.questions[currentQuestionIndex]
+  const fallbackTotal = 1
+  const total = test?.questions.length ?? fallbackTotal
+  const isLast = currentQuestionIndex >= total - 1
+  const currentQ = test?.questions[currentQuestionIndex]
   const rawText = currentQ?.text ?? `Вопрос ${currentQuestionIndex + 1} из ${total}. Оцени по шкале от 1 до 10.`
   const scaleHintMarker = ' Оцени по шкале от 1 до 10:'
   const scaleHintIdx = rawText.indexOf(scaleHintMarker)
@@ -36,18 +33,20 @@ export function TestFlow({ onBack }: TestFlowProps) {
   const progress = (n / total) * 100
 
   useEffect(() => {
+    if (!test) onBack()
+  }, [test, onBack])
+
+  useEffect(() => {
     if (typeof console !== 'undefined' && console.log) {
       console.log('[TestFlow] question text', n, total, questionPart.slice(0, 80) + '...')
     }
   }, [n, total, questionPart])
 
-  useEffect(() => {
-    // После смены вопроса снова разрешаем клик по шкале.
-    setAnswering(false)
-  }, [currentQuestionIndex])
+  if (!test) return null
 
   const handleAnswer = (value: number) => {
-    if (answering) return
+    if (answeringRef.current) return
+    answeringRef.current = true
     setAnswering(true)
     // Обновляем шаг теста детерминированно: на некоторых iOS WebView onClick мог
     // сработать, но индекс вопроса не продвигался через addAnswer.
@@ -58,6 +57,10 @@ export function TestFlow({ onBack }: TestFlowProps) {
       return
     }
     setQuestionIndex(currentQuestionIndex + 1)
+    window.setTimeout(() => {
+      answeringRef.current = false
+      setAnswering(false)
+    }, 0)
   }
 
   return (

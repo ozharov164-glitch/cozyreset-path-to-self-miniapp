@@ -173,7 +173,9 @@ function TypewriterText({
   const [visibleLength, setVisibleLength] = useState(0)
   const [cursorVisible, setCursorVisible] = useState(true)
   const onCompleteRef = useRef(onComplete)
-  onCompleteRef.current = onComplete
+  useEffect(() => {
+    onCompleteRef.current = onComplete
+  }, [onComplete])
 
   const fullText = text || ''
   const animText = animate ? clampForAnim(fullText) : fullText
@@ -181,16 +183,16 @@ function TypewriterText({
 
   useEffect(() => {
     if (!fullText) {
-      setVisibleLength(0)
-      return
+      const t = window.setTimeout(() => setVisibleLength(0), 0)
+      return () => window.clearTimeout(t)
     }
 
     if (!animate) {
-      setVisibleLength(fullText.length)
-      return
+      const t = window.setTimeout(() => setVisibleLength(fullText.length), 0)
+      return () => window.clearTimeout(t)
     }
 
-    setVisibleLength(0)
+    const resetTimer = window.setTimeout(() => setVisibleLength(0), 0)
     const len = animText.length
     const t = window.setInterval(() => {
       setVisibleLength((prev) => {
@@ -203,7 +205,10 @@ function TypewriterText({
       })
     }, TYPEWRITER_MS)
 
-    return () => window.clearInterval(t)
+    return () => {
+      window.clearTimeout(resetTimer)
+      window.clearInterval(t)
+    }
   }, [animate, fullText, animText.length])
 
   useEffect(() => {
@@ -374,7 +379,9 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
 
   const chatEndRef = useRef<HTMLDivElement | null>(null)
   const directionTitleRef = useRef<string | null>(null)
-  directionTitleRef.current = selectedDirection?.title ?? null
+  useEffect(() => {
+    directionTitleRef.current = selectedDirection?.title ?? null
+  }, [selectedDirection])
 
   useEffect(() => {
     apiSelfRealizationWelcome().then((result) => {
@@ -419,10 +426,6 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
 
     const directionTitle = selectedDirection.title
     const directionKey = selectedDirection.id
-    setError(null)
-    setHistoryLoading(true)
-    setLoadingReply(false)
-    setTrack(null)
 
     Promise.all([
       apiSelfRealizationHistory(directionTitle),
@@ -591,7 +594,7 @@ export function SelfRealization({ onBack }: SelfRealizationProps) {
       ])
     } catch (e: unknown) {
       setAdvanceLoading(false)
-      setError((e as any)?.message || 'Ошибка перехода к следующему этапу')
+      setError(e instanceof Error ? e.message : 'Ошибка перехода к следующему этапу')
     }
   }, [advanceLoading, selectedDirection, isFreeLocked])
 

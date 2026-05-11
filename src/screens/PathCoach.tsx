@@ -240,7 +240,6 @@ export function PathCoach({ onBack }: PathCoachProps) {
   const [resultCatchUpLoading, setResultCatchUpLoading] = useState(false)
   const [catchUpWaitSec, setCatchUpWaitSec] = useState(0)
   const [phraseQuoteBar, setPhraseQuoteBar] = useState<PhraseQuoteBar | null>(null)
-  const [retryNonce, setRetryNonce] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const draftInputRef = useRef<HTMLTextAreaElement>(null)
@@ -301,7 +300,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
           : r,
       ),
     )
-  }, [retryNonce])
+  }, [])
 
   useEffect(() => {
     void import('../components/NeuroArena/NeuroArenaScreen')
@@ -918,7 +917,6 @@ export function PathCoach({ onBack }: PathCoachProps) {
                 type="button"
                 onClick={() => {
                   setError(null)
-                  setRetryNonce((n) => n + 1)
                 }}
                 className="mt-2 px-3 py-2 rounded-xl text-xs font-semibold border border-[var(--color-lavender)]/45 bg-white/75 text-[var(--color-text-primary)]"
                 style={{ WebkitTapHighlightColor: 'transparent' }}
