@@ -22,8 +22,8 @@ export function WelcomePathJourneyArt() {
       src={pathJourneyArt}
       alt=""
       className="pts-welcome-hero__art"
-      width={136}
-      height={136}
+      width={140}
+      height={140}
       decoding="async"
       loading="eager"
     />
