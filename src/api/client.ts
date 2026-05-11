@@ -207,6 +207,41 @@ function setTokenPersist(token: string | null): void {
   }
 }
 
+type InitAuthPayload = {
+  isPremium?: boolean
+  app_save_token?: string
+  premiumUntilIso?: string
+  premium_until?: string
+  premiumUntil?: string
+  premiumExpiryDate?: string
+  subscriptionExpiresAt?: string
+}
+
+function readPremiumUntilIso(data: InitAuthPayload): string | null {
+  const raw =
+    data.premiumUntilIso ??
+    data.premium_until ??
+    data.premiumUntil ??
+    data.premiumExpiryDate ??
+    data.subscriptionExpiresAt
+  if (typeof raw !== 'string') return null
+  const trimmed = raw.trim()
+  return trimmed || null
+}
+
+function applyInitAuthPayload(data: InitAuthPayload): void {
+  if (typeof data.isPremium === 'boolean') {
+    useAuthStore.getState().setPremium(data.isPremium)
+    if (!data.isPremium) useAuthStore.getState().setPremiumUntilIso(null)
+  }
+  const premiumUntilIso = readPremiumUntilIso(data)
+  if (premiumUntilIso) {
+    useAuthStore.getState().setPremiumUntilIso(premiumUntilIso)
+  }
+  const token = data.app_save_token?.trim()
+  if (token) setTokenPersist(token)
+}
+
 /**
  * Уже есть app_save_token, но ensureAuth раньше выходил без /mini-app/init — isPremium оставался null
  * (persist не хранил премиум / холодный старт). Подтягиваем флаг премиума тем же init, что и у WebApp.
@@ -222,12 +257,8 @@ async function syncMiniAppPremiumFromInitIfPossible(): Promise<void> {
       body: JSON.stringify({ initData }),
     })
     if (!res.ok) return
-    const data = (await res.json()) as { isPremium?: boolean; app_save_token?: string }
-    if (typeof data.isPremium === 'boolean') {
-      useAuthStore.getState().setPremium(data.isPremium)
-    }
-    const newer = data.app_save_token?.trim()
-    if (newer) setTokenPersist(newer)
+    const data = (await res.json()) as InitAuthPayload
+    applyInitAuthPayload(data)
   } catch {
     /* ignore */
   }
@@ -270,16 +301,13 @@ export async function ensureAuth(): Promise<string | null> {
         body: JSON.stringify({ start_token: startToken }),
       })
       if (res.ok) {
-        const data = (await res.json()) as { app_save_token?: string; isPremium?: boolean }
+        const data = (await res.json()) as InitAuthPayload
+        applyInitAuthPayload(data)
         const newToken = data.app_save_token?.trim()
         if (newToken) {
-          setTokenPersist(newToken)
           useAuthStore.getState().setInitialized(true)
+          return newToken
         }
-        if (typeof data.isPremium === 'boolean') {
-          useAuthStore.getState().setPremium(data.isPremium)
-        }
-        if (newToken) return newToken
       }
     } catch (e) {
       if (DEBUG) console.warn('[PTS] ensureAuth: start_token error', e)
@@ -309,13 +337,10 @@ export async function ensureAuth(): Promise<string | null> {
         useAuthStore.getState().setInitialized(true)
         return null
       }
-      const data = (await res.json()) as { app_save_token?: string; isPremium?: boolean }
+      const data = (await res.json()) as InitAuthPayload
+      applyInitAuthPayload(data)
       const newToken = data.app_save_token?.trim()
-      if (typeof data.isPremium === 'boolean') {
-        useAuthStore.getState().setPremium(data.isPremium)
-      }
       if (newToken) {
-        setTokenPersist(newToken)
         useAuthStore.getState().setInitialized(true)
         return newToken
       }
@@ -384,13 +409,10 @@ async function fetchWithAuth(
         body: JSON.stringify({ initData }),
       })
       if (res.ok) {
-        const data = (await res.json()) as { app_save_token?: string; isPremium?: boolean }
+        const data = (await res.json()) as InitAuthPayload
+        applyInitAuthPayload(data)
         const newToken = data.app_save_token?.trim()
-        if (typeof data.isPremium === 'boolean') {
-          useAuthStore.getState().setPremium(data.isPremium)
-        }
         if (newToken) {
-          setTokenPersist(newToken)
           token = newToken
         }
       }
@@ -615,12 +637,8 @@ export async function syncPremiumFromInit(): Promise<void> {
       body: JSON.stringify({ initData }),
     })
     if (!res.ok) return
-    const data = (await res.json()) as { isPremium?: boolean; app_save_token?: string }
-    if (typeof data.isPremium === 'boolean') {
-      useAuthStore.getState().setPremium(data.isPremium)
-    }
-    const t = data.app_save_token?.trim()
-    if (t) setTokenPersist(t)
+    const data = (await res.json()) as InitAuthPayload
+    applyInitAuthPayload(data)
   } catch {
     /* ignore */
   }

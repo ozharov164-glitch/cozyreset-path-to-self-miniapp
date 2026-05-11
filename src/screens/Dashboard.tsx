@@ -38,6 +38,25 @@ function formatDateWithTime(iso: string): string {
   }
 }
 
+function pluralizeDaysRu(n: number): string {
+  const abs = Math.abs(n) % 100
+  const last = abs % 10
+  if (abs > 10 && abs < 20) return 'дней'
+  if (last === 1) return 'день'
+  if (last >= 2 && last <= 4) return 'дня'
+  return 'дней'
+}
+
+function calcPremiumDaysLeft(iso: string | null): number | null {
+  if (!iso) return null
+  const end = new Date(iso)
+  if (Number.isNaN(end.getTime())) return null
+  const now = new Date()
+  const diffMs = end.getTime() - now.getTime()
+  const days = Math.max(0, Math.ceil(diffMs / (24 * 60 * 60 * 1000)))
+  return days
+}
+
 function CardHeading({
   icon: Icon,
   title,
@@ -62,6 +81,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
   const appAuthReady = useAppStore((s) => s.authReady)
   const appSaveToken = useAuthStore((s) => s.appSaveToken)
   const isPremium = useAuthStore((s) => s.isPremium)
+  const premiumUntilIso = useAuthStore((s) => s.premiumUntilIso)
   const openResultFromHistory = useAppStore((s) => s.openResultFromHistory)
   const tg = typeof window !== 'undefined' ? window.Telegram?.WebApp : undefined
   const userName = tg?.initDataUnsafe?.user?.first_name || 'друг'
@@ -111,6 +131,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
   const headerMotion = reduceMotion
     ? {}
     : { initial: { opacity: 0, y: -10 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.42, ease: [0.22, 1, 0.36, 1] } }
+  const premiumDaysLeft = calcPremiumDaysLeft(premiumUntilIso)
 
   return (
     <div className="min-h-screen flex flex-col safe-area">
@@ -140,6 +161,35 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
       </motion.header>
 
       <div className="flex-1 flex flex-col max-w-[420px] mx-auto w-full px-3 pb-6">
+        <PremiumCard accent="slate" delay={0}>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              {isPremium === true ? (
+                <>
+                  <p className="text-[11px] uppercase tracking-wide text-[var(--color-text-secondary)] font-semibold">
+                    Текущий тариф
+                  </p>
+                  <p className="text-sm font-semibold text-[var(--color-text-primary)] mt-0.5">
+                    Премиум
+                    {premiumDaysLeft !== null
+                      ? ` · ещё ${premiumDaysLeft} ${pluralizeDaysRu(premiumDaysLeft)}`
+                      : ''}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-[11px] uppercase tracking-wide text-[var(--color-text-secondary)] font-semibold">
+                    Бесплатный режим
+                  </p>
+                  <p className="text-xs text-[var(--color-text-secondary)] mt-0.5 leading-relaxed">
+                    Доступно: тесты, базовые практики, 10 сообщений ИИ‑Венере / 3 дня, по 1 PDF «К специалисту» и «Карта терапии».
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+        </PremiumCard>
+
         <PremiumCard accent="rose" delay={0.02}>
           <div className="flex gap-4 mb-4">
             <img
@@ -191,24 +241,6 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
             Каталог тестов
           </button>
         </PremiumCard>
-
-        {isPremium === false && (
-          <PremiumCard accent="rose" delay={0.015}>
-            <h3 className="font-display text-base font-bold text-[var(--color-text-primary)] mb-2 tracking-tight">
-              Бесплатно сейчас
-            </h3>
-            <p className="text-sm text-[var(--color-text-secondary)] mb-3 leading-relaxed">
-              Базовый доступ уже открыт: тесты, часть практик и вход в ключевые разделы.
-            </p>
-            <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-              В режиме «Бесплатно»: 1 генерация «К специалисту», 1 генерация «Карта терапии» и 10 сообщений ИИ‑Венере за 3 дня.
-              <br />
-              <span className="inline-block mt-2 px-2.5 py-1 rounded-full bg-white/70 border border-[var(--color-lavender)]/50 text-xs font-semibold text-[var(--color-text-primary)]">
-                Полный режим — с Премиум
-              </span>
-            </p>
-          </PremiumCard>
-        )}
 
         {authReady && appSaveToken && (
           <PremiumCard accent="lavender" delay={0.03}>
