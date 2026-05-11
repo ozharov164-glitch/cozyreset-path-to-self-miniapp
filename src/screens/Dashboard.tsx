@@ -8,6 +8,7 @@ import { goBackToBot } from '../utils/telegram'
 import { PremiumCard } from '../components/PremiumCard'
 import { WelcomeFingerprintBadge, WelcomePathJourneyArt } from '../components/dashboard/WelcomeHeroVisuals'
 import { VenusCoachNudgeCard } from '../components/VenusCoachNudgeCard'
+import { miniAppAssetUrl } from '../lib/miniAppAssetUrl'
 import {
   IconChart,
   IconHeartLine,
@@ -319,7 +320,7 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
         <PremiumCard accent="lavender" delay={0.02}>
           <div className="flex gap-4 mb-4">
             <img
-              src={`${import.meta.env.BASE_URL}ai-venus-avatar.png`}
+              src={miniAppAssetUrl('ai-venus-avatar.png')}
               alt="Иллюстративный образ ИИ-Венеры, коуча приложения"
               width={80}
               height={80}
