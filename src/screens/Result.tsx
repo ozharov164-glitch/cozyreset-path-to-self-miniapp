@@ -218,7 +218,8 @@ export function Result({ onBack }: ResultProps) {
       const rid = lastSavedResultId
       if (rid && displayTest?.title) {
         const availability = await apiTestResult(rid)
-        if (availability && availability.venusAnalysisAvailable === false) {
+        const hasCachedAnalysis = !!(availability?.venusAnalysis ?? '').trim()
+        if (availability && availability.venusAnalysisAvailable === false && !hasCachedAnalysis) {
           setAnalysisLockText(
             'Анализ и обсуждение результатов доступны в Премиум. Один пробный разбор в бесплатном режиме уже использован.',
           )
@@ -242,7 +243,7 @@ export function Result({ onBack }: ResultProps) {
   const goToPathCoachFromHistory = async () => {
     const rid = openResultId
     const va = (loadedResult?.venusAnalysis ?? '').trim()
-    const analysisAvailable = loadedResult?.venusAnalysisAvailable !== false
+    const analysisAvailable = loadedResult?.venusAnalysisAvailable !== false || !!va
     if (!analysisAvailable) {
       setAnalysisLockText('Анализ и обсуждение результатов доступны в Премиум. Один пробный разбор в бесплатном режиме уже использован.')
       return
@@ -647,7 +648,7 @@ export function Result({ onBack }: ResultProps) {
 
           {!saving && !saved && !error && isViewingHistory && (
             <div className="space-y-3">
-              {loadedResult?.venusAnalysisAvailable === false ? (
+              {loadedResult?.venusAnalysisAvailable === false && !(loadedResult?.venusAnalysis ?? '').trim() ? (
                 <div
                   className="rounded-2xl p-4 relative overflow-hidden"
                   style={{
