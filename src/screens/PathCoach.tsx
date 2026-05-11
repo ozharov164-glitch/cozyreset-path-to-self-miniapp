@@ -512,6 +512,7 @@ export function PathCoach({ onBack }: PathCoachProps) {
   const send = async () => {
     const text = draft.trim()
     if (!text || loading) return
+    setIntroOpen(false)
     setPhraseQuoteBar(null)
     setError(null)
     setDraft('')
@@ -537,7 +538,6 @@ export function PathCoach({ onBack }: PathCoachProps) {
         ...(vs ? { voiceSupportSuggestion: vs } : {}),
       }
       setMessages((m) => [...m, assistantRow])
-      setIntroOpen(false)
     } else {
       setMessages((m) => m.filter((x) => x.id !== userRow.id))
       if ('premium_required' in r && r.premium_required) {
