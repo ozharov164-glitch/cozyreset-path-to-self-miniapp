@@ -925,6 +925,7 @@ html.tg-mini-app .btn-ghost:active {
   object-fit: contain;
   pointer-events: none;
   user-select: none;
+  background: transparent;
 }
 
 @media (min-width: 380px) {
