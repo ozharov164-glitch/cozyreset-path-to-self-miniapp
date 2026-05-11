@@ -316,12 +316,12 @@ html.tg-mini-app .btn-ghost::before {
   backdrop-filter: blur(28px) saturate(1.15);
   -webkit-backdrop-filter: blur(28px) saturate(1.15);
   border: 1px solid rgba(255, 255, 255, 0.55);
-  border-radius: 22px;
+  border-radius: 28px;
   box-shadow:
     0 2px 4px rgba(45, 42, 62, 0.04),
-    0 14px 44px -10px rgba(100, 80, 140, 0.14),
-    0 0 0 1px rgba(184, 164, 224, 0.1) inset,
-    0 1px 0 rgba(255, 255, 255, 0.92) inset;
+    0 18px 48px -12px rgba(100, 80, 140, 0.16),
+    0 0 0 1px rgba(184, 164, 224, 0.12) inset,
+    0 1px 0 rgba(255, 255, 255, 0.94) inset;
   transition: box-shadow 0.35s ease, border-color 0.35s ease, transform 0.2s ease;
 }
 
@@ -421,8 +421,8 @@ html.tg-mini-app .header-app-glass {
   -webkit-appearance: none;
   appearance: none;
   /* Подложка: в WKWebView после навигации иногда «просвечивает» белый фон кнопки */
-  background-color: #d89a9f;
-  background-image: linear-gradient(135deg, #e8b4b8 0%, #d89a9f 45%, #b8a4e0 100%);
+  background-color: #d88a7a;
+  background-image: linear-gradient(105deg, #ff9e7d 0%, #f07f9c 46%, #b066fe 100%);
   color: #fff !important;
   font-weight: 600;
   border: none;
@@ -807,5 +807,141 @@ html.tg-mini-app .btn-ghost:active {
     width: 34%;
     margin-left: 33%;
     opacity: 0.72;
+  }
+}
+
+/* Главный экран: макет «Путь к себе» */
+.pts-dashboard-header {
+  border-radius: 24px;
+}
+
+.pts-dashboard-tariff {
+  padding: 0.85rem 1rem;
+}
+
+.pts-dashboard-tariff__label {
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.pts-dashboard-tariff__value {
+  margin-top: 0.2rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.35;
+}
+
+.pts-dashboard-tariff__note {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+.pts-venus-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+  padding: 0.28rem 0.62rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #6f5a9a;
+  background: linear-gradient(145deg, rgba(237, 228, 255, 0.95) 0%, rgba(248, 242, 255, 0.88) 100%);
+  border: 1px solid rgba(184, 164, 224, 0.42);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.pts-venus-copy {
+  color: #5f4a86;
+}
+
+.pts-fingerprint-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  color: #7b63b8;
+  background: linear-gradient(160deg, rgba(237, 228, 255, 0.98) 0%, rgba(248, 242, 255, 0.9) 100%);
+  border: 1px solid rgba(184, 164, 224, 0.45);
+  box-shadow:
+    0 4px 14px -6px rgba(120, 90, 170, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.pts-sparkle {
+  display: inline-block;
+  color: #9b6fe3;
+  font-size: 0.9em;
+  line-height: 1;
+}
+
+.pts-hero-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 52px;
+  padding: 0.85rem 1rem;
+  border-radius: 18px;
+}
+
+.pts-hero-cta__lead {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.pts-hero-cta__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  flex-shrink: 0;
+}
+
+.pts-hero-cta__label {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  position: relative;
+  z-index: 1;
+}
+
+.pts-hero-cta__trail {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  opacity: 0.96;
+}
+
+.pts-path-illustration {
+  flex-shrink: 0;
+  width: 4.75rem;
+  height: 4.75rem;
+  filter: drop-shadow(0 10px 18px rgba(120, 90, 170, 0.22));
+}
+
+@media (min-width: 380px) {
+  .pts-path-illustration {
+    width: 5.25rem;
+    height: 5.25rem;
   }
 }

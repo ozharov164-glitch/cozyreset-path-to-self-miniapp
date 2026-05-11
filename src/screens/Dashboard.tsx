@@ -74,6 +74,174 @@ function CardHeading({
   )
 }
 
+function IconSparkle({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width={14}
+      height={14}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden
+    >
+      <path d="M12 2l1.4 5.2L18.5 9 13.4 11.8 12 17l-1.4-5.2L5.5 9l5.1-1.8L12 2zm7 13l.8 3 3 .8-3 .8-.8 3-.8-3-3-.8 3-.8.8-3z" />
+    </svg>
+  )
+}
+
+function IconShieldSoft({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width={13}
+      height={13}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M12 3l7 3v6c0 4.2-3 7.4-7 9-4-1.6-7-4.8-7-9V6l7-3z" />
+    </svg>
+  )
+}
+
+function IconFingerprint({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width={18}
+      height={18}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.35}
+      strokeLinecap="round"
+      aria-hidden
+    >
+      <path d="M12 11a3 3 0 013 3v1M9.5 9.5a5.5 5.5 0 019 4.5v1M7 8.5a8 8 0 0114 6.5v1M6 12a9.5 9.5 0 0112 8.5" />
+    </svg>
+  )
+}
+
+function IconChatBubble({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width={18}
+      height={18}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.45}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M7 18l-3 3V6a3 3 0 013-3h10a3 3 0 013 3v7a3 3 0 01-3 3H9l-2 2z" />
+    </svg>
+  )
+}
+
+function IconBookOpen({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width={18}
+      height={18}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.45}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M4 6.5A2.5 2.5 0 016.5 4H12v16H6.5A2.5 2.5 0 014 17.5v-11z" />
+      <path d="M20 6.5A2.5 2.5 0 0017.5 4H12v16h5.5A2.5 2.5 0 0020 17.5v-11z" />
+    </svg>
+  )
+}
+
+function IconChevronRight({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width={18}
+      height={18}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M9 6l6 6-6 6" />
+    </svg>
+  )
+}
+
+function PathJourneyIllustration({ className = '' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 96 96" fill="none" aria-hidden>
+      <defs>
+        <linearGradient id="ptsPathStroke" x1="18" y1="72" x2="78" y2="24" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#d8b8ff" />
+          <stop offset="1" stopColor="#8f6bc8" />
+        </linearGradient>
+        <linearGradient id="ptsPathPlatform" x1="48" y1="48" x2="48" y2="84" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#c9a8ff" />
+          <stop offset="1" stopColor="#8f6bc8" />
+        </linearGradient>
+      </defs>
+      <ellipse cx="48" cy="80" rx="30" ry="7" fill="rgba(139, 107, 199, 0.16)" />
+      <path
+        d="M20 72C30 58 38 54 48 54C58 54 64 42 76 28"
+        stroke="url(#ptsPathStroke)"
+        strokeWidth="8"
+        strokeLinecap="round"
+      />
+      <path d="M36 70h24l-2 10H38l-2-10z" fill="url(#ptsPathPlatform)" opacity="0.9" />
+      <rect x="70" y="18" width="4" height="30" rx="2" fill="#9b7ad4" />
+      <path d="M74 22h16l-3.5 7 3.5 7H74z" fill="#b58cf0" />
+    </svg>
+  )
+}
+
+function DashboardHeroButton({
+  label,
+  onClick,
+  leadIcon,
+}: {
+  label: string
+  onClick: () => void
+  leadIcon: ComponentType<{ className?: string }>
+}) {
+  const LeadIcon = leadIcon
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="pts-hero-cta btn-primary font-semibold"
+      style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+    >
+      <span className="pts-hero-cta__lead">
+        <span className="pts-hero-cta__icon">
+          <LeadIcon className="text-white" />
+        </span>
+        <span className="pts-hero-cta__label">{label}</span>
+      </span>
+      <span className="pts-hero-cta__trail" aria-hidden>
+        <IconChevronRight />
+        <IconSparkle className="text-white/90" />
+      </span>
+    </button>
+  )
+}
+
 export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
   const queryClient = useQueryClient()
   const reduceMotion = useReducedMotion()
@@ -136,13 +304,13 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
   return (
     <div className="min-h-screen flex flex-col safe-area">
       <motion.header
-        className="header-app-glass h-14 flex items-center justify-between px-4 mb-5 rounded-2xl"
+        className="header-app-glass pts-dashboard-header h-14 flex items-center justify-between px-4 mb-5"
         {...headerMotion}
       >
         <button
           type="button"
           onClick={() => goBackToBot()}
-          className="btn-ghost min-h-[44px] min-w-[52px] py-2 px-3 -my-1 -ml-1 rounded-xl text-sm font-semibold select-none tracking-tight text-[var(--color-forest-dark)]"
+          className="btn-ghost min-h-[44px] py-2 px-3 -my-1 -ml-1 rounded-xl text-sm font-semibold select-none tracking-tight text-[var(--color-forest-dark)]"
           style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
         >
           ← В бота
@@ -153,23 +321,24 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
         <button
           type="button"
           onClick={() => onOpenHistory()}
-          className="btn-ghost min-h-[44px] min-w-[52px] py-2 px-3 -my-1 -mr-1 rounded-xl text-sm font-semibold text-[var(--color-glow-teal)] select-none"
+          className="btn-ghost min-h-[44px] py-2 px-3 -my-1 -mr-1 rounded-xl text-sm font-semibold text-[#7b63b8] select-none inline-flex items-center gap-1.5"
           style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
         >
+          <IconSparkle className="text-[#9b6fe3]" />
           История
         </button>
       </motion.header>
 
       <div className="flex-1 flex flex-col max-w-[420px] mx-auto w-full px-3 pb-6">
-        <PremiumCard accent="slate" delay={0}>
+        <PremiumCard accent="slate" delay={0} className="pts-dashboard-tariff">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               {isPremium === true ? (
                 <>
-                  <p className="text-[11px] uppercase tracking-wide text-[var(--color-text-secondary)] font-semibold">
+                  <p className="pts-dashboard-tariff__label">
                     Текущий тариф
                   </p>
-                  <p className="text-sm font-semibold text-[var(--color-text-primary)] mt-0.5">
+                  <p className="pts-dashboard-tariff__value">
                     Премиум
                     {premiumDaysLeft !== null
                       ? ` · ещё ${premiumDaysLeft} ${pluralizeDaysRu(premiumDaysLeft)}`
@@ -178,11 +347,12 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
                 </>
               ) : (
                 <>
-                  <p className="text-[11px] uppercase tracking-wide text-[var(--color-text-secondary)] font-semibold">
-                    Бесплатный режим
+                  <p className="pts-dashboard-tariff__label">
+                    Бесплатно сейчас
                   </p>
-                  <p className="text-xs text-[var(--color-text-secondary)] mt-0.5 leading-relaxed">
-                    Доступно: тесты, базовые практики, 10 сообщений ИИ‑Венере / 3 дня, по 1 PDF «К специалисту» и «Карта терапии».
+                  <p className="pts-dashboard-tariff__note">
+                    Тесты, базовые практики, 10 сообщений ИИ‑Венере за 3 дня и по одному PDF «К специалисту» и «Карта
+                    терапии».
                   </p>
                 </>
               )}
@@ -190,56 +360,60 @@ export function Dashboard({ onOpenCatalog, onOpenHistory }: DashboardProps) {
           </div>
         </PremiumCard>
 
-        <PremiumCard accent="rose" delay={0.02}>
+        <PremiumCard accent="lavender" delay={0.02}>
           <div className="flex gap-4 mb-4">
             <img
               src={`${import.meta.env.BASE_URL}ai-venus-avatar.png`}
               alt="Иллюстративный образ ИИ-Венеры, коуча приложения"
               width={80}
               height={80}
-              className="w-20 h-20 shrink-0 rounded-2xl object-cover shadow-md ring-2 ring-white/55"
+              className="w-20 h-20 shrink-0 rounded-[18px] object-cover shadow-md ring-2 ring-white/60"
               decoding="async"
             />
             <div className="min-w-0 flex-1 pt-0.5">
-              <h3 className="font-display text-lg font-bold text-[var(--color-text-primary)] tracking-tight leading-snug">
-                ИИ-Венера
+              <h3 className="font-display text-lg font-bold text-[var(--color-text-primary)] tracking-tight leading-snug flex items-center gap-1.5 flex-wrap">
+                <span>ИИ-Венера</span>
+                <IconSparkle className="text-[#9b6fe3]" />
               </h3>
               <p className="text-xs text-[var(--color-text-secondary)] mt-1 leading-snug font-medium">
                 Коуч внутри приложения «Путь к себе»
               </p>
+              <span className="pts-venus-badge">
+                <IconShieldSoft />
+                Твой проводник к осознанности
+              </span>
             </div>
           </div>
-          <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
-            Спокойный ИИ-собеседник: отвечает с учётом твоих тестов, заметок в самореализации и сессий в нейро-арене —
-            только того, что ты уже сделал здесь, без домыслов. Помогает сформулировать следующий шаг и подсказать,
-            куда перейти в приложении. Это не психотерапия и не медицинская консультация, а поддержка в понятном,
-            взрослом темпе.
+          <p className="text-sm pts-venus-copy mb-4 leading-relaxed">
+            Спокойный ИИ-собеседник: отвечает с учётом твоих тестов, заметок и сессий в нейро-арене. Помогает
+            сформулировать следующий шаг и подсказать, куда перейти в приложении. Это не психотерапия, а поддержка в
+            понятном темпе.
           </p>
-          <button
-            type="button"
+          <DashboardHeroButton
+            label="Открыть чат"
+            leadIcon={IconChatBubble}
             onClick={() => useAppStore.getState().setScreen('pathCoach')}
-            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
-            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-          >
-            Открыть чат
-          </button>
+          />
         </PremiumCard>
 
-        <PremiumCard accent="coral" delay={0}>
-          <h2 className="font-display text-xl font-bold text-[var(--color-text-primary)] mb-1.5 tracking-tight">
-            Привет, {userName}!
-          </h2>
-          <p className="text-[15px] text-[var(--color-text-secondary)] mb-5 leading-relaxed">
-            Это основной продукт «Путь к себе»: начни бесплатно и двигайся в своём темпе.
-          </p>
-          <button
-            type="button"
-            onClick={onOpenCatalog}
-            className="w-full py-3.5 px-4 rounded-xl btn-primary min-h-[48px] font-semibold"
-            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-          >
-            Каталог тестов
-          </button>
+        <PremiumCard accent="coral" delay={0.04}>
+          <div className="flex items-start gap-3 mb-5">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2.5 mb-2">
+                <span className="pts-fingerprint-badge" aria-hidden>
+                  <IconFingerprint />
+                </span>
+                <h2 className="font-display text-xl font-bold text-[var(--color-text-primary)] tracking-tight leading-snug">
+                  Привет, {userName} 👋
+                </h2>
+              </div>
+              <p className="text-[15px] text-[var(--color-text-secondary)] leading-relaxed">
+                Это основной продукт «Путь к себе»: начни бесплатно и двигайся в своём темпе.
+              </p>
+            </div>
+            <PathJourneyIllustration className="pts-path-illustration" />
+          </div>
+          <DashboardHeroButton label="Каталог тестов" leadIcon={IconBookOpen} onClick={onOpenCatalog} />
         </PremiumCard>
 
         {authReady && appSaveToken && (
